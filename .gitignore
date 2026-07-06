@@ -1,0 +1,62 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# App specific
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Generated files
+gen/
+out/
+
+# Debug
+*.log
+*.log.*
+
+# Local configuration
+local.properties
+gradle.properties.local
+
+# Build outputs
+*.hprof
+*.trace
+
+# Lint
+lint/intermediates/
+lint/generated/
+lint/outputs/
+lint/tmp/
+
+# APK
+*.apk
+*.ap_
+*.dex
+*.class
+*.jar
+*.pak
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android Studio
+*.pack
+captures/
+*.log
+local.properties
+*.hprof
+
+# Keystore
+*.jks
+*.keystore
