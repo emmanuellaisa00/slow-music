@@ -373,6 +373,7 @@ private fun AppleSheetOption(
 /**
  * Apple Music Style Share Sheet
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppleShareSheet(
     song: Song,
