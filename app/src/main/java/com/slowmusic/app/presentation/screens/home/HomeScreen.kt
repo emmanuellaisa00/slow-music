@@ -1,5 +1,6 @@
 package com.slowmusic.app.presentation.screens.home
 
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material.icons.Icons
@@ -7,6 +8,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.slowmusic.app.domain.model.Song
@@ -70,22 +72,43 @@ fun HomeScreen(
             )
         }
     ) { paddingValues ->
-        when {
-            uiState.isLoading -> LoadingIndicator()
-            uiState.error != null -> ErrorMessage(
+        var pullDistance by remember { mutableFloatStateOf(0f) }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(uiState.isRefreshing) {
+                    detectVerticalDragGestures(
+                        onVerticalDrag = { _, dragAmount ->
+                            if (dragAmount > 0) pullDistance += dragAmount
+                        },
+                        onDragEnd = {
+                            if (pullDistance > 120f && !uiState.isRefreshing) viewModel.refresh()
+                            pullDistance = 0f
+                        },
+                        onDragCancel = { pullDistance = 0f }
+                    )
+                }
+        ) {
+            when {
+                uiState.isLoading -> LoadingIndicator()
+                uiState.error != null -> ErrorMessage(
                 message = uiState.error!!,
                 onRetry = { viewModel.loadContent() }
             )
-            else -> HomeContent(
-                uiState = uiState,
-                onSongClick = onSongClick,
-                onMoreClick = { selectedSong = it },
-                onArtistClick = onArtistClick,
-                onAlbumClick = onAlbumClick,
-                onGenreClick = onGenreClick,
-                onSeeAllClick = onNavigateToSeeAll,
-                modifier = Modifier.padding(paddingValues)
-            )
+                else -> HomeContent(
+                    uiState = uiState,
+                    onSongClick = onSongClick,
+                    onMoreClick = { selectedSong = it },
+                    onArtistClick = onArtistClick,
+                    onAlbumClick = onAlbumClick,
+                    onGenreClick = onGenreClick,
+                    onSeeAllClick = onNavigateToSeeAll,
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+            if (uiState.isRefreshing) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth().align(androidx.compose.ui.Alignment.TopCenter))
+            }
         }
     }
 }
@@ -107,7 +130,10 @@ private fun HomeContent(
     ) {
         // Good Evening Section
         item {
-            SectionHeader(title = "Good Evening")
+            Row(Modifier.fillMaxWidth().padding(end = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                SectionHeader(title = "Good Evening")
+                if (uiState.loadedFromCache) AssistChip(onClick = {}, label = { Text("Cached") })
+            }
         }
         
         // Quick Picks

@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -71,18 +72,35 @@ fun SearchScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(top = 0.dp),
                 title = {
                     OutlinedTextField(
                         value = uiState.query,
                         onValueChange = viewModel::updateQuery,
                         placeholder = { Text("Songs, artists, albums, playlists...") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(28.dp),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.82f),
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f),
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
+                        ),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(onSearch = { viewModel.search(uiState.query); focusManager.clearFocus() }),
                         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
                         trailingIcon = {
-                            if (uiState.query.isNotEmpty()) IconButton(onClick = { viewModel.updateQuery("") }) { Icon(Icons.Filled.Clear, "Clear") }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (uiState.query.isNotEmpty()) IconButton(onClick = { viewModel.updateQuery("") }) { Icon(Icons.Filled.Clear, "Clear") }
+                                IconButton(onClick = {
+                                    recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                    }
+                                    runCatching { voiceSearchLauncher.launch(intent) }.onFailure { voiceMessage = "Voice search is not available on this device" }
+                                }) { Icon(Icons.Filled.Mic, "Voice search") }
+                            }
                         }
                     )
                 }

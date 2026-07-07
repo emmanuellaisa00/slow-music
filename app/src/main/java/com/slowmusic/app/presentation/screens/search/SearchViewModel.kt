@@ -2,6 +2,8 @@ package com.slowmusic.app.presentation.screens.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.slowmusic.app.data.repository.ContentCacheRepository
+import com.slowmusic.app.data.repository.SearchContentSnapshot
 import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.domain.repository.LibraryRepository
 import com.slowmusic.app.domain.repository.LocalMusicRepository
@@ -40,7 +42,8 @@ class SearchViewModel @Inject constructor(
     private val preferencesRepository: PreferencesRepository,
     private val getSearchHistoryUseCase: GetSearchHistoryUseCase,
     private val addToSearchHistoryUseCase: AddToSearchHistoryUseCase,
-    private val streamingFallbackResolver: StreamingFallbackResolver
+    private val streamingFallbackResolver: StreamingFallbackResolver,
+    private val contentCacheRepository: ContentCacheRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
@@ -76,6 +79,18 @@ class SearchViewModel @Inject constructor(
             _uiState.update { it.copy(isSearching = true, error = null, query = query) }
             try {
                 addToSearchHistoryUseCase(query)
+                contentCacheRepository.getSearch(query)?.let { cached ->
+                    _uiState.update {
+                        it.copy(
+                            isSearching = false,
+                            results = cached.results,
+                            localSongs = cached.localSongs,
+                            downloadedSongs = cached.downloadedSongs,
+                            suggestions = emptyList()
+                        )
+                    }
+                    return@launch
+                }
 
                 val onlineSongs = async { runCatching { musicRepository.searchSongs(query) }.getOrDefault(emptyList()) }
                 val fallbackSongs = async { runCatching { streamingFallbackResolver.searchSongs(query) }.getOrDefault(emptyList()) }
@@ -95,15 +110,17 @@ class SearchViewModel @Inject constructor(
                 val albumResults = (albums.await() + fallbackAlbums.await()).distinctBy { album -> album.id }
                 val playlistResults = (playlists.await() + fallbackPlaylists.await()).distinctBy { playlist -> playlist.id }
 
+                val finalResults = SearchResult(
+                    songs = mergedSongs,
+                    artists = artistResults,
+                    albums = albumResults,
+                    playlists = playlistResults
+                )
+                contentCacheRepository.saveSearch(query, SearchContentSnapshot(finalResults, locals, downloaded))
                 _uiState.update {
                     it.copy(
                         isSearching = false,
-                        results = SearchResult(
-                            songs = mergedSongs,
-                            artists = artistResults,
-                            albums = albumResults,
-                            playlists = playlistResults
-                        ),
+                        results = finalResults,
                         localSongs = locals,
                         downloadedSongs = downloaded,
                         suggestions = emptyList()
