@@ -319,7 +319,8 @@ fun NavigationGraph(
             PlaylistDetailsScreen(
                 playlistId = backStackEntry.arguments?.getString("playlistId") ?: "",
                 onNavigateBack = { navController.popBackStack() },
-                onAddSongs = { navController.navigate(Screen.Search.route) }
+                onAddSongs = { navController.navigate(Screen.Search.route) },
+                onSongClick = { song, queue -> selectSong(song, queue) }
             )
         }
 

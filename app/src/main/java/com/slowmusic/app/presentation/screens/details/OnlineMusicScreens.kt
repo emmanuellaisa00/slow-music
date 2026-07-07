@@ -19,13 +19,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -95,22 +98,59 @@ fun AlbumDetailsScreen(
 ) {
     val state by viewModel.state.collectAsState()
     LaunchedEffect(albumId) { viewModel.load(albumId) }
-    Scaffold(topBar = { TopAppBar(title = { Text("Album") }, navigationIcon = { BackButton(onNavigateBack) }) }) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 120.dp)) {
+    val album = state.album
+
+    Scaffold(
+        containerColor = Color(0xFF0B0B0B),
+        topBar = {
+            TopAppBar(
+                title = { Text(album?.title ?: "Album", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                navigationIcon = { BackButton(onNavigateBack) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                )
+            )
+        }
+    ) { padding ->
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(bottom = 120.dp)
+        ) {
             item {
-                HeroHeader(
-                    title = state.album?.title ?: "Album",
-                    subtitle = listOfNotNull(state.album?.artist, state.album?.releaseDate, state.album?.genre).joinToString(" • "),
-                    icon = Icons.Filled.Album,
-                    action = { Button(onClick = viewModel::saveAlbum) { Icon(Icons.Filled.LibraryAdd, null); Spacer(Modifier.width(8.dp)); Text("Save") } }
+                SpotifyBlurHeader(
+                    title = album?.title ?: "Album",
+                    subtitle = listOfNotNull(album?.artist, album?.releaseDate, album?.genre).joinToString(" • ").ifBlank { "Album" },
+                    artworkUrl = album?.artworkUrl,
+                    fallbackIcon = Icons.Filled.Album,
+                    typeLabel = "Album",
+                    primaryButtonText = "Play",
+                    onPrimaryClick = { state.songs.firstOrNull()?.let { onSongClick(it, state.songs) } },
+                    onSecondaryClick = viewModel::saveAlbum
                 )
             }
-            item { SectionTitle("Tracks") }
-            items(state.songs) { song ->
-                SongRow(song, onClick = { onSongClick(song, state.songs) }, onMore = { onAddToPlaylist(song) })
+
+            item { SpotifySectionTitle("Tracks") }
+            if (state.songs.isEmpty()) {
+                item { SpotifyEmptyRow("No tracks found", "Tracks from this album will appear here.") }
             }
-            item { SectionTitle("Credits") }
-            item { Text("Released by ${state.album?.artist ?: "Unknown label"}. Track metadata is sourced from the online catalog and cached locally for library use.") }
+            items(state.songs) { song ->
+                SpotifyTrackRow(
+                    song = song,
+                    index = state.songs.indexOf(song) + 1,
+                    onClick = { onSongClick(song, state.songs) },
+                    onMore = { onAddToPlaylist(song) }
+                )
+            }
+            item {
+                Text(
+                    text = "Released by ${album?.artist ?: "Unknown label"}. Track metadata is sourced from the online catalog and cached locally for library use.",
+                    modifier = Modifier.padding(16.dp),
+                    color = Color.White.copy(alpha = 0.62f),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
 }
@@ -121,6 +161,7 @@ fun PlaylistDetailsScreen(
     playlistId: String,
     onNavigateBack: () -> Unit,
     onAddSongs: () -> Unit,
+    onSongClick: (Song, List<Song>) -> Unit = { _, _ -> },
     viewModel: PlaylistDetailsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -138,21 +179,184 @@ fun PlaylistDetailsScreen(
         )
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text(state.playlist?.name ?: "Playlist") }, navigationIcon = { BackButton(onNavigateBack) }, actions = { IconButton(onClick = { editing = true }) { Icon(Icons.Filled.Edit, "Edit") } }) }) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 120.dp)) {
-            item { HeroHeader(state.playlist?.name ?: "Playlist", "${state.playlist?.songIds?.size ?: 0} songs • Local database", Icons.Filled.QueueMusic) }
-            item { Button(onClick = onAddSongs, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Filled.Add, null); Spacer(Modifier.width(8.dp)); Text("Add songs") } }
-            item { SectionTitle("Songs") }
-            if (state.playlist?.songIds.orEmpty().isEmpty()) item { EmptyPanel("No songs yet", "Use Add songs from album/search menus to build this playlist.") }
+    Scaffold(
+        containerColor = Color(0xFF0B0B0B),
+        topBar = {
+            TopAppBar(
+                title = { Text(state.playlist?.name ?: "Playlist", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                navigationIcon = { BackButton(onNavigateBack) },
+                actions = { IconButton(onClick = { editing = true }) { Icon(Icons.Filled.Edit, "Edit", tint = Color.White) } },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White,
+                    actionIconContentColor = Color.White
+                )
+            )
+        }
+    ) { padding ->
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(bottom = 120.dp)
+        ) {
+            item {
+                SpotifyBlurHeader(
+                    title = state.playlist?.name ?: "Playlist",
+                    subtitle = "${state.songs.size} songs • Local database",
+                    artworkUrl = state.songs.firstOrNull()?.albumArtUrl ?: state.playlist?.artworkUrl,
+                    fallbackIcon = Icons.Filled.QueueMusic,
+                    typeLabel = "Playlist",
+                    primaryButtonText = "Play",
+                    onPrimaryClick = { state.songs.firstOrNull()?.let { onSongClick(it, state.songs) } },
+                    secondaryButtonText = "Add songs",
+                    onSecondaryClick = onAddSongs
+                )
+            }
+
+            item { SpotifySectionTitle("Songs") }
+            if (state.songs.isEmpty()) {
+                item { SpotifyEmptyRow("No songs yet", "Use Add songs from album/search menus to build this playlist.") }
+            }
             items(state.songs) { song ->
-                ListItem(
-                    headlineContent = { Text(song.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    supportingContent = { Text("${song.artist} • ${song.album}", maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    leadingContent = { Icon(Icons.Filled.MusicNote, null, tint = MaterialTheme.colorScheme.primary) },
-                    trailingContent = { IconButton(onClick = { viewModel.removeSong(song.id) }) { Icon(Icons.Filled.RemoveCircleOutline, "Remove") } }
+                SpotifyTrackRow(
+                    song = song,
+                    index = state.songs.indexOf(song) + 1,
+                    onClick = { onSongClick(song, state.songs) },
+                    onMore = { viewModel.removeSong(song.id) },
+                    moreIcon = Icons.Filled.RemoveCircleOutline
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SpotifyBlurHeader(
+    title: String,
+    subtitle: String,
+    artworkUrl: String?,
+    fallbackIcon: androidx.compose.ui.graphics.vector.ImageVector,
+    typeLabel: String,
+    primaryButtonText: String,
+    onPrimaryClick: () -> Unit,
+    secondaryButtonText: String = "Save",
+    onSecondaryClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(390.dp)
+    ) {
+        AsyncImage(
+            model = artworkUrl,
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+                .blur(34.dp),
+            contentScale = ContentScale.Crop
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.18f),
+                            Color(0xFF121212).copy(alpha = 0.78f),
+                            Color(0xFF0B0B0B)
+                        )
+                    )
+                )
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomStart)
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(176.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Brush.linearGradient(listOf(Color(0xFF4F4F4F), Color(0xFF191919)))),
+                contentAlignment = Alignment.Center
+            ) {
+                if (artworkUrl != null) {
+                    AsyncImage(
+                        model = artworkUrl,
+                        contentDescription = title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(fallbackIcon, null, tint = Color.White.copy(alpha = 0.86f), modifier = Modifier.size(76.dp))
+                }
+            }
+            Spacer(Modifier.height(18.dp))
+            Text(typeLabel, color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            Text(title, color = Color.White, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(6.dp))
+            Text(subtitle, color = Color.White.copy(alpha = 0.72f), style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                FilledTonalButton(
+                    onClick = onSecondaryClick,
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = Color.White.copy(alpha = 0.12f),
+                        contentColor = Color.White
+                    )
+                ) { Text(secondaryButtonText) }
+                Spacer(Modifier.weight(1f))
+                FloatingActionButton(
+                    onClick = onPrimaryClick,
+                    containerColor = Color(0xFF1DB954),
+                    contentColor = Color.Black,
+                    shape = CircleShape
+                ) { Icon(Icons.Filled.PlayArrow, primaryButtonText, modifier = Modifier.size(34.dp)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SpotifySectionTitle(text: String) {
+    Text(
+        text = text,
+        color = Color.White,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+    )
+}
+
+@Composable
+private fun SpotifyTrackRow(
+    song: Song,
+    index: Int,
+    onClick: () -> Unit,
+    onMore: () -> Unit,
+    moreIcon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Filled.MoreVert
+) {
+    ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        leadingContent = {
+            Text(index.toString(), color = Color.White.copy(alpha = 0.55f), modifier = Modifier.width(24.dp))
+        },
+        headlineContent = { Text(song.title, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        supportingContent = { Text(song.artist, color = Color.White.copy(alpha = 0.58f), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        trailingContent = { IconButton(onClick = onMore) { Icon(moreIcon, null, tint = Color.White.copy(alpha = 0.72f)) } }
+    )
+}
+
+@Composable
+private fun SpotifyEmptyRow(title: String, subtitle: String) {
+    Column(Modifier.fillMaxWidth().padding(20.dp)) {
+        Text(title, color = Color.White, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(4.dp))
+        Text(subtitle, color = Color.White.copy(alpha = 0.62f))
     }
 }
 
