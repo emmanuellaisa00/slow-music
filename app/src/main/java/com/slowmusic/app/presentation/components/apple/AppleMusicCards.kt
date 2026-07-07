@@ -26,19 +26,6 @@ import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.presentation.theme.apple.*
 
 
-private enum class SwipeToDismissBoxValue { Settled, StartToEnd, EndToStart }
-private class SimpleSwipeToDismissBoxState
-@Composable
-private fun rememberSwipeToDismissBoxState(confirmValueChange: (SwipeToDismissBoxValue) -> Boolean = { true }): SimpleSwipeToDismissBoxState = SimpleSwipeToDismissBoxState()
-@Composable
-private fun SwipeToDismissBox(
-    state: SimpleSwipeToDismissBoxState,
-    modifier: Modifier = Modifier,
-    backgroundContent: @Composable () -> Unit = {},
-    endBackgroundContent: @Composable () -> Unit = {},
-    content: @Composable () -> Unit
-) { Box(modifier) { content() } }
-
 /**
  * Apple Music Style Song Card (Horizontal Card)
  */

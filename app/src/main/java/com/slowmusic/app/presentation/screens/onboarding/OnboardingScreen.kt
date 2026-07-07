@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -24,6 +25,7 @@ import com.slowmusic.app.presentation.theme.apple.*
 fun OnboardingScreen(
     onComplete: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { 3 })
     
     Box(
@@ -114,7 +116,7 @@ fun OnboardingScreen(
                         if (isLastPage) {
                             onComplete()
                         } else {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
                         }
                     },
                     modifier = Modifier

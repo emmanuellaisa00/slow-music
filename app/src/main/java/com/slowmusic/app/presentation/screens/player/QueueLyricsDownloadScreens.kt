@@ -13,7 +13,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
 import coil.compose.AsyncImage
@@ -48,7 +50,7 @@ fun QueueScreen(
             onBackClick = onNavigateBack,
             trailing = {
                 var showMenu by remember { mutableStateOf(false) }
-                
+
                 Box {
                     IconButton(onClick = { showMenu = true }) {
                         Icon(
@@ -57,7 +59,7 @@ fun QueueScreen(
                             tint = AppleColors.textPrimary
                         )
                     }
-                    
+
                     DropdownMenu(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false }
@@ -86,7 +88,7 @@ fun QueueScreen(
                 }
             }
         )
-        
+
         // Now Playing
         if (currentSong != null) {
             AppleGlassCard(
@@ -102,9 +104,9 @@ fun QueueScreen(
                         color = AppleColors.primary,
                         fontWeight = FontWeight.SemiBold
                     )
-                    
+
                     Spacer(modifier = Modifier.height(12.dp))
-                    
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -121,9 +123,9 @@ fun QueueScreen(
                                 ),
                             contentScale = ContentScale.Crop
                         )
-                        
+
                         Spacer(modifier = Modifier.width(16.dp))
-                        
+
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = currentSong.title,
@@ -140,13 +142,13 @@ fun QueueScreen(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        
+
                         PlayingIndicator()
                     }
                 }
             }
         }
-        
+
         // Queue header
         Row(
             modifier = Modifier
@@ -161,14 +163,14 @@ fun QueueScreen(
                 color = AppleColors.textSecondary,
                 fontWeight = FontWeight.SemiBold
             )
-            
+
             Text(
                 text = "${queue.size} songs",
                 style = AppleTypography.caption1,
                 color = AppleColors.textTertiary
             )
         }
-        
+
         // Queue list
         if (queue.isEmpty()) {
             Box(
@@ -218,7 +220,7 @@ private fun QueueItem(
             }
         }
     )
-    
+
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
@@ -264,7 +266,7 @@ fun LyricsScreen(
     modifier: Modifier = Modifier
 ) {
     var currentLine by remember { mutableIntStateOf(0) }
-    
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -286,7 +288,7 @@ fun LyricsScreen(
                 )
             }
         )
-        
+
         // Song info
         Row(
             modifier = Modifier
@@ -302,9 +304,9 @@ fun LyricsScreen(
                     .clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop
             )
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = song.title,
@@ -320,7 +322,7 @@ fun LyricsScreen(
                 )
             }
         }
-        
+
         // Lyrics content
         Box(
             modifier = Modifier
@@ -329,7 +331,7 @@ fun LyricsScreen(
         ) {
             if (lyrics != null) {
                 val lines = lyrics.split("\n")
-                
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -337,28 +339,28 @@ fun LyricsScreen(
                 ) {
                     itemsIndexed(lines) { index, line ->
                         val isCurrentLine = index == currentLine
-                        
+
                         val textSize by animateDpAsState(
                             targetValue = if (isCurrentLine) 24.dp else 18.dp,
-                            animationSpec = springBouncy,
+                            animationSpec = AppleSpringAnimations.springBouncy,
                             label = "lyric_size"
                         )
-                        
+
                         val textAlpha by animateFloatAsState(
                             targetValue = if (isCurrentLine) 1f else 0.5f,
                             label = "lyric_alpha"
                         )
-                        
+
                         Text(
                             text = line.ifBlank { "♪" },
-                            style = AppleTypography.body.copy(fontSize = textSize.toSp()),
+                            style = AppleTypography.body.copy(fontSize = textSize.sp),
                             color = AppleColors.textPrimary.copy(alpha = textAlpha),
                             fontWeight = if (isCurrentLine) FontWeight.Bold else FontWeight.Normal,
                             textAlign = TextAlign.Center,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { currentLine = index }
-                                .animateItem()
+
                         )
                     }
                 }
@@ -377,17 +379,17 @@ fun LyricsScreen(
                             tint = AppleColors.textTertiary,
                             modifier = Modifier.size(64.dp)
                         )
-                        
+
                         Spacer(modifier = Modifier.height(16.dp))
-                        
+
                         Text(
                             text = "Lyrics Not Available",
                             style = AppleTypography.title3,
                             color = AppleColors.textPrimary
                         )
-                        
+
                         Spacer(modifier = Modifier.height(8.dp))
-                        
+
                         Text(
                             text = "We couldn't find lyrics for this song",
                             style = AppleTypography.body,
@@ -437,7 +439,7 @@ fun DownloadsScreen(
                 }
             }
         )
-        
+
         // Storage info
         AppleGlassCard(
             modifier = Modifier
@@ -454,9 +456,9 @@ fun DownloadsScreen(
                     tint = AppleColors.primary,
                     modifier = Modifier.size(24.dp)
                 )
-                
+
                 Spacer(modifier = Modifier.width(12.dp))
-                
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Storage Used",
@@ -469,7 +471,7 @@ fun DownloadsScreen(
                         color = AppleColors.textSecondary
                     )
                 }
-                
+
                 Text(
                     text = "0 MB",
                     style = AppleTypography.headline,
@@ -477,7 +479,7 @@ fun DownloadsScreen(
                 )
             }
         }
-        
+
         // Downloads list
         if (downloads.isEmpty() && downloadProgress.isEmpty()) {
             Box(
@@ -507,7 +509,7 @@ fun DownloadsScreen(
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
                     }
-                    
+
                     downloadProgress.forEach { (songId, progress) ->
                         item {
                             DownloadProgressItem(
@@ -518,7 +520,7 @@ fun DownloadsScreen(
                         }
                     }
                 }
-                
+
                 // Completed downloads
                 if (downloads.isNotEmpty()) {
                     item {
@@ -530,7 +532,7 @@ fun DownloadsScreen(
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
                     }
-                    
+
                     items(downloads) { song ->
                         AppleSongCard(
                             song = song,
@@ -566,9 +568,9 @@ private fun DownloadProgressItem(
                     trackColor = AppleColors.textTertiary.copy(alpha = 0.2f),
                     strokeWidth = 3.dp
                 )
-                
+
                 Spacer(modifier = Modifier.width(12.dp))
-                
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Downloading...",
@@ -581,7 +583,7 @@ private fun DownloadProgressItem(
                         color = AppleColors.textSecondary
                     )
                 }
-                
+
                 IconButton(onClick = onCancel) {
                     Icon(
                         imageVector = Icons.Filled.Close,
@@ -590,9 +592,9 @@ private fun DownloadProgressItem(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier

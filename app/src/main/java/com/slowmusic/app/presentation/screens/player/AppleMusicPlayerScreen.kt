@@ -336,7 +336,7 @@ fun AppleMusicPlayerScreen(
                     // Play/Pause
                     val playButtonScale by animateFloatAsState(
                         targetValue = 1f,
-                        animationSpec = springBouncy,
+                        animationSpec = AppleSpringAnimations.springBouncy,
                         label = "play_button"
                     )
                     

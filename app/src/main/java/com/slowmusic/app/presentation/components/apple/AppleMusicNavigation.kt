@@ -181,18 +181,6 @@ val appleNavItems = listOf(
 )
 
 
-private enum class SwipeToDismissBoxValue { Settled, StartToEnd, EndToStart }
-private class SimpleSwipeToDismissBoxState
-@Composable
-private fun rememberSwipeToDismissBoxState(confirmValueChange: (SwipeToDismissBoxValue) -> Boolean = { true }): SimpleSwipeToDismissBoxState = SimpleSwipeToDismissBoxState()
-@Composable
-private fun SwipeToDismissBox(
-    state: SimpleSwipeToDismissBoxState,
-    modifier: Modifier = Modifier,
-    backgroundContent: @Composable () -> Unit = {},
-    content: @Composable () -> Unit
-) { Box(modifier) { content() } }
-
 /**
  * Apple Music Style Mini Player
  */
@@ -318,7 +306,7 @@ fun AppleMiniPlayer(
                             ) {
                                 val scale by animateFloatAsState(
                                     targetValue = if (isPlaying) 1f else 1f,
-                                    animationSpec = springBouncy,
+                                    animationSpec = AppleSpringAnimations.springBouncy,
                                     label = "play_scale"
                                 )
                                 

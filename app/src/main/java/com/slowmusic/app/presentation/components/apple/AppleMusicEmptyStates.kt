@@ -475,7 +475,7 @@ object AppleEmptyStates {
     @Composable
     fun NoArtists() {
         AppleEmptyState(
-            icon = Icons.Filled.Artists,
+            icon = Icons.Filled.Person,
             title = "No Artists",
             subtitle = "Artists you follow will appear here.\nStart exploring to find your favorites."
         )
