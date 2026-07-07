@@ -15,7 +15,11 @@ import javax.inject.Singleton
 class StreamingFallbackResolver @Inject constructor(
     private val youtubeMusicSearch: YoutubeMusicSearch,
     private val resolverBackend: ResolverBackend,
-    private val pipedResolver: PipedResolver
+    private val pipedResolver: PipedResolver,
+    private val newPipeResolver: NewPipeResolver,
+    private val innertubeResolver: InnertubeResolver,
+    private val webViewStreamResolver: WebViewStreamResolver,
+    private val invidiousResolver: InvidiousResolver
 ) {
     private data class CacheEntry(val stream: ResolvedStream, val timeMs: Long)
     private val streamCache = ConcurrentHashMap<String, CacheEntry>()
@@ -47,7 +51,11 @@ class StreamingFallbackResolver @Inject constructor(
         getCached(videoId)?.let { return@withContext it }
         val stream = resolverBackend.resolve(videoId)
             ?: pipedResolver.resolve(videoId)
+            ?: newPipeResolver.resolve(videoId)
+            ?: innertubeResolver.resolve(videoId)
+            ?: webViewStreamResolver.resolve(videoId)
             ?: pipedResolver.resolveExhaustive(videoId)
+            ?: invidiousResolver.resolve(videoId)
         if (stream != null) {
             streamCache[videoId] = CacheEntry(stream, System.currentTimeMillis())
             Logger.d("StreamingFallback", "Resolved $videoId via ${stream.source}")

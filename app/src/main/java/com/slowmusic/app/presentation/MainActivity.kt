@@ -13,13 +13,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.slowmusic.app.presentation.navigation.*
 import com.slowmusic.app.presentation.theme.SlowMusicTheme
+import com.slowmusic.app.streaming.WebViewStreamResolver
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private var cleanupWebViewResolver: (() -> Unit)? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        cleanupWebViewResolver = WebViewStreamResolver.init(this)
         
         setContent {
             val mainViewModel: MainViewModel = hiltViewModel()
@@ -53,6 +57,12 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onDestroy() {
+        cleanupWebViewResolver?.invoke()
+        cleanupWebViewResolver = null
+        super.onDestroy()
     }
 }
 

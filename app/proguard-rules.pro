@@ -52,3 +52,9 @@
 -keep class com.google.android.gms.ads.** { *; }
 -keep class com.google.android.gms.cast.** { *; }
 -dontwarn com.google.android.gms.**
+
+# BeatDrop-style stream fallback resolvers
+-keep class org.schabi.newpipe.extractor.** { *; }
+-dontwarn org.schabi.newpipe.extractor.**
+-dontwarn org.mozilla.javascript.**
+-keep class org.mozilla.javascript.** { *; }
