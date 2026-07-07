@@ -4,8 +4,11 @@ import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.slowmusic.app.data.remote.api.ITunesApiService
+import com.slowmusic.app.data.remote.api.LrcLibApiService
+import com.slowmusic.app.data.remote.api.LyricsApiService
 import com.slowmusic.app.data.repository.*
 import com.slowmusic.app.domain.repository.*
+import com.slowmusic.app.monetization.BillingManager
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -17,6 +20,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -48,6 +52,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @Named("itunes")
     fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
         return Retrofit.Builder()
             .baseUrl("https://itunes.apple.com/")
@@ -58,8 +63,42 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideITunesApiService(retrofit: Retrofit): ITunesApiService {
+    @Named("lyricsOvh")
+    fun provideLyricsOvhRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://api.lyrics.ovh/")
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    @Named("lrcLib")
+    fun provideLrcLibRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://lrclib.net/")
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideITunesApiService(@Named("itunes") retrofit: Retrofit): ITunesApiService {
         return retrofit.create(ITunesApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLyricsApiService(@Named("lyricsOvh") retrofit: Retrofit): LyricsApiService {
+        return retrofit.create(LyricsApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLrcLibApiService(@Named("lrcLib") retrofit: Retrofit): LrcLibApiService {
+        return retrofit.create(LrcLibApiService::class.java)
     }
 }
 
@@ -102,15 +141,19 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun provideSubscriptionRepository(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        billingManager: BillingManager
     ): SubscriptionRepository {
-        return SubscriptionRepositoryImpl(context)
+        return SubscriptionRepositoryImpl(context, billingManager)
     }
 
     @Provides
     @Singleton
-    fun provideLyricsRepository(): LyricsRepository {
-        return LyricsRepositoryImpl()
+    fun provideLyricsRepository(
+        lyricsApiService: LyricsApiService,
+        lrcLibApiService: LrcLibApiService
+    ): LyricsRepository {
+        return LyricsRepositoryImpl(lyricsApiService, lrcLibApiService)
     }
 
     @Provides

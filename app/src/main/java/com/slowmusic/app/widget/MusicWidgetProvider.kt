@@ -1,85 +1,55 @@
 package com.slowmusic.app.widget
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import com.slowmusic.app.R
+import com.slowmusic.app.service.MusicWidgetService
 
 class MusicWidgetProvider : AppWidgetProvider() {
-    
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        for (appWidgetId in appWidgetIds) {
+        appWidgetIds.forEach { appWidgetId ->
             updateAppWidget(context, appWidgetManager, appWidgetId)
         }
     }
-    
-    override fun onEnabled(context: Context) {
-        // Enter relevant functionality for when the first widget is created
-    }
-    
-    override fun onDisabled(context: Context) {
-        // Enter relevant functionality for when the last widget is disabled
-    }
-    
+
     companion object {
         fun updateAppWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int
         ) {
-            val views = RemoteViews(context.packageName, R.layout.widget_music)
-            
-            // Set up click listeners
-            val playIntent = Intent(context, MusicWidgetService::class.java).apply {
-                action = MusicWidgetService.ACTION_PLAY
+            val views = RemoteViews(context.packageName, R.layout.widget_music).apply {
+                setOnClickPendingIntent(
+                    R.id.widget_play_button,
+                    actionPendingIntent(context, MusicWidgetService.ACTION_PLAY_PAUSE, 0)
+                )
+                setOnClickPendingIntent(
+                    R.id.widget_next_button,
+                    actionPendingIntent(context, MusicWidgetService.ACTION_NEXT, 1)
+                )
+                setOnClickPendingIntent(
+                    R.id.widget_previous_button,
+                    actionPendingIntent(context, MusicWidgetService.ACTION_PREVIOUS, 2)
+                )
             }
-            val playPendingIntent = PendingIntent.getService(
-                context, 0, playIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.widget_play_button, playPendingIntent)
-            
-            val nextIntent = Intent(context, MusicWidgetService::class.java).apply {
-                action = MusicWidgetService.ACTION_NEXT
-            }
-            val nextPendingIntent = PendingIntent.getService(
-                context, 1, nextIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.widget_next_button, nextPendingIntent)
-            
-            val prevIntent = Intent(context, MusicWidgetService::class.java).apply {
-                action = MusicWidgetService.ACTION_PREVIOUS
-            }
-            val prevPendingIntent = PendingIntent.getService(
-                context, 2, prevIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.widget_previous_button, prevPendingIntent)
-            
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
-    }
-}
 
-import android.app.PendingIntent
-
-private class PendingIntent {
-    companion object {
-        fun getService(
-            context: Context,
-            requestCode: Int,
-            intent: Intent,
-            flags: Int
-        ): PendingIntent {
-            return android.app.PendingIntent.getService(
-                context, requestCode, intent, flags
+        private fun actionPendingIntent(context: Context, action: String, requestCode: Int): PendingIntent {
+            val intent = Intent(context, MusicWidgetService::class.java).apply { this.action = action }
+            return PendingIntent.getService(
+                context,
+                requestCode,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         }
     }

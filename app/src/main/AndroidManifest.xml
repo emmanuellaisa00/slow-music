@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="com.android.vending.BILLING" />
 
     <!-- Storage for local music -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
@@ -84,6 +85,11 @@
             </intent-filter>
         </receiver>
 
+        <!-- Widget action/update service -->
+        <service
+            android:name=".service.MusicWidgetService"
+            android:exported="false" />
+
         <!-- Home Screen Widget -->
         <receiver
             android:name=".widget.MusicWidgetProvider"
@@ -96,10 +102,22 @@
                 android:resource="@xml/music_widget_info" />
         </receiver>
 
+        <!-- AdMob test app id. Replace with production id before release. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/admob_app_id" />
+
         <!-- Cast Support -->
         <meta-data
             android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
             android:value="com.slowmusic.app.cast.CastOptionsProvider" />
+
+        <meta-data
+            android:name="com.slowmusic.app.PRIVACY_POLICY_URL"
+            android:value="@string/privacy_policy_url" />
+        <meta-data
+            android:name="com.slowmusic.app.TERMS_URL"
+            android:value="@string/terms_url" />
 
     </application>
 

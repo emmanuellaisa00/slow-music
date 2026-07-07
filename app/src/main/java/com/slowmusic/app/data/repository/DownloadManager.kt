@@ -303,20 +303,3 @@ class AudioFocusManager @Inject constructor(
     
     fun hasFocus(): Boolean = hasAudioFocus
 }
-
-/**
- * Logger utility
- */
-object Logger {
-    fun d(tag: String, message: String) {
-        android.util.Log.d(tag, message)
-    }
-    
-    fun e(tag: String, message: String, throwable: Throwable? = null) {
-        android.util.Log.e(tag, message, throwable)
-    }
-    
-    fun i(tag: String, message: String) {
-        android.util.Log.i(tag, message)
-    }
-}

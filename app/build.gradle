@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
+    id 'kotlin-parcelize'
     id 'com.google.dagger.hilt.android'
 }
 
@@ -22,10 +23,30 @@ android {
         }
     }
 
-    buildTypes {
+    signingConfigs {
         release {
-            minifyEnabled false
+            def storeFilePath = System.getenv('SLOW_MUSIC_KEYSTORE_FILE')
+            if (storeFilePath != null && storeFilePath.trim()) {
+                storeFile file(storeFilePath)
+                storePassword System.getenv('SLOW_MUSIC_KEYSTORE_PASSWORD') ?: ''
+                keyAlias System.getenv('SLOW_MUSIC_KEY_ALIAS') ?: ''
+                keyPassword System.getenv('SLOW_MUSIC_KEY_PASSWORD') ?: ''
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (System.getenv('SLOW_MUSIC_KEYSTORE_FILE') != null) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 
@@ -87,6 +108,7 @@ dependencies {
     implementation 'androidx.media3:media3-exoplayer:1.2.1'
     implementation 'androidx.media3:media3-session:1.2.1'
     implementation 'androidx.media3:media3-ui:1.2.1'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.2.1'
 
     // Room (for local database if needed)
     implementation 'androidx.room:room-runtime:2.6.1'
@@ -111,18 +133,16 @@ dependencies {
     implementation 'com.google.accompanist:accompanist-permissions:0.32.0'
     implementation 'com.google.accompanist:accompanist-systemuicontroller:0.32.0'
 
-    // ExoPlayer for local playback
-    implementation 'com.google.android.exoplayer:exoplayer-core:2.19.1'
-    implementation 'com.google.android.exoplayer:exoplayer-ui:2.19.1'
-
-    // Media session
+    // Media session / legacy media button receiver
     implementation 'androidx.media:media:1.7.0'
 
     // Cast
     implementation 'androidx.mediarouter:mediarouter:1.6.0'
+    implementation 'com.google.android.gms:play-services-cast-framework:21.5.0'
 
-    // Equalizer
-    implementation 'com.google.android.libraries.mediaframework:exoplayeryt:0.9.0'
+    // Monetization
+    implementation 'com.google.android.gms:play-services-ads:23.6.0'
+    implementation 'com.android.billingclient:billing-ktx:7.1.1'
 
     // Testing
     testImplementation 'junit:junit:4.13.2'

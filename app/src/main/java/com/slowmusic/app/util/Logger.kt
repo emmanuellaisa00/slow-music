@@ -2,40 +2,39 @@ package com.slowmusic.app.util
 
 import android.util.Log
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 object Logger {
-    private const val TAG = "SlowMusic"
+    private const val DEFAULT_TAG = "SlowMusic"
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-    
-    // In-memory log storage for the Logs screen
     private val logs = mutableListOf<LogEntry>()
-    
-    fun d(message: String, tag: String = TAG) {
+
+    fun d(message: String) = d(DEFAULT_TAG, message)
+    fun d(tag: String, message: String) {
         Log.d(tag, message)
         addToMemoryLog(LogLevel.DEBUG, tag, message)
     }
-    
-    fun i(message: String, tag: String = TAG) {
+
+    fun i(message: String) = i(DEFAULT_TAG, message)
+    fun i(tag: String, message: String) {
         Log.i(tag, message)
         addToMemoryLog(LogLevel.INFO, tag, message)
     }
-    
-    fun w(message: String, tag: String = TAG) {
+
+    fun w(message: String) = w(DEFAULT_TAG, message)
+    fun w(tag: String, message: String) {
         Log.w(tag, message)
         addToMemoryLog(LogLevel.WARNING, tag, message)
     }
-    
-    fun e(message: String, throwable: Throwable? = null, tag: String = TAG) {
-        val fullMessage = if (throwable != null) {
-            "$message\n${throwable.message}"
-        } else {
-            message
-        }
+
+    fun e(message: String, throwable: Throwable? = null) = e(DEFAULT_TAG, message, throwable)
+    fun e(tag: String, message: String, throwable: Throwable? = null) {
+        val fullMessage = if (throwable != null) "$message\n${throwable.message}" else message
         Log.e(tag, fullMessage, throwable)
         addToMemoryLog(LogLevel.ERROR, tag, fullMessage)
     }
-    
+
     private fun addToMemoryLog(level: LogLevel, tag: String, message: String) {
         synchronized(logs) {
             logs.add(
@@ -46,23 +45,14 @@ object Logger {
                     message = message
                 )
             )
-            // Keep only last 1000 logs
-            if (logs.size > 1000) {
-                logs.removeAt(0)
-            }
+            if (logs.size > 1000) logs.removeAt(0)
         }
     }
-    
-    fun getLogs(): List<LogEntry> {
-        synchronized(logs) {
-            return logs.toList()
-        }
-    }
-    
+
+    fun getLogs(): List<LogEntry> = synchronized(logs) { logs.toList() }
+
     fun clearLogs() {
-        synchronized(logs) {
-            logs.clear()
-        }
+        synchronized(logs) { logs.clear() }
     }
 }
 

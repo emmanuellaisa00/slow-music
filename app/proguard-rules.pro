@@ -46,3 +46,9 @@
 -keep class dagger.hilt.** { *; }
 -keep class javax.inject.** { *; }
 -keep class * extends dagger.hilt.android.internal.managers.ViewComponentManager$FragmentContextWrapper { *; }
+
+# Google Play Billing / Ads / Cast
+-keep class com.android.billingclient.** { *; }
+-keep class com.google.android.gms.ads.** { *; }
+-keep class com.google.android.gms.cast.** { *; }
+-dontwarn com.google.android.gms.**

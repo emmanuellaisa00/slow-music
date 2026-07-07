@@ -1,5 +1,9 @@
 package com.slowmusic.app.domain.model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 data class Song(
     val id: String,
     val title: String,
@@ -15,7 +19,7 @@ data class Song(
     val localPath: String? = null,
     val isDownloaded: Boolean = false,
     val downloadProgress: Int = 0
-)
+) : Parcelable
 
 data class Artist(
     val id: String,

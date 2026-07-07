@@ -67,6 +67,11 @@
     <string name="student">Student</string>
     <string name="upgrade_to_premium">Upgrade to Premium</string>
     
+    <!-- Store / legal / monetization metadata -->
+    <string name="privacy_policy_url">https://example.com/slow-music/privacy</string>
+    <string name="terms_url">https://example.com/slow-music/terms</string>
+    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
+
     <!-- Errors -->
     <string name="error_loading">Failed to load content</string>
     <string name="retry">Retry</string>
