@@ -1,8 +1,10 @@
 package com.slowmusic.app.presentation.navigation
 
 import android.Manifest
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -14,6 +16,8 @@ import com.slowmusic.app.presentation.screens.home.HomeScreen
 import com.slowmusic.app.presentation.screens.library.*
 import com.slowmusic.app.presentation.screens.profile.ProfileScreen
 import com.slowmusic.app.presentation.screens.search.SearchScreen
+import com.slowmusic.app.presentation.screens.splash.SplashScreen
+import com.slowmusic.app.presentation.screens.onboarding.OnboardingScreen
 import com.slowmusic.app.presentation.screens.settings.LogsScreen
 import com.slowmusic.app.presentation.screens.settings.SettingsScreen
 import com.slowmusic.app.presentation.screens.settings.EqualizerControlScreen
@@ -66,9 +70,41 @@ fun NavigationGraph(
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route,
+        startDestination = Screen.Splash.route,
         modifier = modifier
     ) {
+        composable(Screen.Splash.route) {
+            val context = LocalContext.current
+            val prefs = context.getSharedPreferences("slow_music_onboarding", Context.MODE_PRIVATE)
+            val hasCompleted = prefs.getBoolean("completed", false)
+            SplashScreen(
+                showOnboarding = !hasCompleted,
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+                onNavigateToOnboarding = {
+                    navController.navigate(Screen.Onboarding.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Onboarding.route) {
+            val context = LocalContext.current
+            OnboardingScreen(
+                onComplete = {
+                    context.getSharedPreferences("slow_music_onboarding", Context.MODE_PRIVATE)
+                        .edit().putBoolean("completed", true).apply()
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         // Main Tabs
         composable(Screen.Home.route) {
             HomeScreen(

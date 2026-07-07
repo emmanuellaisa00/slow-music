@@ -65,10 +65,25 @@ fun AppleMusicPlayerScreen(
     )
     
     var showControls by remember { mutableStateOf(true) }
+    var swipeDownDistance by remember { mutableFloatStateOf(0f) }
+    var artworkZoom by remember { mutableFloatStateOf(1f) }
+    val artworkTransformState = rememberTransformableState { zoomChange, _, _ ->
+        artworkZoom = (artworkZoom * zoomChange).coerceIn(1f, 2.4f)
+    }
     
     Box(
         modifier = modifier
             .fillMaxSize()
+            .pointerInput(song.id) {
+                detectVerticalDragGestures(
+                    onVerticalDrag = { _, dragAmount -> if (dragAmount > 0) swipeDownDistance += dragAmount },
+                    onDragEnd = {
+                        if (swipeDownDistance > 160f) onNavigateBack()
+                        swipeDownDistance = 0f
+                    },
+                    onDragCancel = { swipeDownDistance = 0f }
+                )
+            }
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
@@ -151,7 +166,14 @@ fun AppleMusicPlayerScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 40.dp)
                     .aspectRatio(1f)
-                    .clickable { showControls = !showControls },
+                    .scale(artworkZoom)
+                    .transformable(artworkTransformState)
+                    .pointerInput(song.id) {
+                        detectTapGestures(
+                            onTap = { showControls = !showControls },
+                            onDoubleTap = { onToggleFavorite() }
+                        )
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 // Glow effect

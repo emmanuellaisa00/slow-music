@@ -14,8 +14,10 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.*
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
+import com.slowmusic.app.R
 import com.slowmusic.app.presentation.theme.apple.*
 import kotlinx.coroutines.delay
 
@@ -48,7 +50,7 @@ fun SplashScreen(
     )
     
     LaunchedEffect(Unit) {
-        delay(2500)
+        delay(1400)
         if (showOnboarding) {
             onNavigateToOnboarding()
         } else {
@@ -103,7 +105,7 @@ fun SplashScreen(
                     .size(120.dp)
                     .scale(logoScale)
                     .graphicsLayer { alpha = logoAlpha }
-                    .clip(CircleShape)
+                    .clip(RoundedCornerShape(32.dp))
                     .background(
                         brush = Brush.linearGradient(AppleColors.gradientGreen)
                     )
@@ -112,15 +114,14 @@ fun SplashScreen(
                         brush = Brush.linearGradient(
                             listOf(Color.White.copy(alpha = 0.5f), Color.Transparent)
                         ),
-                        shape = CircleShape
+                        shape = RoundedCornerShape(32.dp)
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Filled.MusicNote,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(64.dp)
+                Image(
+                    painter = painterResource(id = R.drawable.splash_logo),
+                    contentDescription = "Slow Music logo",
+                    modifier = Modifier.size(86.dp)
                 )
             }
             
@@ -139,7 +140,7 @@ fun SplashScreen(
             
             // Tagline
             Text(
-                text = "Music without limits",
+                text = "Online, local, and cached beautifully",
                 style = AppleTypography.body,
                 color = AppleColors.textSecondary,
                 modifier = Modifier.graphicsLayer { alpha = textAlpha }

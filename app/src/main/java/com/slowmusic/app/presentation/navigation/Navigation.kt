@@ -8,6 +8,8 @@ import android.net.Uri
 import com.slowmusic.app.domain.model.Song
 
 sealed class Screen(val route: String) {
+    object Splash : Screen("splash")
+    object Onboarding : Screen("onboarding")
     // Main tabs
     object Home : Screen("home")
     object Search : Screen("search")
