@@ -4,6 +4,8 @@ package com.slowmusic.app.presentation.screens.details
 
 import android.Manifest
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -159,6 +161,9 @@ fun PlaylistDetailsScreen(
 @Composable
 fun AddToPlaylistScreen(
     songId: String,
+    title: String,
+    artist: String,
+    album: String,
     onNavigateBack: () -> Unit,
     viewModel: AddToPlaylistViewModel = hiltViewModel()
 ) {
@@ -174,10 +179,10 @@ fun AddToPlaylistScreen(
     )
     Scaffold(topBar = { TopAppBar(title = { Text("Add to playlist") }, navigationIcon = { BackButton(onNavigateBack) }, actions = { IconButton(onClick = { showCreate = true }) { Icon(Icons.Filled.Add, "Create") } }) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 120.dp)) {
-            item { Text("Choose where to save song $songId", style = MaterialTheme.typography.bodyMedium) }
+            item { Text("Choose where to save $title by $artist", style = MaterialTheme.typography.bodyMedium) }
             items(playlists) { playlist ->
                 ListItem(
-                    modifier = Modifier.clickable { viewModel.addSong(songId, playlist.id); onNavigateBack() },
+                    modifier = Modifier.clickable { viewModel.addSong(Song(songId, title, artist, album, null, null, null, 0, null, null), playlist.id); onNavigateBack() },
                     leadingContent = { Icon(Icons.Filled.QueueMusic, null, tint = MaterialTheme.colorScheme.primary) },
                     headlineContent = { Text(playlist.name) },
                     supportingContent = { Text("${playlist.songIds.size} songs") },
@@ -234,6 +239,10 @@ fun LegalTextScreen(title: String, body: String, onNavigateBack: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PermissionExplainerScreen(title: String, description: String, permission: String, onNavigateBack: () -> Unit) {
+    var resultText by remember { mutableStateOf<String?>(null) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        resultText = if (granted) "Permission granted" else "Permission denied. You can enable it later in Android Settings."
+    }
     Scaffold(topBar = { TopAppBar(title = { Text(title) }, navigationIcon = { BackButton(onNavigateBack) }) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Icon(Icons.Filled.Security, null, modifier = Modifier.size(72.dp), tint = MaterialTheme.colorScheme.primary)
@@ -241,8 +250,9 @@ fun PermissionExplainerScreen(title: String, description: String, permission: St
             Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
             Text(description, style = MaterialTheme.typography.bodyMedium)
+            resultText?.let { Spacer(Modifier.height(12.dp)); Text(it, color = MaterialTheme.colorScheme.primary) }
             Spacer(Modifier.height(24.dp))
-            Button(onClick = {}) { Text("Grant ${permissionLabel(permission)}") }
+            Button(onClick = { launcher.launch(permission) }) { Text("Grant ${permissionLabel(permission)}") }
             TextButton(onClick = onNavigateBack) { Text("Not now") }
         }
     }
@@ -302,8 +312,7 @@ data class PlaylistDetailsState(val playlist: Playlist? = null)
 class AddToPlaylistViewModel @Inject constructor(private val libraryRepository: LibraryRepository) : ViewModel() {
     val playlists = libraryRepository.getPlaylists().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     fun createPlaylist(name: String) = viewModelScope.launch { libraryRepository.createPlaylist(name, null) }
-    fun addSong(songId: String, playlistId: String) = viewModelScope.launch {
-        val song = Song(songId, "Saved song", "Unknown Artist", "Unknown Album", null, null, null, 0, null, null)
+    fun addSong(song: Song, playlistId: String) = viewModelScope.launch {
         libraryRepository.addSongToPlaylist(playlistId, song)
     }
 }

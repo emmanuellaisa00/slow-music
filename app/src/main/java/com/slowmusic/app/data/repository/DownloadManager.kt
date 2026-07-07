@@ -2,6 +2,7 @@ package com.slowmusic.app.data.repository
 
 import android.content.Context
 import com.slowmusic.app.domain.model.Song
+import com.slowmusic.app.domain.repository.LibraryRepository
 import com.slowmusic.app.util.Logger
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*

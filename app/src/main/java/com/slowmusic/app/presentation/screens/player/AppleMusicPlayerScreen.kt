@@ -49,6 +49,8 @@ fun AppleMusicPlayerScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLyrics: () -> Unit,
     onNavigateToQueue: () -> Unit,
+    onNavigateToCast: () -> Unit = {},
+    onMoreOptions: () -> Unit = {},
     onShare: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -412,7 +414,7 @@ fun AppleMusicPlayerScreen(
                     }
                     
                     // AirPlay / Cast
-                    IconButton(onClick = { /* Cast */ }) {
+                    IconButton(onClick = onNavigateToCast) {
                         Icon(
                             imageVector = Icons.Filled.Cast,
                             contentDescription = "Cast",
@@ -432,7 +434,7 @@ fun AppleMusicPlayerScreen(
                     }
                     
                     // More
-                    IconButton(onClick = { /* More options */ }) {
+                    IconButton(onClick = onMoreOptions) {
                         Icon(
                             imageVector = Icons.Filled.MoreHoriz,
                             contentDescription = "More",

@@ -1,5 +1,6 @@
 package com.slowmusic.app.presentation.screens.profile
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +26,7 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val subscription by viewModel.subscription.collectAsState()
+    var message by remember { mutableStateOf<String?>(null) }
     
     Scaffold(
         topBar = {
@@ -75,8 +77,8 @@ fun ProfileScreen(
                 ProfileListItem(
                     icon = Icons.Filled.Payment,
                     title = "Purchase History",
-                    subtitle = "View your purchases",
-                    onClick = { }
+                    subtitle = "Local database mode",
+                    onClick = { message = "Purchase history is disabled in local database mode" }
                 )
             }
             
@@ -84,8 +86,8 @@ fun ProfileScreen(
                 ProfileListItem(
                     icon = Icons.Filled.Voucher,
                     title = "Redeem Code",
-                    subtitle = "Enter a promo code",
-                    onClick = { }
+                    subtitle = "Local database mode",
+                    onClick = { message = "Redeem codes are disabled in local database mode" }
                 )
             }
             
@@ -98,8 +100,8 @@ fun ProfileScreen(
                 ProfileListItem(
                     icon = Icons.Filled.Help,
                     title = "Help Center",
-                    subtitle = "Get help with Slow Music",
-                    onClick = { }
+                    subtitle = "Support articles coming soon",
+                    onClick = { message = "Help Center URL is not configured yet" }
                 )
             }
             
@@ -107,8 +109,8 @@ fun ProfileScreen(
                 ProfileListItem(
                     icon = Icons.Filled.Feedback,
                     title = "Send Feedback",
-                    subtitle = "Help us improve",
-                    onClick = { }
+                    subtitle = "Feedback channel coming soon",
+                    onClick = { message = "Feedback channel is not configured yet" }
                 )
             }
             
@@ -117,9 +119,16 @@ fun ProfileScreen(
                     icon = Icons.Filled.Info,
                     title = "About",
                     subtitle = "Version 1.0.0",
-                    onClick = { }
+                    onClick = { message = "Slow Music v1.0.0 • Local database mode" }
                 )
             }
+        }
+        message?.let { text ->
+            LaunchedEffect(text) {
+                kotlinx.coroutines.delay(2200)
+                message = null
+            }
+            Snackbar(modifier = Modifier.fillMaxWidth().padding(16.dp)) { Text(text) }
         }
     }
 }
@@ -246,7 +255,7 @@ private fun ProfileListItem(
     onClick: () -> Unit
 ) {
     ListItem(
-        modifier = Modifier.padding(horizontal = 16.dp),
+        modifier = Modifier.padding(horizontal = 16.dp).clickable(onClick = onClick),
         headlineContent = { Text(title) },
         supportingContent = { Text(subtitle) },
         leadingContent = {

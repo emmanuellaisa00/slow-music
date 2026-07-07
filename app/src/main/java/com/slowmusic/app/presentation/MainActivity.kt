@@ -4,8 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -28,6 +27,9 @@ class MainActivity : ComponentActivity() {
             val navigationStyle by mainViewModel.navigationStyle.collectAsState()
             val playbackState by mainViewModel.playbackState.collectAsState()
             val currentSong by mainViewModel.currentSong.collectAsState()
+            val progress by mainViewModel.progress.collectAsState()
+            val repeatMode by mainViewModel.repeatMode.collectAsState()
+            val isShuffled by mainViewModel.isShuffled.collectAsState()
             
             SlowMusicTheme(themeMode = themeMode) {
                 SlowMusicApp(
@@ -37,7 +39,16 @@ class MainActivity : ComponentActivity() {
                     onPlayPause = { mainViewModel.togglePlayPause() },
                     onNext = { mainViewModel.playNext() },
                     onPrevious = { mainViewModel.playPrevious() },
-                    onMiniPlayerClick = { /* Navigate to full player */ }
+                    onPlaySong = { song, queue -> mainViewModel.playSong(song, queue) },
+                    progress = progress,
+                    repeatMode = repeatMode,
+                    isShuffled = isShuffled,
+                    onSeek = { mainViewModel.seekTo(it) },
+                    onToggleShuffle = { mainViewModel.toggleShuffle() },
+                    onToggleRepeat = { mainViewModel.toggleRepeat() },
+                    onToggleFavorite = { mainViewModel.toggleFavorite() },
+                    onDownload = { song -> mainViewModel.downloadSong(song) },
+                    onMiniPlayerClick = { }
                 )
             }
         }
@@ -53,6 +64,15 @@ fun SlowMusicApp(
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
+    onPlaySong: (com.slowmusic.app.domain.model.Song, List<com.slowmusic.app.domain.model.Song>) -> Unit,
+    progress: Float,
+    repeatMode: com.slowmusic.app.domain.model.RepeatMode,
+    isShuffled: Boolean,
+    onSeek: (Float) -> Unit,
+    onToggleShuffle: () -> Unit,
+    onToggleRepeat: () -> Unit,
+    onToggleFavorite: () -> Unit,
+    onDownload: (com.slowmusic.app.domain.model.Song) -> Unit,
     onMiniPlayerClick: () -> Unit
 ) {
     val navController = rememberNavController()
@@ -81,7 +101,7 @@ fun SlowMusicApp(
                                 isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
                                 onPlayPause = onPlayPause,
                                 onNext = onNext,
-                                onClick = onMiniPlayerClick
+                                onClick = { navController.navigate(Screen.Player.route) }
                             )
                         }
                         NavigationBar {
@@ -117,7 +137,7 @@ fun SlowMusicApp(
                             isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
                             onPlayPause = onPlayPause,
                             onNext = onNext,
-                            onClick = onMiniPlayerClick
+                            onClick = { navController.navigate(Screen.Player.route) }
                         )
                     }
                 }
@@ -131,7 +151,16 @@ fun SlowMusicApp(
             currentSong = currentSong,
             onPlayPause = onPlayPause,
             onNext = onNext,
-            onPrevious = onPrevious
+            onPrevious = onPrevious,
+            onPlaySong = onPlaySong,
+            progress = progress,
+            repeatMode = repeatMode,
+            isShuffled = isShuffled,
+            onSeek = onSeek,
+            onToggleShuffle = onToggleShuffle,
+            onToggleRepeat = onToggleRepeat,
+            onToggleFavorite = onToggleFavorite,
+            onDownload = onDownload
         )
     }
 }

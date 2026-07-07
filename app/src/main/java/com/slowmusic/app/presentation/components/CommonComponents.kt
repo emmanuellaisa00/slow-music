@@ -454,3 +454,53 @@ fun EmptyState(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SongOptionsBottomSheet(
+    song: Song,
+    onDismiss: () -> Unit,
+    onAddToPlaylist: () -> Unit,
+    onAddToQueue: () -> Unit,
+    onDownload: () -> Unit,
+    onShare: () -> Unit,
+    onGoToArtist: () -> Unit,
+    onGoToAlbum: () -> Unit
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+            ListItem(
+                headlineContent = { Text(song.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                supportingContent = { Text(song.artist, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                leadingContent = {
+                    AsyncImage(
+                        model = song.albumArtUrl,
+                        contentDescription = "Album art",
+                        modifier = Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            )
+            HorizontalDivider()
+            SongOption(Icons.Filled.PlaylistAdd, "Add to playlist", onAddToPlaylist)
+            SongOption(Icons.Filled.QueueMusic, "Add to queue", onAddToQueue)
+            SongOption(Icons.Filled.Download, "Download", onDownload)
+            SongOption(Icons.Filled.Share, "Share", onShare)
+            SongOption(Icons.Filled.Person, "Go to artist", onGoToArtist)
+            SongOption(Icons.Filled.Album, "Go to album", onGoToAlbum)
+        }
+    }
+}
+
+@Composable
+private fun SongOption(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    onClick: () -> Unit
+) {
+    ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
+        leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.primary) },
+        headlineContent = { Text(title) }
+    )
+}

@@ -21,15 +21,34 @@ fun HomeScreen(
     onAlbumClick: (String) -> Unit,
     onGenreClick: (String) -> Unit,
     onNavigateToSearch: () -> Unit,
+    onNavigateToSettings: () -> Unit = {},
     onNavigateToSeeAll: (String) -> Unit,
+    onAddToPlaylist: (Song) -> Unit = {},
+    onAddToQueue: (Song) -> Unit = {},
+    onDownload: (Song) -> Unit = {},
+    onShare: (Song) -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedSong by remember { mutableStateOf<Song?>(null) }
     
     LaunchedEffect(Unit) {
         viewModel.loadContent()
     }
     
+    selectedSong?.let { song ->
+        SongOptionsBottomSheet(
+            song = song,
+            onDismiss = { selectedSong = null },
+            onAddToPlaylist = { onAddToPlaylist(song); selectedSong = null },
+            onAddToQueue = { onAddToQueue(song); selectedSong = null },
+            onDownload = { onDownload(song); selectedSong = null },
+            onShare = { onShare(song); selectedSong = null },
+            onGoToArtist = { onArtistClick(song.artist); selectedSong = null },
+            onGoToAlbum = { selectedSong = null }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -43,7 +62,7 @@ fun HomeScreen(
                     IconButton(onClick = onNavigateToSearch) {
                         Icon(Icons.Filled.Search, contentDescription = "Search")
                     }
-                    IconButton(onClick = { /* Settings */ }) {
+                    IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")
                     }
                 }
@@ -213,7 +232,7 @@ private fun QuickPickCard(
     com.slowmusic.app.presentation.components.SongCard(
         song = song,
         onClick = onClick,
-        onMoreClick = { }
+        onMoreClick = { selectedSong = song }
     )
 }
 
@@ -248,7 +267,7 @@ private fun SongRow(
             SongCard(
                 song = song,
                 onClick = { onSongClick(song) },
-                onMoreClick = { }
+                onMoreClick = { selectedSong = song }
             )
         }
     }

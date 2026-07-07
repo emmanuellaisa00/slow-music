@@ -32,9 +32,14 @@ fun SearchScreen(
     onArtistClick: (String) -> Unit,
     onAlbumClick: (String) -> Unit,
     onGenreClick: (String) -> Unit,
+    onAddToPlaylist: (Song) -> Unit = {},
+    onAddToQueue: (Song) -> Unit = {},
+    onDownload: (Song) -> Unit = {},
+    onShare: (Song) -> Unit = {},
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedSong by remember { mutableStateOf<Song?>(null) }
     val searchHistory by viewModel.searchHistory.collectAsState()
     val focusManager = LocalFocusManager.current
     
@@ -53,6 +58,19 @@ fun SearchScreen(
         viewModel.loadGenres()
     }
     
+    selectedSong?.let { song ->
+        SongOptionsBottomSheet(
+            song = song,
+            onDismiss = { selectedSong = null },
+            onAddToPlaylist = { onAddToPlaylist(song); selectedSong = null },
+            onAddToQueue = { onAddToQueue(song); selectedSong = null },
+            onDownload = { onDownload(song); selectedSong = null },
+            onShare = { onShare(song); selectedSong = null },
+            onGoToArtist = { onArtistClick(song.artist); selectedSong = null },
+            onGoToAlbum = { selectedSong = null }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -146,6 +164,10 @@ private fun BrowseContent(
     genres: List<Genre>,
     searchHistory: List<String>,
     onGenreClick: (String) -> Unit,
+    onAddToPlaylist: (Song) -> Unit = {},
+    onAddToQueue: (Song) -> Unit = {},
+    onDownload: (Song) -> Unit = {},
+    onShare: (Song) -> Unit = {},
     onHistoryItemClick: (String) -> Unit,
     onClearHistory: () -> Unit
 ) {
@@ -255,7 +277,7 @@ private fun SearchResults(
                 SongListItem(
                     song = song,
                     onClick = { onSongClick(song) },
-                    onMoreClick = { }
+                    onMoreClick = { selectedSong = song }
                 )
             }
         }

@@ -25,9 +25,23 @@ fun SettingsScreen(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToLocalFilesPermission: () -> Unit = {},
     onNavigateToCastDevices: () -> Unit = {},
+    onNavigateToEqualizer: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val preferences by viewModel.preferences.collectAsState()
+    var dialog by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf<String?>(null) }
+
+    when (dialog) {
+        "theme" -> ChoiceDialog("Theme", ThemeMode.values().map { it.name }, { viewModel.updateTheme(ThemeMode.valueOf(it)); dialog = null }, { dialog = null })
+        "nav" -> ChoiceDialog("Navigation", NavigationStyle.values().map { it.name }, { viewModel.updateNavigationStyle(NavigationStyle.valueOf(it)); dialog = null }, { dialog = null })
+        "quality" -> ChoiceDialog("Audio Quality", AudioQuality.values().map { it.name }, { viewModel.updateAudioQuality(AudioQuality.valueOf(it)); dialog = null }, { dialog = null })
+        "crossfade" -> ChoiceDialog("Crossfade", listOf("Off", "On"), { viewModel.updateCrossfadeEnabled(it == "On"); dialog = null }, { dialog = null })
+        "speed" -> ChoiceDialog("Playback Speed", listOf("0.75x", "Normal", "1.25x", "1.5x"), { message = "Playback speed set to $it for this session"; dialog = null }, { dialog = null })
+        "about" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Slow Music") }, text = { Text("Version 1.0.0\nLocal database mode enabled\nOnline catalog powered by iTunes Search API") }, confirmButton = { TextButton(onClick = { dialog = null }) { Text("OK") } })
+        "clear" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Clear cache?") }, text = { Text("Downloaded-file management is available from Download Storage. Image/network caches will be cleared by Android when storage is reclaimed.") }, confirmButton = { TextButton(onClick = { message = "Cache cleanup requested"; dialog = null }) { Text("Clear") } }, dismissButton = { TextButton(onClick = { dialog = null }) { Text("Cancel") } })
+        "reset" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Reset app data?") }, text = { Text("For safety this demo does not erase local DataStore automatically. Add a confirmed repository reset before production.") }, confirmButton = { TextButton(onClick = { message = "Reset is disabled until production confirmation flow is added"; dialog = null }) { Text("OK") } })
+    }
 
     Scaffold(
         topBar = {
@@ -57,7 +71,7 @@ fun SettingsScreen(
                     icon = Icons.Filled.Palette,
                     title = "Theme",
                     subtitle = preferences.theme.name.lowercase().replaceFirstChar { it.uppercase() },
-                    onClick = { }
+                    onClick = { dialog = "theme" }
                 )
             }
 
@@ -70,7 +84,7 @@ fun SettingsScreen(
                         NavigationStyle.BOTTOM_NAV -> "Bottom Navigation"
                         NavigationStyle.DRAWER -> "Drawer"
                     },
-                    onClick = { }
+                    onClick = { dialog = "nav" }
                 )
             }
 
@@ -85,7 +99,7 @@ fun SettingsScreen(
                     icon = Icons.Filled.PlayCircle,
                     title = "Crossfade",
                     subtitle = if (preferences.crossfadeEnabled) "${preferences.crossfadeDuration}s" else "Off",
-                    onClick = { }
+                    onClick = { dialog = "crossfade" }
                 )
             }
 
@@ -94,7 +108,7 @@ fun SettingsScreen(
                     icon = Icons.Filled.Equalizer,
                     title = "Equalizer",
                     subtitle = "Adjust audio settings",
-                    onClick = { }
+                    onClick = onNavigateToEqualizer
                 )
             }
 
@@ -103,7 +117,7 @@ fun SettingsScreen(
                     icon = Icons.Filled.Speed,
                     title = "Playback Speed",
                     subtitle = "Normal",
-                    onClick = { }
+                    onClick = { dialog = "speed" }
                 )
             }
 
@@ -146,7 +160,7 @@ fun SettingsScreen(
                     icon = Icons.Filled.HighQuality,
                     title = "Audio Quality",
                     subtitle = preferences.audioQuality.name,
-                    onClick = { }
+                    onClick = { dialog = "quality" }
                 )
             }
 
@@ -184,8 +198,8 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Filled.CardMembership,
                     title = "Subscription",
-                    subtitle = "Manage your plan",
-                    onClick = { }
+                    subtitle = "Local database mode: plan management disabled",
+                    onClick = { message = "Subscriptions are disabled while using local database mode" }
                 )
             }
 
@@ -209,7 +223,7 @@ fun SettingsScreen(
                     icon = Icons.Filled.Info,
                     title = "About Slow Music",
                     subtitle = "Version 1.0.0",
-                    onClick = { }
+                    onClick = { dialog = "about" }
                 )
             }
 
@@ -272,7 +286,7 @@ fun SettingsScreen(
                     icon = Icons.Filled.DeleteForever,
                     title = "Clear Cache",
                     subtitle = "Free up storage space",
-                    onClick = { },
+                    onClick = { dialog = "clear" },
                     isDanger = true
                 )
             }
@@ -282,12 +296,43 @@ fun SettingsScreen(
                     icon = Icons.Filled.Logout,
                     title = "Reset App",
                     subtitle = "Clear all data and restart",
-                    onClick = { },
+                    onClick = { dialog = "reset" },
                     isDanger = true
                 )
             }
         }
+        message?.let { text ->
+            LaunchedEffect(text) {
+                kotlinx.coroutines.delay(2200)
+                message = null
+            }
+            Snackbar(modifier = Modifier.fillMaxWidth().padding(16.dp)) { Text(text) }
+        }
     }
+}
+
+@Composable
+private fun ChoiceDialog(
+    title: String,
+    choices: List<String>,
+    onChoose: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column {
+                choices.forEach { choice ->
+                    ListItem(
+                        modifier = Modifier.clickable { onChoose(choice) },
+                        headlineContent = { Text(choice.lowercase().replaceFirstChar { it.uppercase() }) }
+                    )
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }
+    )
 }
 
 @Composable

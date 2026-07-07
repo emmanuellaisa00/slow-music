@@ -4,6 +4,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.graphics.vector.ImageVector
+import android.net.Uri
+import com.slowmusic.app.domain.model.Song
 
 sealed class Screen(val route: String) {
     // Main tabs
@@ -66,8 +68,9 @@ sealed class Screen(val route: String) {
     object SearchResults : Screen("search/results/{query}") {
         fun createRoute(query: String) = "search/results/$query"
     }
-    object AddToPlaylist : Screen("playlist/add/{songId}") {
-        fun createRoute(songId: String) = "playlist/add/$songId"
+    object AddToPlaylist : Screen("playlist/add/{songId}/{title}/{artist}/{album}") {
+        fun createRoute(song: Song): String = "playlist/add/${Uri.encode(song.id)}/${Uri.encode(song.title)}/${Uri.encode(song.artist)}/${Uri.encode(song.album)}"
+        fun createRoute(songId: String): String = "playlist/add/${Uri.encode(songId)}/${Uri.encode("Saved song")}/${Uri.encode("Unknown Artist")}/${Uri.encode("Unknown Album")}"
     }
 }
 

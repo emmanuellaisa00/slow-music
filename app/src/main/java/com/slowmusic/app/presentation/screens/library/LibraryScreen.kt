@@ -30,13 +30,31 @@ fun LibraryScreen(
     onNavigateToArtists: () -> Unit,
     onNavigateToAlbums: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onAddToPlaylist: (Song) -> Unit = {},
+    onAddToQueue: (Song) -> Unit = {},
+    onDownload: (Song) -> Unit = {},
+    onShare: (Song) -> Unit = {},
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
     val favorites by viewModel.favorites.collectAsState()
     val playlists by viewModel.playlists.collectAsState()
     val downloadedSongs by viewModel.downloadedSongs.collectAsState()
     val followedArtists by viewModel.followedArtists.collectAsState()
+    var selectedSong by remember { mutableStateOf<Song?>(null) }
     
+    selectedSong?.let { song ->
+        SongOptionsBottomSheet(
+            song = song,
+            onDismiss = { selectedSong = null },
+            onAddToPlaylist = { onAddToPlaylist(song); selectedSong = null },
+            onAddToQueue = { onAddToQueue(song); selectedSong = null },
+            onDownload = { onDownload(song); selectedSong = null },
+            onShare = { onShare(song); selectedSong = null },
+            onGoToArtist = { selectedSong = null },
+            onGoToAlbum = { selectedSong = null }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
