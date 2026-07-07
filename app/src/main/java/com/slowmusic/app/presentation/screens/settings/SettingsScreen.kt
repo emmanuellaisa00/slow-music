@@ -35,6 +35,7 @@ fun SettingsScreen(
     when (dialog) {
         "theme" -> ChoiceDialog("Theme", ThemeMode.values().map { it.name }, { viewModel.updateTheme(ThemeMode.valueOf(it)); dialog = null }, { dialog = null })
         "nav" -> ChoiceDialog("Navigation", NavigationStyle.values().map { it.name }, { viewModel.updateNavigationStyle(NavigationStyle.valueOf(it)); dialog = null }, { dialog = null })
+        "ui" -> ChoiceDialog("UI Style", UIStyle.values().map { it.name }, { viewModel.updateUiStyle(UIStyle.valueOf(it)); dialog = null }, { dialog = null })
         "quality" -> ChoiceDialog("Audio Quality", AudioQuality.values().map { it.name }, { viewModel.updateAudioQuality(AudioQuality.valueOf(it)); dialog = null }, { dialog = null })
         "crossfade" -> ChoiceDialog("Crossfade", listOf("Off", "On"), { viewModel.updateCrossfadeEnabled(it == "On"); dialog = null }, { dialog = null })
         "speed" -> ChoiceDialog("Playback Speed", listOf("0.75x", "Normal", "1.25x", "1.5x"), { message = "Playback speed set to $it for this session"; dialog = null }, { dialog = null })
@@ -46,6 +47,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(top = 0.dp),
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -75,6 +77,15 @@ fun SettingsScreen(
                 )
             }
 
+
+            item {
+                SettingsItem(
+                    icon = Icons.Filled.LibraryMusic,
+                    title = "UI Style",
+                    subtitle = if (preferences.uiStyle == UIStyle.APPLE_MUSIC) "Apple Music" else "Default",
+                    onClick = { dialog = "ui" }
+                )
+            }
             item {
                 SettingsItem(
                     icon = Icons.Filled.Navigation,
@@ -399,6 +410,7 @@ fun LogsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(top = 0.dp),
                 title = { Text("App Logs") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

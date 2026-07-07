@@ -70,6 +70,13 @@ class SettingsViewModel @Inject constructor(
             )
         }
     }
+
+    fun updateUiStyle(style: UIStyle) {
+        viewModelScope.launch {
+            val current = preferences.value
+            preferencesRepository.updateUserPreferences(current.copy(uiStyle = style))
+        }
+    }
 }
 
 @HiltViewModel

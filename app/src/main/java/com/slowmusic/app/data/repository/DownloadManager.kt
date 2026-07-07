@@ -66,9 +66,8 @@ class DownloadManager @Inject constructor(
     }
 
     private suspend fun resolveDownloadUrl(song: Song): Pair<String, Map<String, String>>? {
-        val direct = song.localPath ?: song.streamUrl ?: song.previewUrl
-        if (!direct.isNullOrBlank() && !song.id.startsWith("yt_")) return direct to emptyMap()
-        val stream = streamingFallbackResolver.resolveSong(song) ?: return direct?.let { it to emptyMap() }
+        song.localPath?.takeIf { it.isNotBlank() }?.let { return it to emptyMap() }
+        val stream = streamingFallbackResolver.resolveSong(song) ?: return null
         val headers = LinkedHashMap<String, String>()
         if (stream.userAgent.isNotBlank()) headers["User-Agent"] = stream.userAgent
         headers.putAll(stream.headers)

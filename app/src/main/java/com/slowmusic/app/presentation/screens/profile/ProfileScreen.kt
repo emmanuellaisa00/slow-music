@@ -31,6 +31,7 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(top = 0.dp),
                 title = { Text("Profile") },
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {

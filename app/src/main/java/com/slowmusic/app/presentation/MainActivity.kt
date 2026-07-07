@@ -13,6 +13,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.slowmusic.app.presentation.navigation.*
 import com.slowmusic.app.presentation.components.MiniPlayer
+import com.slowmusic.app.presentation.components.apple.AppleMiniPlayer
 import com.slowmusic.app.presentation.theme.SlowMusicTheme
 import com.slowmusic.app.streaming.WebViewStreamResolver
 import dagger.hilt.android.AndroidEntryPoint
@@ -30,8 +31,11 @@ class MainActivity : ComponentActivity() {
             val mainViewModel: MainViewModel = hiltViewModel()
             val themeMode by mainViewModel.themeMode.collectAsState()
             val navigationStyle by mainViewModel.navigationStyle.collectAsState()
+            val userPreferences by mainViewModel.userPreferences.collectAsState()
             val playbackState by mainViewModel.playbackState.collectAsState()
             val currentSong by mainViewModel.currentSong.collectAsState()
+            val queue by mainViewModel.queue.collectAsState()
+            val lyrics by mainViewModel.lyrics.collectAsState()
             val progress by mainViewModel.progress.collectAsState()
             val repeatMode by mainViewModel.repeatMode.collectAsState()
             val isShuffled by mainViewModel.isShuffled.collectAsState()
@@ -39,8 +43,11 @@ class MainActivity : ComponentActivity() {
             SlowMusicTheme(themeMode = themeMode) {
                 SlowMusicApp(
                     navigationStyle = navigationStyle,
+                    useAppleMusicUi = userPreferences.uiStyle == com.slowmusic.app.domain.model.UIStyle.APPLE_MUSIC,
                     playbackState = playbackState,
                     currentSong = currentSong,
+                    queue = queue,
+                    lyrics = lyrics,
                     onPlayPause = { mainViewModel.togglePlayPause() },
                     onNext = { mainViewModel.playNext() },
                     onPrevious = { mainViewModel.playPrevious() },
@@ -54,6 +61,8 @@ class MainActivity : ComponentActivity() {
                     onToggleFavorite = { mainViewModel.toggleFavorite() },
                     onDownload = { song -> mainViewModel.downloadSong(song) },
                     onAddToQueue = { song -> mainViewModel.addToQueue(song) },
+                    onRemoveFromQueue = { index -> mainViewModel.removeFromQueue(index) },
+                    onClearQueue = { mainViewModel.clearQueue() },
                     onMiniPlayerClick = { }
                 )
             }
@@ -71,8 +80,11 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun SlowMusicApp(
     navigationStyle: com.slowmusic.app.domain.model.NavigationStyle,
+    useAppleMusicUi: Boolean,
     playbackState: com.slowmusic.app.domain.model.PlaybackState,
     currentSong: com.slowmusic.app.domain.model.Song?,
+    queue: List<com.slowmusic.app.domain.model.Song>,
+    lyrics: String?,
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
@@ -86,6 +98,8 @@ fun SlowMusicApp(
     onToggleFavorite: () -> Unit,
     onDownload: (com.slowmusic.app.domain.model.Song) -> Unit,
     onAddToQueue: (com.slowmusic.app.domain.model.Song) -> Unit,
+    onRemoveFromQueue: (Int) -> Unit,
+    onClearQueue: () -> Unit,
     onMiniPlayerClick: () -> Unit
 ) {
     val navController = rememberNavController()
@@ -109,13 +123,25 @@ fun SlowMusicApp(
                 com.slowmusic.app.domain.model.NavigationStyle.BOTTOM_NAV -> {
                     Column {
                         if (showMiniPlayer) {
-                            MiniPlayer(
-                                song = currentSong!!,
-                                isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
-                                onPlayPause = onPlayPause,
-                                onNext = onNext,
-                                onClick = { navController.navigate(Screen.Player.route) }
-                            )
+                            if (useAppleMusicUi) {
+                                AppleMiniPlayer(
+                                    song = currentSong!!,
+                                    isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
+                                    progress = progress,
+                                    onPlayPause = onPlayPause,
+                                    onNext = onNext,
+                                    onClick = { navController.navigate(Screen.Player.route) },
+                                    onDismiss = { }
+                                )
+                            } else {
+                                MiniPlayer(
+                                    song = currentSong!!,
+                                    isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
+                                    onPlayPause = onPlayPause,
+                                    onNext = onNext,
+                                    onClick = { navController.navigate(Screen.Player.route) }
+                                )
+                            }
                         }
                         NavigationBar {
                             bottomNavItems.forEach { item ->
@@ -145,14 +171,26 @@ fun SlowMusicApp(
                 }
                 com.slowmusic.app.domain.model.NavigationStyle.DRAWER -> {
                     if (showMiniPlayer) {
-                        MiniPlayer(
-                            song = currentSong!!,
-                            isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
-                            onPlayPause = onPlayPause,
-                            onNext = onNext,
-                            onClick = { navController.navigate(Screen.Player.route) }
-                        )
-                    }
+                        if (useAppleMusicUi) {
+                            AppleMiniPlayer(
+                                song = currentSong!!,
+                                isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
+                                progress = progress,
+                                onPlayPause = onPlayPause,
+                                onNext = onNext,
+                                onClick = { navController.navigate(Screen.Player.route) },
+                                onDismiss = { }
+                            )
+                        } else {
+                            MiniPlayer(
+                                song = currentSong!!,
+                                isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
+                                onPlayPause = onPlayPause,
+                                onNext = onNext,
+                                onClick = { navController.navigate(Screen.Player.route) }
+                            )
+                        }
+                        }
                 }
             }
         }
@@ -162,6 +200,8 @@ fun SlowMusicApp(
             modifier = Modifier.padding(paddingValues),
             playbackState = playbackState,
             currentSong = currentSong,
+            queue = queue,
+            lyrics = lyrics,
             onPlayPause = onPlayPause,
             onNext = onNext,
             onPrevious = onPrevious,
@@ -174,7 +214,9 @@ fun SlowMusicApp(
             onToggleRepeat = onToggleRepeat,
             onToggleFavorite = onToggleFavorite,
             onDownload = onDownload,
-            onAddToQueue = onAddToQueue
+            onAddToQueue = onAddToQueue,
+            onRemoveFromQueue = onRemoveFromQueue,
+            onClearQueue = onClearQueue
         )
     }
 }

@@ -39,13 +39,25 @@ class StreamingFallbackResolver @Inject constructor(
         return pipedResolver.playlistTracks(clean).map { it.toSong() }
     }
 
-    suspend fun resolveSong(song: Song): ResolvedStream? = withContext(Dispatchers.IO) {
-        val videoId = videoIdFor(song) ?: run {
-            val candidate = youtubeMusicSearch.searchSongs("${song.title} ${song.artist}", 1).firstOrNull()
-            candidate?.videoId
-        } ?: return@withContext null
-        resolveVideoId(videoId)
+    data class SongResolution(val song: Song, val stream: ResolvedStream)
+
+    suspend fun resolveSongWithMetadata(song: Song): SongResolution? = withContext(Dispatchers.IO) {
+        val existingVideoId = videoIdFor(song)
+        val match = if (existingVideoId == null) youtubeMusicSearch.searchSongs("${song.title} ${song.artist}", 1).firstOrNull() else null
+        val videoId = existingVideoId ?: match?.videoId ?: return@withContext null
+        val stream = resolveVideoId(videoId) ?: return@withContext null
+        val enriched = match?.toSong()?.copy(
+            id = "yt_$videoId",
+            title = song.title.ifBlank { match.title },
+            artist = song.artist.ifBlank { match.artist },
+            album = match.album.ifBlank { song.album },
+            albumArtUrl = match.thumbnailUrl ?: song.albumArtUrl,
+            duration = if (match.durationMs > 0) match.durationMs else song.duration
+        ) ?: song.copy(id = if (song.id.startsWith("yt_")) song.id else "yt_$videoId")
+        SongResolution(enriched, stream)
     }
+
+    suspend fun resolveSong(song: Song): ResolvedStream? = resolveSongWithMetadata(song)?.stream
 
     suspend fun resolveVideoId(videoId: String): ResolvedStream? = withContext(Dispatchers.IO) {
         getCached(videoId)?.let { return@withContext it }

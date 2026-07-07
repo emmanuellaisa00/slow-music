@@ -161,7 +161,7 @@ fun AppleMusicPlayerScreen(
                         .graphicsLayer {
                             shadowElevation = 32.dp.toPx()
                         }
-                        .clip(CircleShape)
+                        .clip(RoundedCornerShape(32.dp))
                         .background(
                             brush = Brush.radialGradient(
                                 colors = listOf(
@@ -179,7 +179,7 @@ fun AppleMusicPlayerScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(8.dp)
-                        .clip(CircleShape)
+                        .clip(RoundedCornerShape(28.dp))
                         .graphicsLayer {
                             // Subtle floating animation
                             scaleX = 1f
@@ -193,7 +193,7 @@ fun AppleMusicPlayerScreen(
                                     Color.White.copy(alpha = 0.1f)
                                 )
                             ),
-                            shape = CircleShape
+                            shape = RoundedCornerShape(28.dp)
                         ),
                     contentScale = ContentScale.Crop
                 )

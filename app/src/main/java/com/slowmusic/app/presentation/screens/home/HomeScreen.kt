@@ -52,6 +52,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(top = 0.dp),
                 title = { 
                     Text(
                         text = "Slow Music",

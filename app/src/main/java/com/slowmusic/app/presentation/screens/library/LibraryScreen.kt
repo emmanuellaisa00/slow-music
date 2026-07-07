@@ -60,6 +60,7 @@ fun LibraryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(top = 0.dp),
                 title = { Text("Library") },
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
@@ -302,6 +303,7 @@ fun RecentPlaysScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(top = 0.dp),
                 title = { Text("Recently Played") },
                 actions = {
                     TextButton(onClick = { viewModel.clearHistory() }) {

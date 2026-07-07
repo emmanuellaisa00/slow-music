@@ -35,6 +35,7 @@ class PreferencesRepositoryImpl @Inject constructor(
         val CROSSFADE_ENABLED = booleanPreferencesKey("crossfade_enabled")
         val CROSSFADE_DURATION = intPreferencesKey("crossfade_duration")
         val AUTO_PLAY_SIMILAR = booleanPreferencesKey("auto_play_similar")
+        val UI_STYLE = stringPreferencesKey("ui_style")
         val EQUALIZER_ENABLED = booleanPreferencesKey("equalizer_enabled")
         val EQUALIZER_PRESET = intPreferencesKey("equalizer_preset")
         val SEARCH_HISTORY = stringPreferencesKey("search_history")
@@ -55,7 +56,8 @@ class PreferencesRepositoryImpl @Inject constructor(
                 audioQuality = AudioQuality.valueOf(prefs[PreferencesKeys.AUDIO_QUALITY] ?: AudioQuality.HIGH.name),
                 crossfadeEnabled = prefs[PreferencesKeys.CROSSFADE_ENABLED] ?: false,
                 crossfadeDuration = prefs[PreferencesKeys.CROSSFADE_DURATION] ?: 5,
-                autoPlaySimilar = prefs[PreferencesKeys.AUTO_PLAY_SIMILAR] ?: true
+                autoPlaySimilar = prefs[PreferencesKeys.AUTO_PLAY_SIMILAR] ?: true,
+                uiStyle = UIStyle.valueOf(prefs[PreferencesKeys.UI_STYLE] ?: UIStyle.DEFAULT.name)
             )
         }
     }
@@ -69,6 +71,7 @@ class PreferencesRepositoryImpl @Inject constructor(
             prefs[PreferencesKeys.CROSSFADE_ENABLED] = preferences.crossfadeEnabled
             prefs[PreferencesKeys.CROSSFADE_DURATION] = preferences.crossfadeDuration
             prefs[PreferencesKeys.AUTO_PLAY_SIMILAR] = preferences.autoPlaySimilar
+            prefs[PreferencesKeys.UI_STYLE] = preferences.uiStyle.name
         }
     }
 

@@ -16,6 +16,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.slowmusic.app.data.repository.DownloadManager
 import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.domain.repository.LibraryRepository
+import com.slowmusic.app.domain.repository.LyricsRepository
 import com.slowmusic.app.domain.repository.PreferencesRepository
 import com.slowmusic.app.service.MusicPlaybackService
 import com.slowmusic.app.service.MusicWidgetService
@@ -37,6 +38,7 @@ class MainViewModel @Inject constructor(
     application: Application,
     private val preferencesRepository: PreferencesRepository,
     private val libraryRepository: LibraryRepository,
+    private val lyricsRepository: LyricsRepository,
     private val downloadManager: DownloadManager,
     private val streamingFallbackResolver: StreamingFallbackResolver
 ) : AndroidViewModel(application) {
@@ -46,6 +48,9 @@ class MainViewModel @Inject constructor(
 
     val navigationStyle: StateFlow<NavigationStyle> = preferencesRepository.getNavigationStyle()
         .stateIn(viewModelScope, SharingStarted.Eagerly, NavigationStyle.TABS)
+
+    val userPreferences: StateFlow<UserPreferences> = preferencesRepository.getUserPreferences()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, UserPreferences())
 
     private val _playbackState = MutableStateFlow(PlaybackState.IDLE)
     val playbackState: StateFlow<PlaybackState> = _playbackState.asStateFlow()
@@ -67,6 +72,9 @@ class MainViewModel @Inject constructor(
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> = _progress.asStateFlow()
 
+    private val _lyrics = MutableStateFlow<String?>(null)
+    val lyrics: StateFlow<String?> = _lyrics.asStateFlow()
+
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private var mediaController: MediaController? = null
     private var progressJob: Job? = null
@@ -74,6 +82,7 @@ class MainViewModel @Inject constructor(
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             syncPlaybackState()
+            if (playbackState == Player.STATE_ENDED) handleQueueEnded()
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -92,6 +101,7 @@ class MainViewModel @Inject constructor(
                     _currentSong.value?.let { song ->
                         libraryRepository.addToRecentlyPlayed(song)
                         libraryRepository.incrementPlayCount(song.id)
+                        loadLyrics(song)
                     }
                 }
             }
@@ -182,23 +192,31 @@ class MainViewModel @Inject constructor(
 
     fun playSong(song: Song, queue: List<Song> = listOf(song)) {
         val playableQueue = queue.ifEmpty { listOf(song) }
+        mediaController?.run {
+            stop()
+            clearMediaItems()
+        }
+        stopProgressTicker()
         _currentSong.value = song
         _queue.value = playableQueue
         _currentIndex.value = playableQueue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
         _progress.value = 0f
+        _lyrics.value = null
         _playbackState.value = PlaybackState.BUFFERING
+        updateWidget()
 
         viewModelScope.launch {
             val resolvedQueue = playableQueue.map { resolveForPlayback(it) }
-            val resolvedSong = resolvedQueue.firstOrNull { it.id == song.id } ?: resolveForPlayback(song)
+            val clickedIndex = playableQueue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
+            val resolvedSong = resolvedQueue.getOrNull(clickedIndex) ?: resolveForPlayback(song)
             _currentSong.value = resolvedSong
             _queue.value = resolvedQueue
             val items = resolvedQueue.mapNotNull(::toMediaItem)
-            val startIndex = resolvedQueue.indexOfFirst { it.id == resolvedSong.id }.coerceAtLeast(0)
+            val startIndex = clickedIndex.coerceAtMost(items.lastIndex.coerceAtLeast(0))
             val controller = mediaController
 
             if (controller != null && items.isNotEmpty()) {
-                controller.setMediaItems(items, startIndex.coerceAtMost(items.lastIndex), 0L)
+                controller.setMediaItems(items, startIndex, 0L)
                 controller.prepare()
                 controller.play()
                 controller.shuffleModeEnabled = _isShuffled.value
@@ -210,6 +228,7 @@ class MainViewModel @Inject constructor(
 
             libraryRepository.addToRecentlyPlayed(resolvedSong)
             libraryRepository.incrementPlayCount(resolvedSong.id)
+            loadLyrics(resolvedSong)
             updateWidget()
         }
     }
@@ -317,11 +336,14 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun resolveForPlayback(song: Song): Song {
-        val hasDirect = !song.localPath.isNullOrBlank() || !song.streamUrl.isNullOrBlank() || !song.previewUrl.isNullOrBlank()
-        val needsFallback = song.id.startsWith("yt_") || !hasDirect
-        if (!needsFallback) return song
-        val stream = streamingFallbackResolver.resolveSong(song) ?: return song
-        return song.copy(streamUrl = streamingFallbackResolver.encodeStreamUrl(stream))
+        if (!song.localPath.isNullOrBlank()) return song
+        val resolved = streamingFallbackResolver.resolveSongWithMetadata(song) ?: return song.copy(previewUrl = null)
+        return resolved.song.copy(
+            streamUrl = streamingFallbackResolver.encodeStreamUrl(resolved.stream),
+            previewUrl = null,
+            isDownloaded = song.isDownloaded,
+            localPath = song.localPath
+        )
     }
 
     private fun toMediaItem(song: Song): MediaItem? {
@@ -416,6 +438,29 @@ class MainViewModel @Inject constructor(
         _currentIndex.value = queue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
         _playbackState.value = PlaybackState.PLAYING
         startProgressTicker()
+    }
+
+    private fun loadLyrics(song: Song) {
+        viewModelScope.launch {
+            _lyrics.value = runCatching { lyricsRepository.getLyrics(song)?.text }.getOrNull()
+        }
+    }
+
+    private fun handleQueueEnded() {
+        if (!userPreferences.value.autoPlaySimilar) return
+        val seed = _currentSong.value ?: return
+        viewModelScope.launch {
+            val similar = streamingFallbackResolver.searchSongs("${seed.artist} ${seed.genre ?: seed.title}", 12)
+                .filterNot { candidate -> _queue.value.any { it.id == candidate.id || (it.title.equals(candidate.title, true) && it.artist.equals(candidate.artist, true)) } }
+            if (similar.isNotEmpty()) {
+                val expanded = _queue.value + similar
+                _queue.value = expanded
+                for (candidate in similar) {
+                    toMediaItem(resolveForPlayback(candidate))?.let { mediaController?.addMediaItem(it) }
+                }
+                playNext()
+            }
+        }
     }
 
     private fun updateWidget() {

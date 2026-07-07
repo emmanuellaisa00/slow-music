@@ -17,6 +17,8 @@ import com.slowmusic.app.presentation.screens.search.SearchScreen
 import com.slowmusic.app.presentation.screens.settings.LogsScreen
 import com.slowmusic.app.presentation.screens.settings.SettingsScreen
 import com.slowmusic.app.presentation.screens.player.AppleMusicPlayerScreen
+import com.slowmusic.app.presentation.screens.player.QueueScreen
+import com.slowmusic.app.presentation.screens.player.LyricsScreen
 import com.slowmusic.app.presentation.screens.details.*
 
 @Composable
@@ -25,6 +27,8 @@ fun NavigationGraph(
     modifier: Modifier = Modifier,
     playbackState: PlaybackState,
     currentSong: Song?,
+    queue: List<Song>,
+    lyrics: String?,
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
@@ -37,7 +41,9 @@ fun NavigationGraph(
     onToggleRepeat: () -> Unit,
     onToggleFavorite: () -> Unit,
     onDownload: (Song) -> Unit,
-    onAddToQueue: (Song) -> Unit
+    onAddToQueue: (Song) -> Unit,
+    onRemoveFromQueue: (Int) -> Unit,
+    onClearQueue: () -> Unit
 ) {
 
     fun sameSong(a: Song?, b: Song): Boolean {
@@ -272,17 +278,29 @@ fun NavigationGraph(
 
 
         composable(Screen.Queue.route) {
-            LegalTextScreen(
-                title = "Queue",
-                body = "The active queue is managed by the player. Queue reorder/remove UI is ready to be connected to the Media3 queue controller.",
+            QueueScreen(
+                currentSong = currentSong,
+                queue = queue,
+                onSongClick = { song -> selectSong(song, queue) },
+                onRemoveFromQueue = onRemoveFromQueue,
+                onClearQueue = onClearQueue,
+                onSaveAsPlaylist = { },
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
         composable(Screen.Lyrics.route) {
-            LegalTextScreen(
+            currentSong?.let { song ->
+                LyricsScreen(
+                    song = song,
+                    lyrics = lyrics,
+                    isSynced = lyrics?.contains("[") == true,
+                    onNavigateBack = { navController.popBackStack() },
+                    onToggleSynced = { }
+                )
+            } ?: LegalTextScreen(
                 title = "Lyrics",
-                body = "Lyrics are fetched from LRCLib with lyrics.ovh fallback. Select a song, then this screen can render synced lyric lines for the active track.",
+                body = "Start a song to view lyrics.",
                 onNavigateBack = { navController.popBackStack() }
             )
         }
