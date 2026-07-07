@@ -100,8 +100,26 @@ data class UserPreferences(
     val audioQuality: AudioQuality = AudioQuality.HIGH,
     val crossfadeEnabled: Boolean = false,
     val crossfadeDuration: Int = 5,
-    val autoPlaySimilar: Boolean = true
+    val autoPlaySimilar: Boolean = true,
+    // Apple Music Style Settings
+    val uiStyle: UIStyle = UIStyle.DEFAULT,
+    val enableGlassmorphism: Boolean = false,
+    val enableLiquidGlass: Boolean = false,
+    val enableDynamicColors: Boolean = false,
+    val enableSmoothAnimations: Boolean = true,
+    val cornerRadiusStyle: CornerRadiusStyle = CornerRadiusStyle.LARGE
 )
+
+enum class UIStyle {
+    DEFAULT,
+    APPLE_MUSIC
+}
+
+enum class CornerRadiusStyle {
+    MEDIUM,
+    LARGE,
+    EXTRA_LARGE
+}
 
 enum class ThemeMode {
     LIGHT, DARK, SYSTEM
