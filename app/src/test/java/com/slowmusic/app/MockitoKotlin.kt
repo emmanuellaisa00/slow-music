@@ -1,10 +1,7 @@
 package com.slowmusic.app
 
-import org.mockito.kotlin.*
+import org.mockito.Mockito
 
-/**
- * Mockito Kotlin helper for mocking
- */
 object MockHelper {
-    inline fun <reified T> mock(): T = mock()
+    inline fun <reified T> mock(): T = Mockito.mock(T::class.java)
 }
