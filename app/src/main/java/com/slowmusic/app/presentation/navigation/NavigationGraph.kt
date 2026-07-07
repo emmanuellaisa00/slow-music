@@ -36,8 +36,25 @@ fun NavigationGraph(
     onToggleShuffle: () -> Unit,
     onToggleRepeat: () -> Unit,
     onToggleFavorite: () -> Unit,
-    onDownload: (Song) -> Unit
+    onDownload: (Song) -> Unit,
+    onAddToQueue: (Song) -> Unit
 ) {
+
+    fun sameSong(a: Song?, b: Song): Boolean {
+        if (a == null) return false
+        if (a.id == b.id) return true
+        val durationClose = a.duration <= 0 || b.duration <= 0 || kotlin.math.abs(a.duration - b.duration) <= 3000
+        return a.title.equals(b.title, ignoreCase = true) && a.artist.equals(b.artist, ignoreCase = true) && durationClose
+    }
+
+    fun selectSong(song: Song, queue: List<Song>) {
+        if (sameSong(currentSong, song)) {
+            navController.navigate(Screen.Player.route) { launchSingleTop = true }
+        } else {
+            onPlaySong(song, queue.ifEmpty { listOf(song) })
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route,
@@ -46,8 +63,8 @@ fun NavigationGraph(
         // Main Tabs
         composable(Screen.Home.route) {
             HomeScreen(
-                onSongClick = { song ->
-                    onPlaySong(song, listOf(song))
+                onSongClick = { song, queue ->
+                    selectSong(song, queue)
                 },
                 onArtistClick = { artistId ->
                     navController.navigate(Screen.ArtistDetails.createRoute(artistId))
@@ -68,7 +85,7 @@ fun NavigationGraph(
                     navController.navigate(Screen.Search.route)
                 },
                 onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) },
-                onAddToQueue = { song -> onPlaySong(song, listOfNotNull(currentSong, song).distinctBy { it.id }) },
+                onAddToQueue = { song -> onAddToQueue(song) },
                 onDownload = { song -> onDownload(song) },
                 onShare = { }
             )
@@ -76,8 +93,8 @@ fun NavigationGraph(
 
         composable(Screen.Search.route) {
             SearchScreen(
-                onSongClick = { song ->
-                    onPlaySong(song, listOf(song))
+                onSongClick = { song, queue ->
+                    selectSong(song, queue)
                 },
                 onArtistClick = { artistId ->
                     navController.navigate(Screen.ArtistDetails.createRoute(artistId))
@@ -85,11 +102,14 @@ fun NavigationGraph(
                 onAlbumClick = { albumId ->
                     navController.navigate(Screen.AlbumDetails.createRoute(albumId))
                 },
+                onPlaylistClick = { playlistId ->
+                    navController.navigate(Screen.PlaylistDetails.createRoute(playlistId))
+                },
                 onGenreClick = { genreId ->
                     navController.navigate(Screen.GenreDetails.createRoute(genreId))
                 },
                 onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) },
-                onAddToQueue = { song -> onPlaySong(song, listOfNotNull(currentSong, song).distinctBy { it.id }) },
+                onAddToQueue = { song -> onAddToQueue(song) },
                 onDownload = { song -> onDownload(song) },
                 onShare = { }
             )
@@ -97,8 +117,8 @@ fun NavigationGraph(
 
         composable(Screen.Library.route) {
             LibraryScreen(
-                onSongClick = { song ->
-                    onPlaySong(song, listOf(song))
+                onSongClick = { song, queue ->
+                    selectSong(song, queue)
                 },
                 onNavigateToFavorites = {
                     navController.navigate(Screen.Favorites.route)
@@ -131,7 +151,7 @@ fun NavigationGraph(
                     navController.navigate(Screen.Settings.route)
                 },
                 onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) },
-                onAddToQueue = { song -> onPlaySong(song, listOfNotNull(currentSong, song).distinctBy { it.id }) },
+                onAddToQueue = { song -> onAddToQueue(song) },
                 onDownload = { song -> onDownload(song) },
                 onShare = { }
             )
@@ -151,68 +171,38 @@ fun NavigationGraph(
         // Library Sub-screens
         composable(Screen.Favorites.route) {
             FavoritesScreen(
-                onSongClick = { song ->
-                    onPlaySong(song, listOf(song))
+                onSongClick = { song, queue ->
+                    selectSong(song, queue)
                 }
             )
         }
 
         composable(Screen.RecentPlays.route) {
             RecentPlaysScreen(
-                onSongClick = { song ->
-                    onPlaySong(song, listOf(song))
+                onSongClick = { song, queue ->
+                    selectSong(song, queue)
                 }
             )
         }
 
         composable(Screen.Downloads.route) {
             DownloadsScreen(
-                onSongClick = { song ->
-                    onPlaySong(song, listOf(song))
+                onSongClick = { song, queue ->
+                    selectSong(song, queue)
                 }
             )
         }
 
 
-        composable(Screen.MostPlayed.route) {
-            LegalTextScreen(
-                title = "Most Played",
-                body = "Your most played songs are calculated from the local play-count database. Play more music to build this chart.",
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
+        composable(Screen.MostPlayed.route) { MostPlayedScreen(onSongClick = { song, queue -> selectSong(song, queue) }) }
 
-        composable(Screen.LocalMusic.route) {
-            LegalTextScreen(
-                title = "Local Music",
-                body = "Local files are scanned from device audio storage after permission is granted. This screen is ready for the local media database and import flow.",
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
+        composable(Screen.LocalMusic.route) { LocalMusicScreen(onSongClick = { song, queue -> selectSong(song, queue) }) }
 
-        composable(Screen.Playlists.route) {
-            LegalTextScreen(
-                title = "Playlists",
-                body = "Create, edit, and open playlists from your local database. Open an individual playlist from Library to edit its name and songs.",
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
+        composable(Screen.Playlists.route) { PlaylistsScreen(onPlaylistClick = { navController.navigate(Screen.PlaylistDetails.createRoute(it)) }) }
 
-        composable(Screen.Artists.route) {
-            LegalTextScreen(
-                title = "Followed Artists",
-                body = "Artists you follow are stored locally for now and can be synced to an online account later.",
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
+        composable(Screen.Artists.route) { FollowedArtistsScreen(onArtistClick = { navController.navigate(Screen.ArtistDetails.createRoute(it)) }) }
 
-        composable(Screen.Albums.route) {
-            LegalTextScreen(
-                title = "Saved Albums",
-                body = "Saved albums and their cached metadata will appear here. Album detail screens are now implemented for online catalog results.",
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
+        composable(Screen.Albums.route) { SavedAlbumsScreen(onAlbumClick = { navController.navigate(Screen.AlbumDetails.createRoute(it)) }) }
 
 
         composable(Screen.Player.route) {
@@ -306,7 +296,7 @@ fun NavigationGraph(
                 artistId = backStackEntry.arguments?.getString("artistId") ?: "",
                 onNavigateBack = { navController.popBackStack() },
                 onAlbumClick = { navController.navigate(Screen.AlbumDetails.createRoute(it)) },
-                onSongClick = { song -> onPlaySong(song, listOf(song)) }
+                onSongClick = { song, queue -> selectSong(song, queue) }
             )
         }
 
@@ -317,7 +307,7 @@ fun NavigationGraph(
             AlbumDetailsScreen(
                 albumId = backStackEntry.arguments?.getString("albumId") ?: "",
                 onNavigateBack = { navController.popBackStack() },
-                onSongClick = { song -> onPlaySong(song, listOf(song)) },
+                onSongClick = { song, queue -> selectSong(song, queue) },
                 onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) }
             )
         }

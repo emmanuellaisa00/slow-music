@@ -44,7 +44,7 @@ fun ArtistDetailsScreen(
     artistId: String,
     onNavigateBack: () -> Unit,
     onAlbumClick: (String) -> Unit,
-    onSongClick: (Song) -> Unit,
+    onSongClick: (Song, List<Song>) -> Unit,
     viewModel: ArtistDetailsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -67,7 +67,7 @@ fun ArtistDetailsScreen(
                 )
             }
             item { SectionTitle("Top Songs") }
-            items(state.songs.take(10)) { song -> SongRow(song, { onSongClick(song) }) }
+            items(state.songs.take(10)) { song -> SongRow(song, { onSongClick(song, state.songs) }) }
             item { SectionTitle("Albums & Singles") }
             items(state.albums) { album ->
                 ListItem(
@@ -89,7 +89,7 @@ fun ArtistDetailsScreen(
 fun AlbumDetailsScreen(
     albumId: String,
     onNavigateBack: () -> Unit,
-    onSongClick: (Song) -> Unit,
+    onSongClick: (Song, List<Song>) -> Unit,
     onAddToPlaylist: (Song) -> Unit,
     viewModel: AlbumDetailsViewModel = hiltViewModel()
 ) {
@@ -107,7 +107,7 @@ fun AlbumDetailsScreen(
             }
             item { SectionTitle("Tracks") }
             items(state.songs) { song ->
-                SongRow(song, onClick = { onSongClick(song) }, onMore = { onAddToPlaylist(song) })
+                SongRow(song, onClick = { onSongClick(song, state.songs) }, onMore = { onAddToPlaylist(song) })
             }
             item { SectionTitle("Credits") }
             item { Text("Released by ${state.album?.artist ?: "Unknown label"}. Track metadata is sourced from the online catalog and cached locally for library use.") }
@@ -143,14 +143,13 @@ fun PlaylistDetailsScreen(
             item { HeroHeader(state.playlist?.name ?: "Playlist", "${state.playlist?.songIds?.size ?: 0} songs • Local database", Icons.Filled.QueueMusic) }
             item { Button(onClick = onAddSongs, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Filled.Add, null); Spacer(Modifier.width(8.dp)); Text("Add songs") } }
             item { SectionTitle("Songs") }
-            val ids = state.playlist?.songIds.orEmpty()
-            if (ids.isEmpty()) item { EmptyPanel("No songs yet", "Use Add songs from album/search menus to build this playlist.") }
-            items(ids) { songId ->
+            if (state.playlist?.songIds.orEmpty().isEmpty()) item { EmptyPanel("No songs yet", "Use Add songs from album/search menus to build this playlist.") }
+            items(state.songs) { song ->
                 ListItem(
-                    headlineContent = { Text("Song $songId", maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    supportingContent = { Text("Saved in local playlist database") },
+                    headlineContent = { Text(song.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    supportingContent = { Text("${song.artist} • ${song.album}", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     leadingContent = { Icon(Icons.Filled.MusicNote, null, tint = MaterialTheme.colorScheme.primary) },
-                    trailingContent = { IconButton(onClick = { viewModel.removeSong(songId) }) { Icon(Icons.Filled.RemoveCircleOutline, "Remove") } }
+                    trailingContent = { IconButton(onClick = { viewModel.removeSong(song.id) }) { Icon(Icons.Filled.RemoveCircleOutline, "Remove") } }
                 )
             }
         }
@@ -301,12 +300,19 @@ class PlaylistDetailsViewModel @Inject constructor(private val libraryRepository
     private val playlistId: String = savedStateHandle["playlistId"] ?: ""
     private val _state = MutableStateFlow(PlaylistDetailsState())
     val state: StateFlow<PlaylistDetailsState> = _state.asStateFlow()
-    fun load(id: String = playlistId) = viewModelScope.launch { _state.value = PlaylistDetailsState(libraryRepository.getPlaylistById(id)) }
+    fun load(id: String = playlistId) = viewModelScope.launch {
+        val playlist = libraryRepository.getPlaylistById(id)
+        val knownSongs = (libraryRepository.getFavorites().first() + libraryRepository.getDownloadedSongs().first() + libraryRepository.getRecentlyPlayed().first()).distinctBy { it.id }.associateBy { it.id }
+        val songs = playlist?.songIds.orEmpty().map { songId ->
+            knownSongs[songId] ?: Song(songId, "Song $songId", "Unknown Artist", "Unknown Album", null, null, null, 0, null, null)
+        }
+        _state.value = PlaylistDetailsState(playlist, songs)
+    }
     fun rename(name: String) = viewModelScope.launch { _state.value.playlist?.let { libraryRepository.updatePlaylist(it.copy(name = name)); load(it.id) } }
     fun removeSong(songId: String) = viewModelScope.launch { _state.value.playlist?.let { libraryRepository.removeSongFromPlaylist(it.id, songId); load(it.id) } }
 }
 
-data class PlaylistDetailsState(val playlist: Playlist? = null)
+data class PlaylistDetailsState(val playlist: Playlist? = null, val songs: List<Song> = emptyList())
 
 @HiltViewModel
 class AddToPlaylistViewModel @Inject constructor(private val libraryRepository: LibraryRepository) : ViewModel() {

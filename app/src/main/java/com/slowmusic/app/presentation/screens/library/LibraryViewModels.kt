@@ -87,3 +87,62 @@ class DownloadsViewModel @Inject constructor(
         }
     }
 }
+
+@HiltViewModel
+class MostPlayedViewModel @Inject constructor(
+    private val libraryRepository: LibraryRepository
+) : ViewModel() {
+    val songs: StateFlow<List<Song>> = libraryRepository.getMostPlayed()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+}
+
+@HiltViewModel
+class LocalMusicViewModel @Inject constructor(
+    private val localMusicRepository: com.slowmusic.app.domain.repository.LocalMusicRepository
+) : ViewModel() {
+    private val _songs = MutableStateFlow<List<Song>>(emptyList())
+    val songs: StateFlow<List<Song>> = _songs.asStateFlow()
+    fun scan() { viewModelScope.launch { _songs.value = localMusicRepository.getLocalSongs() } }
+}
+
+@HiltViewModel
+class PlaylistsViewModel @Inject constructor(
+    private val libraryRepository: LibraryRepository
+) : ViewModel() {
+    val playlists: StateFlow<List<Playlist>> = libraryRepository.getPlaylists()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    fun create(name: String) { viewModelScope.launch { libraryRepository.createPlaylist(name, null) } }
+    fun delete(id: String) { viewModelScope.launch { libraryRepository.deletePlaylist(id) } }
+}
+
+@HiltViewModel
+class FollowedArtistsViewModel @Inject constructor(
+    private val libraryRepository: LibraryRepository
+) : ViewModel() {
+    val artists: StateFlow<List<Artist>> = libraryRepository.getFollowedArtists()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    fun unfollow(id: String) { viewModelScope.launch { libraryRepository.unfollowArtist(id) } }
+}
+
+@HiltViewModel
+class SavedAlbumsViewModel @Inject constructor(
+    private val libraryRepository: LibraryRepository
+) : ViewModel() {
+    val albums: StateFlow<List<Album>> = combine(
+        libraryRepository.getFavorites(),
+        libraryRepository.getDownloadedSongs()
+    ) { favorites, downloads ->
+        (favorites + downloads).groupBy { it.album to it.artist }.map { (key, songs) ->
+            Album(
+                id = key.hashCode().toString(),
+                title = key.first,
+                artist = key.second,
+                artistId = key.second.hashCode().toString(),
+                artworkUrl = songs.firstOrNull()?.albumArtUrl,
+                trackCount = songs.size,
+                releaseDate = null,
+                genre = songs.firstOrNull()?.genre
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+}

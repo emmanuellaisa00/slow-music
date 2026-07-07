@@ -27,15 +27,10 @@ class MusicRepositoryImpl @Inject constructor(
 
     override suspend fun search(query: String): SearchResult = withContext(Dispatchers.IO) {
         try {
-            val response = apiService.searchAll(query)
-            val songs = response.results
-                .filter { it.wrapperType == "track" || it.kind == "song" }
-                .toSongDomainList()
-            
             SearchResult(
-                songs = songs,
-                artists = emptyList(), // We'll need separate artist search
-                albums = emptyList(),
+                songs = searchSongs(query),
+                artists = searchArtists(query),
+                albums = searchAlbums(query),
                 playlists = emptyList()
             )
         } catch (e: Exception) {

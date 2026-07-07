@@ -16,7 +16,7 @@ import com.slowmusic.app.presentation.theme.PrimaryGreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onSongClick: (Song) -> Unit,
+    onSongClick: (Song, List<Song>) -> Unit,
     onArtistClick: (String) -> Unit,
     onAlbumClick: (String) -> Unit,
     onGenreClick: (String) -> Unit,
@@ -78,6 +78,7 @@ fun HomeScreen(
             else -> HomeContent(
                 uiState = uiState,
                 onSongClick = onSongClick,
+                onMoreClick = { selectedSong = it },
                 onArtistClick = onArtistClick,
                 onAlbumClick = onAlbumClick,
                 onGenreClick = onGenreClick,
@@ -91,7 +92,8 @@ fun HomeScreen(
 @Composable
 private fun HomeContent(
     uiState: HomeUiState,
-    onSongClick: (Song) -> Unit,
+    onSongClick: (Song, List<Song>) -> Unit,
+    onMoreClick: (Song) -> Unit,
     onArtistClick: (String) -> Unit,
     onAlbumClick: (String) -> Unit,
     onGenreClick: (String) -> Unit,
@@ -112,7 +114,8 @@ private fun HomeContent(
             item {
                 QuickPicksRow(
                     songs = uiState.recentlyPlayed.take(6),
-                    onSongClick = onSongClick
+                    onSongClick = onSongClick,
+                    onMoreClick = onMoreClick
                 )
             }
         }
@@ -145,7 +148,8 @@ private fun HomeContent(
             item {
                 SongRow(
                     songs = uiState.trendingSongs,
-                    onSongClick = onSongClick
+                    onSongClick = onSongClick,
+                    onMoreClick = onMoreClick
                 )
             }
         }
@@ -163,7 +167,8 @@ private fun HomeContent(
             item {
                 SongRow(
                     songs = uiState.topSongs,
-                    onSongClick = onSongClick
+                    onSongClick = onSongClick,
+                    onMoreClick = onMoreClick
                 )
             }
         }
@@ -199,7 +204,8 @@ private fun HomeContent(
             item {
                 SongRow(
                     songs = uiState.recommendations,
-                    onSongClick = onSongClick
+                    onSongClick = onSongClick,
+                    onMoreClick = onMoreClick
                 )
             }
         }
@@ -209,7 +215,8 @@ private fun HomeContent(
 @Composable
 private fun QuickPicksRow(
     songs: List<Song>,
-    onSongClick: (Song) -> Unit
+    onSongClick: (Song, List<Song>) -> Unit,
+    onMoreClick: (Song) -> Unit
 ) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
@@ -218,7 +225,8 @@ private fun QuickPicksRow(
         items(songs) { song ->
             QuickPickCard(
                 song = song,
-                onClick = { onSongClick(song) }
+                onClick = { onSongClick(song, songs) },
+                onMoreClick = { onMoreClick(song) }
             )
         }
     }
@@ -227,12 +235,13 @@ private fun QuickPicksRow(
 @Composable
 private fun QuickPickCard(
     song: Song,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onMoreClick: () -> Unit
 ) {
     com.slowmusic.app.presentation.components.SongCard(
         song = song,
         onClick = onClick,
-        onMoreClick = { selectedSong = song }
+        onMoreClick = onMoreClick
     )
 }
 
@@ -257,7 +266,8 @@ private fun GenreRow(
 @Composable
 private fun SongRow(
     songs: List<Song>,
-    onSongClick: (Song) -> Unit
+    onSongClick: (Song, List<Song>) -> Unit,
+    onMoreClick: (Song) -> Unit
 ) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
@@ -266,8 +276,8 @@ private fun SongRow(
         items(songs) { song ->
             SongCard(
                 song = song,
-                onClick = { onSongClick(song) },
-                onMoreClick = { selectedSong = song }
+                onClick = { onSongClick(song, songs) },
+                onMoreClick = { onMoreClick(song) }
             )
         }
     }

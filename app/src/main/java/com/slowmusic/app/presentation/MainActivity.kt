@@ -48,6 +48,7 @@ class MainActivity : ComponentActivity() {
                     onToggleRepeat = { mainViewModel.toggleRepeat() },
                     onToggleFavorite = { mainViewModel.toggleFavorite() },
                     onDownload = { song -> mainViewModel.downloadSong(song) },
+                    onAddToQueue = { song -> mainViewModel.addToQueue(song) },
                     onMiniPlayerClick = { }
                 )
             }
@@ -73,6 +74,7 @@ fun SlowMusicApp(
     onToggleRepeat: () -> Unit,
     onToggleFavorite: () -> Unit,
     onDownload: (com.slowmusic.app.domain.model.Song) -> Unit,
+    onAddToQueue: (com.slowmusic.app.domain.model.Song) -> Unit,
     onMiniPlayerClick: () -> Unit
 ) {
     val navController = rememberNavController()
@@ -160,7 +162,8 @@ fun SlowMusicApp(
             onToggleShuffle = onToggleShuffle,
             onToggleRepeat = onToggleRepeat,
             onToggleFavorite = onToggleFavorite,
-            onDownload = onDownload
+            onDownload = onDownload,
+            onAddToQueue = onAddToQueue
         )
     }
 }

@@ -1,5 +1,6 @@
 package com.slowmusic.app.presentation.screens.search
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.speech.RecognizerIntent
@@ -18,19 +19,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.presentation.components.*
-import com.slowmusic.app.presentation.theme.PrimaryGreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    onSongClick: (Song) -> Unit,
+    onSongClick: (Song, List<Song>) -> Unit,
     onArtistClick: (String) -> Unit,
     onAlbumClick: (String) -> Unit,
+    onPlaylistClick: (String) -> Unit = {},
     onGenreClick: (String) -> Unit,
     onAddToPlaylist: (Song) -> Unit = {},
     onAddToQueue: (Song) -> Unit = {},
@@ -39,25 +39,22 @@ fun SearchScreen(
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var selectedSong by remember { mutableStateOf<Song?>(null) }
     val searchHistory by viewModel.searchHistory.collectAsState()
     val focusManager = LocalFocusManager.current
-    
-    val voiceSearchLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
+    var selectedSong by remember { mutableStateOf<Song?>(null) }
+    var voiceMessage by remember { mutableStateOf<String?>(null) }
+
+    val recordAudioLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        voiceMessage = if (granted) "Tap Voice Search again to speak" else "Microphone permission denied"
+    }
+    val voiceSearchLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val spokenText = result.data
-                ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-                ?.firstOrNull()
-            spokenText?.let { viewModel.search(it) }
+            result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let { viewModel.search(it) }
         }
     }
-    
-    LaunchedEffect(Unit) {
-        viewModel.loadGenres()
-    }
-    
+
+    LaunchedEffect(Unit) { viewModel.loadGenres() }
+
     selectedSong?.let { song ->
         SongOptionsBottomSheet(
             song = song,
@@ -77,82 +74,50 @@ fun SearchScreen(
                 title = {
                     OutlinedTextField(
                         value = uiState.query,
-                        onValueChange = { viewModel.updateQuery(it) },
-                        placeholder = { Text("Songs, artists, albums...") },
+                        onValueChange = viewModel::updateQuery,
+                        placeholder = { Text("Songs, artists, albums, playlists...") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(
-                            onSearch = {
-                                viewModel.search(uiState.query)
-                                focusManager.clearFocus()
-                            }
-                        ),
-                        leadingIcon = {
-                            Icon(Icons.Filled.Search, contentDescription = "Search")
-                        },
+                        keyboardActions = KeyboardActions(onSearch = { viewModel.search(uiState.query); focusManager.clearFocus() }),
+                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
                         trailingIcon = {
-                            if (uiState.query.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.updateQuery("") }) {
-                                    Icon(Icons.Filled.Clear, contentDescription = "Clear")
-                                }
-                            }
+                            if (uiState.query.isNotEmpty()) IconButton(onClick = { viewModel.updateQuery("") }) { Icon(Icons.Filled.Clear, "Clear") }
                         }
                     )
                 }
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Voice Search Button
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+        Column(Modifier.fillMaxSize().padding(paddingValues)) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AssistChip(
                     onClick = {
+                        recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
                         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                            putExtra(
-                                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-                            )
+                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                         }
-                        voiceSearchLauncher.launch(intent)
+                        runCatching { voiceSearchLauncher.launch(intent) }.onFailure { voiceMessage = "Voice search is not available on this device" }
                     },
                     label = { Text("Voice Search") },
-                    leadingIcon = {
-                        Icon(Icons.Filled.Mic, contentDescription = null)
-                    }
+                    leadingIcon = { Icon(Icons.Filled.Mic, null) }
                 )
+                if (uiState.downloadedSongs.isNotEmpty()) AssistChip(onClick = { viewModel.selectTab(SearchTab.DOWNLOADS) }, label = { Text("Downloaded") })
+                if (uiState.localSongs.isNotEmpty()) AssistChip(onClick = { viewModel.selectTab(SearchTab.LOCAL) }, label = { Text("Local") })
             }
-            
+            voiceMessage?.let { Text(it, modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.primary) }
             when {
                 uiState.isSearching -> LoadingIndicator()
-                uiState.query.isEmpty() -> BrowseContent(
-                    genres = uiState.genres,
-                    searchHistory = searchHistory,
-                    onGenreClick = onGenreClick,
-                    onHistoryItemClick = { 
-                        viewModel.updateQuery(it)
-                        viewModel.search(it)
-                    },
-                    onClearHistory = { viewModel.clearSearchHistory() }
-                )
-                uiState.error != null -> ErrorMessage(
-                    message = uiState.error!!,
-                    onRetry = { viewModel.search(uiState.query) }
-                )
+                uiState.query.isEmpty() -> BrowseContent(uiState.genres, searchHistory, uiState.suggestions, onGenreClick, { viewModel.updateQuery(it); viewModel.search(it) }, viewModel::clearSearchHistory)
+                uiState.error != null -> ErrorMessage(uiState.error ?: "Search failed", onRetry = { viewModel.search(uiState.query) })
                 else -> SearchResults(
-                    results = uiState.results,
+                    state = uiState,
+                    onTabSelected = viewModel::selectTab,
                     onSongClick = onSongClick,
                     onArtistClick = onArtistClick,
-                    onAlbumClick = onAlbumClick
+                    onAlbumClick = onAlbumClick,
+                    onPlaylistClick = onPlaylistClick,
+                    onMore = { selectedSong = it }
                 )
             }
         }
@@ -163,187 +128,103 @@ fun SearchScreen(
 private fun BrowseContent(
     genres: List<Genre>,
     searchHistory: List<String>,
+    suggestions: List<String>,
     onGenreClick: (String) -> Unit,
-    onAddToPlaylist: (Song) -> Unit = {},
-    onAddToQueue: (Song) -> Unit = {},
-    onDownload: (Song) -> Unit = {},
-    onShare: (Song) -> Unit = {},
     onHistoryItemClick: (String) -> Unit,
     onClearHistory: () -> Unit
 ) {
-    LazyColumn(
-        contentPadding = PaddingValues(bottom = 100.dp)
-    ) {
-        // Search History
+    LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
+        if (suggestions.isNotEmpty()) {
+            item { SectionHeader("Suggestions") }
+            items(suggestions) { suggestion -> SearchTextRow(Icons.Filled.Lightbulb, suggestion) { onHistoryItemClick(suggestion) } }
+        }
         if (searchHistory.isNotEmpty()) {
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Recent Searches",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    TextButton(onClick = onClearHistory) {
-                        Text("Clear all")
-                    }
+                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Recent Searches", style = MaterialTheme.typography.titleMedium)
+                    TextButton(onClick = onClearHistory) { Text("Clear all") }
                 }
             }
-            
-            items(searchHistory.take(5)) { query ->
-                ListItem(
-                    headlineContent = { Text(query) },
-                    leadingContent = {
-                        Icon(Icons.Filled.History, contentDescription = null)
-                    },
-                    modifier = Modifier.clickable { onHistoryItemClick(query) }
-                )
-            }
-            
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
+            items(searchHistory.take(8)) { query -> SearchTextRow(Icons.Filled.History, query) { onHistoryItemClick(query) } }
+        }
+        item { SectionHeader("Browse All") }
+        item {
+            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(genres) { genre -> GenreChip(genre.name) { onGenreClick(genre.id) } }
             }
         }
-        
-        // Browse Genres
-        item {
-            Text(
-                text = "Browse All",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-        }
-        
-        item {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(genres) { genre ->
-                    GenreChip(
-                        name = genre.name,
-                        onClick = { onGenreClick(genre.id) }
-                    )
-                }
-            }
-        }
-        
-        // Category Sections
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = "Popular Categories",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-        }
-        
-        items(listOf("Pop", "Rock", "Hip-Hop", "Latin", "R&B", "Electronic", "Country", "Jazz")) { category ->
-            ListItem(
-                headlineContent = { Text(category) },
-                leadingContent = {
-                    Icon(Icons.Filled.MusicNote, contentDescription = null)
-                },
-                trailingContent = {
-                    Icon(Icons.Filled.ChevronRight, contentDescription = null)
-                },
-                modifier = Modifier.clickable { onHistoryItemClick(category) }
-            )
+        item { SectionHeader("Popular Categories") }
+        items(listOf("Pop", "Rock", "Hip-Hop", "Latin", "R&B", "Electronic", "Country", "Jazz", "Afrobeats", "Gospel")) { category ->
+            SearchTextRow(Icons.Filled.MusicNote, category) { onHistoryItemClick(category) }
         }
     }
 }
 
 @Composable
+private fun SearchTextRow(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, onClick: () -> Unit) {
+    ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
+        leadingContent = { Icon(icon, null) },
+        headlineContent = { Text(text) },
+        trailingContent = { Icon(Icons.Filled.ChevronRight, null) }
+    )
+}
+
+@Composable
 private fun SearchResults(
-    results: SearchResult,
-    onSongClick: (Song) -> Unit,
+    state: SearchUiState,
+    onTabSelected: (SearchTab) -> Unit,
+    onSongClick: (Song, List<Song>) -> Unit,
     onArtistClick: (String) -> Unit,
-    onAlbumClick: (String) -> Unit
+    onAlbumClick: (String) -> Unit,
+    onPlaylistClick: (String) -> Unit,
+    onMore: (Song) -> Unit
 ) {
-    LazyColumn(
-        contentPadding = PaddingValues(bottom = 100.dp)
-    ) {
-        // Songs
-        if (results.songs.isNotEmpty()) {
-            item {
-                SectionHeader(title = "Songs")
-            }
-            
-            items(results.songs.take(10)) { song ->
-                SongListItem(
-                    song = song,
-                    onClick = { onSongClick(song) },
-                    onMoreClick = { selectedSong = song }
-                )
-            }
-        }
-        
-        // Artists
-        if (results.artists.isNotEmpty()) {
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                SectionHeader(title = "Artists")
-            }
-            
-            item {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(results.artists) { artist ->
-                        ArtistCard(
-                            name = artist.name,
-                            imageUrl = artist.imageUrl,
-                            onClick = { onArtistClick(artist.id) }
-                        )
-                    }
+    val results = state.results
+    val songsForTab = when (state.selectedTab) {
+        SearchTab.LOCAL -> state.localSongs
+        SearchTab.DOWNLOADS -> state.downloadedSongs
+        else -> results.songs
+    }
+    val showSongs = state.selectedTab in listOf(SearchTab.ALL, SearchTab.SONGS, SearchTab.LOCAL, SearchTab.DOWNLOADS)
+    val showAlbums = state.selectedTab in listOf(SearchTab.ALL, SearchTab.ALBUMS)
+    val showArtists = state.selectedTab in listOf(SearchTab.ALL, SearchTab.ARTISTS)
+    val showPlaylists = state.selectedTab in listOf(SearchTab.ALL, SearchTab.PLAYLISTS)
+
+    LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
+        item {
+            ScrollableTabRow(selectedTabIndex = state.selectedTab.ordinal, edgePadding = 8.dp) {
+                SearchTab.values().forEach { tab ->
+                    Tab(selected = state.selectedTab == tab, onClick = { onTabSelected(tab) }, text = { Text(tab.name.lowercase().replaceFirstChar { it.uppercase() }) })
                 }
             }
         }
-        
-        // Albums
-        if (results.albums.isNotEmpty()) {
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                SectionHeader(title = "Albums")
-            }
-            
-            item {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(results.albums) { album ->
-                        AlbumCard(
-                            title = album.title,
-                            artist = album.artist,
-                            artworkUrl = album.artworkUrl,
-                            onClick = { onAlbumClick(album.id) }
-                        )
-                    }
-                }
-            }
+        if (showSongs && songsForTab.isNotEmpty()) {
+            item { SectionHeader(if (state.selectedTab == SearchTab.LOCAL) "Local Songs" else if (state.selectedTab == SearchTab.DOWNLOADS) "Downloads" else "Songs") }
+            items(songsForTab) { song -> SongListItem(song, { onSongClick(song, songsForTab) }, { onMore(song) }) }
         }
-        
-        // Empty state
-        if (results.songs.isEmpty() && results.artists.isEmpty() && results.albums.isEmpty()) {
-            item {
-                EmptyState(
-                    icon = {
-                        Icon(
-                            Icons.Filled.SearchOff,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp)
-                        )
-                    },
-                    title = "No results found",
-                    subtitle = "Try searching for something else"
+        if (showPlaylists && results.playlists.isNotEmpty()) {
+            item { SectionHeader("Playlists") }
+            items(results.playlists) { playlist ->
+                ListItem(
+                    modifier = Modifier.clickable { onPlaylistClick(playlist.id) },
+                    leadingContent = { Icon(Icons.Filled.QueueMusic, null, tint = MaterialTheme.colorScheme.primary) },
+                    headlineContent = { Text(playlist.name) },
+                    supportingContent = { Text("${playlist.songIds.size} songs") },
+                    trailingContent = { Icon(Icons.Filled.ChevronRight, null) }
                 )
             }
+        }
+        if (showArtists && results.artists.isNotEmpty()) {
+            item { SectionHeader("Artists") }
+            item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(results.artists) { artist -> ArtistCard(artist.name, artist.imageUrl) { onArtistClick(artist.id) } } } }
+        }
+        if (showAlbums && results.albums.isNotEmpty()) {
+            item { SectionHeader("Albums") }
+            item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(results.albums) { album -> AlbumCard(album.title, album.artist, album.artworkUrl) { onAlbumClick(album.id) } } } }
+        }
+        if ((showSongs && songsForTab.isEmpty()) && (!showArtists || results.artists.isEmpty()) && (!showAlbums || results.albums.isEmpty()) && (!showPlaylists || results.playlists.isEmpty())) {
+            item { EmptyState(icon = { Icon(Icons.Filled.SearchOff, null, Modifier.size(64.dp)) }, title = "No results found", subtitle = "Try another search or switch tabs") }
         }
     }
 }
