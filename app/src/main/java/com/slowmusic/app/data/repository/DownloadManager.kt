@@ -239,7 +239,7 @@ class SleepTimerManager @Inject constructor() {
         endTime = System.currentTimeMillis() + (minutes * 60 * 1000L)
         
         timerJob = CoroutineScope(Dispatchers.Main).launch {
-            while (isActive.value) {
+            while (_isActive.value) {
                 val remaining = endTime - System.currentTimeMillis()
                 
                 if (remaining <= 0) {

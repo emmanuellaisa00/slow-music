@@ -39,7 +39,7 @@ fun MiniPlayer(
         Column {
             // Progress bar
             LinearProgressIndicator(
-                progress = { 0.4f }, // Would be actual progress
+                progress = 0.4f, // Would be actual progress
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(2.dp),
@@ -481,7 +481,7 @@ fun SongOptionsBottomSheet(
                     )
                 }
             )
-            HorizontalDivider()
+            Divider()
             SongOption(Icons.Filled.PlaylistAdd, "Add to playlist", onAddToPlaylist)
             SongOption(Icons.Filled.QueueMusic, "Add to queue", onAddToQueue)
             SongOption(Icons.Filled.Download, "Download", onDownload)

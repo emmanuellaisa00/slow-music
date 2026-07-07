@@ -40,7 +40,7 @@ class MusicRepositoryImpl @Inject constructor(
 
     override suspend fun searchSongs(query: String): List<Song> = withContext(Dispatchers.IO) {
         try {
-            val response = apiService.searchSongs(query)
+            val response = apiService.search(term = query)
             response.results
                 .filter { it.wrapperType == "track" || it.kind == "song" }
                 .toSongDomainList()

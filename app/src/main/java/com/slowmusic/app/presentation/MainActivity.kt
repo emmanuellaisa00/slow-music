@@ -12,6 +12,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.slowmusic.app.presentation.navigation.*
+import com.slowmusic.app.presentation.components.MiniPlayer
 import com.slowmusic.app.presentation.theme.SlowMusicTheme
 import com.slowmusic.app.streaming.WebViewStreamResolver
 import dagger.hilt.android.AndroidEntryPoint

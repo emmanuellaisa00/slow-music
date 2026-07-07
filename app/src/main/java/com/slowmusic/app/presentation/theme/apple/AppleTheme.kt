@@ -3,6 +3,9 @@ package com.slowmusic.app.presentation.theme.apple
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.*
@@ -133,7 +136,7 @@ object AppleColors {
 
 // Typography with Inter font
 object AppleTypography {
-    val largeTitle = Typography(
+    val largeTitle = TextStyle(
         fontFamily = FontFamily.Inter,
         fontWeight = FontWeight.Bold,
         fontSize = 34.sp,
@@ -141,7 +144,7 @@ object AppleTypography {
         letterSpacing = 0.37.sp
     )
     
-    val title1 = Typography(
+    val title1 = TextStyle(
         fontFamily = FontFamily.Inter,
         fontWeight = FontWeight.Bold,
         fontSize = 28.sp,
@@ -149,7 +152,7 @@ object AppleTypography {
         letterSpacing = 0.36.sp
     )
     
-    val title2 = Typography(
+    val title2 = TextStyle(
         fontFamily = FontFamily.Inter,
         fontWeight = FontWeight.Bold,
         fontSize = 22.sp,
@@ -157,7 +160,7 @@ object AppleTypography {
         letterSpacing = 0.35.sp
     )
     
-    val title3 = Typography(
+    val title3 = TextStyle(
         fontFamily = FontFamily.Inter,
         fontWeight = FontWeight.SemiBold,
         fontSize = 20.sp,
@@ -165,7 +168,7 @@ object AppleTypography {
         letterSpacing = 0.38.sp
     )
     
-    val headline = Typography(
+    val headline = TextStyle(
         fontFamily = FontFamily.Inter,
         fontWeight = FontWeight.SemiBold,
         fontSize = 17.sp,
@@ -173,7 +176,7 @@ object AppleTypography {
         letterSpacing = (-0.41).sp
     )
     
-    val body = Typography(
+    val body = TextStyle(
         fontFamily = FontFamily.Inter,
         fontWeight = FontWeight.Regular,
         fontSize = 17.sp,
@@ -181,7 +184,7 @@ object AppleTypography {
         letterSpacing = (-0.41).sp
     )
     
-    val callout = Typography(
+    val callout = TextStyle(
         fontFamily = FontFamily.Inter,
         fontWeight = FontWeight.Regular,
         fontSize = 16.sp,
@@ -189,7 +192,7 @@ object AppleTypography {
         letterSpacing = (-0.32).sp
     )
     
-    val subheadline = Typography(
+    val subheadline = TextStyle(
         fontFamily = FontFamily.Inter,
         fontWeight = FontWeight.Regular,
         fontSize = 15.sp,
@@ -197,7 +200,7 @@ object AppleTypography {
         letterSpacing = (-0.24).sp
     )
     
-    val footnote = Typography(
+    val footnote = TextStyle(
         fontFamily = FontFamily.Inter,
         fontWeight = FontWeight.Regular,
         fontSize = 13.sp,
@@ -205,7 +208,7 @@ object AppleTypography {
         letterSpacing = (-0.08).sp
     )
     
-    val caption1 = Typography(
+    val caption1 = TextStyle(
         fontFamily = FontFamily.Inter,
         fontWeight = FontWeight.Regular,
         fontSize = 12.sp,
@@ -213,7 +216,7 @@ object AppleTypography {
         letterSpacing = 0.sp
     )
     
-    val caption2 = Typography(
+    val caption2 = TextStyle(
         fontFamily = FontFamily.Inter,
         fontWeight = FontWeight.Regular,
         fontSize = 11.sp,

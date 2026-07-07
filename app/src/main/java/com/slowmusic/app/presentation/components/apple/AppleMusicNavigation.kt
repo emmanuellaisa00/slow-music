@@ -3,6 +3,7 @@ package com.slowmusic.app.presentation.components.apple
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.Icons
@@ -15,6 +16,8 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
 import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.presentation.theme.apple.*
@@ -177,6 +180,19 @@ val appleNavItems = listOf(
     )
 )
 
+
+private enum class SwipeToDismissBoxValue { Settled, StartToEnd, EndToStart }
+private class SimpleSwipeToDismissBoxState
+@Composable
+private fun rememberSwipeToDismissBoxState(confirmValueChange: (SwipeToDismissBoxValue) -> Boolean = { true }): SimpleSwipeToDismissBoxState = SimpleSwipeToDismissBoxState()
+@Composable
+private fun SwipeToDismissBox(
+    state: SimpleSwipeToDismissBoxState,
+    modifier: Modifier = Modifier,
+    backgroundContent: @Composable () -> Unit = {},
+    content: @Composable () -> Unit
+) { Box(modifier) { content() } }
+
 /**
  * Apple Music Style Mini Player
  */
@@ -233,12 +249,12 @@ fun AppleMiniPlayer(
                 Column {
                     // Progress bar
                     LinearProgressIndicator(
-                        progress = { progress },
+                        progress = progress,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(2.dp)
                             .clip(RoundedCornerShape(1.dp))
-                            .graphicsLayer { translationY = -8.dp },
+                            .graphicsLayer { translationY = -8f },
                         color = AppleColors.primary,
                         trackColor = AppleColors.textTertiary.copy(alpha = 0.2f)
                     )

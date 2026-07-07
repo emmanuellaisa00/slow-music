@@ -116,7 +116,7 @@ object LibraryItems {
         LibraryItem(Screen.Downloads, "Downloads", Icons.Filled.Download, Icons.Outlined.Download),
         LibraryItem(Screen.LocalMusic, "Local Music", Icons.Filled.Smartphone, Icons.Outlined.Smartphone),
         LibraryItem(Screen.Playlists, "Playlists", Icons.Filled.QueueMusic, Icons.Outlined.QueueMusic),
-        LibraryItem(Screen.Artists, "Artists", Icons.Filled.Artists, Icons.Outlined.Artists),
+        LibraryItem(Screen.Artists, "Artists", Icons.Filled.Person, Icons.Outlined.Person),
         LibraryItem(Screen.Albums, "Albums", Icons.Filled.Album, Icons.Outlined.Album)
     )
 }
