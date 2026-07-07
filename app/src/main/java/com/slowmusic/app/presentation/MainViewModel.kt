@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -18,6 +19,7 @@ import com.slowmusic.app.domain.repository.LibraryRepository
 import com.slowmusic.app.domain.repository.PreferencesRepository
 import com.slowmusic.app.service.MusicPlaybackService
 import com.slowmusic.app.service.MusicWidgetService
+import com.slowmusic.app.streaming.StreamingFallbackResolver
 import com.slowmusic.app.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -35,7 +37,8 @@ class MainViewModel @Inject constructor(
     application: Application,
     private val preferencesRepository: PreferencesRepository,
     private val libraryRepository: LibraryRepository,
-    private val downloadManager: DownloadManager
+    private val downloadManager: DownloadManager,
+    private val streamingFallbackResolver: StreamingFallbackResolver
 ) : AndroidViewModel(application) {
 
     val themeMode: StateFlow<ThemeMode> = preferencesRepository.getThemeMode()
@@ -107,6 +110,29 @@ class MainViewModel @Inject constructor(
                 else -> RepeatMode.OFF
             }
         }
+
+        override fun onPlayerError(error: PlaybackException) {
+            val song = _currentSong.value ?: return
+            val position = mediaController?.currentPosition ?: 0L
+            Logger.w("Player", "Playback error ${error.errorCode}; trying fallback re-resolve for ${song.title}")
+            viewModelScope.launch {
+                streamingFallbackResolver.invalidate(song)
+                val resolved = streamingFallbackResolver.resolveSong(song)
+                val controller = mediaController
+                if (resolved != null && controller != null) {
+                    val recovered = song.copy(streamUrl = streamingFallbackResolver.encodeStreamUrl(resolved))
+                    _currentSong.value = recovered
+                    val mediaItem = toMediaItem(recovered)
+                    if (mediaItem != null) {
+                        controller.setMediaItem(mediaItem, position)
+                        controller.prepare()
+                        controller.play()
+                    }
+                } else {
+                    _playbackState.value = PlaybackState.ERROR
+                }
+            }
+        }
     }
 
     init {
@@ -162,24 +188,28 @@ class MainViewModel @Inject constructor(
         _progress.value = 0f
         _playbackState.value = PlaybackState.BUFFERING
 
-        val items = playableQueue.mapNotNull(::toMediaItem)
-        val startIndex = playableQueue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
-        val controller = mediaController
-
-        if (controller != null && items.isNotEmpty()) {
-            controller.setMediaItems(items, startIndex.coerceAtMost(items.lastIndex), 0L)
-            controller.prepare()
-            controller.play()
-            controller.shuffleModeEnabled = _isShuffled.value
-            controller.repeatMode = media3RepeatMode(_repeatMode.value)
-        } else {
-            Logger.w("Player", "No playable URL for ${song.title}; using local UI playback state")
-            fallbackStartPlayback(song, playableQueue)
-        }
-
         viewModelScope.launch {
-            libraryRepository.addToRecentlyPlayed(song)
-            libraryRepository.incrementPlayCount(song.id)
+            val resolvedQueue = playableQueue.map { resolveForPlayback(it) }
+            val resolvedSong = resolvedQueue.firstOrNull { it.id == song.id } ?: resolveForPlayback(song)
+            _currentSong.value = resolvedSong
+            _queue.value = resolvedQueue
+            val items = resolvedQueue.mapNotNull(::toMediaItem)
+            val startIndex = resolvedQueue.indexOfFirst { it.id == resolvedSong.id }.coerceAtLeast(0)
+            val controller = mediaController
+
+            if (controller != null && items.isNotEmpty()) {
+                controller.setMediaItems(items, startIndex.coerceAtMost(items.lastIndex), 0L)
+                controller.prepare()
+                controller.play()
+                controller.shuffleModeEnabled = _isShuffled.value
+                controller.repeatMode = media3RepeatMode(_repeatMode.value)
+            } else {
+                Logger.w("Player", "No playable URL for ${song.title}; using local UI playback state")
+                fallbackStartPlayback(resolvedSong, resolvedQueue)
+            }
+
+            libraryRepository.addToRecentlyPlayed(resolvedSong)
+            libraryRepository.incrementPlayCount(resolvedSong.id)
             updateWidget()
         }
     }
@@ -284,6 +314,14 @@ class MainViewModel @Inject constructor(
     fun setPlaybackState(state: PlaybackState) {
         _playbackState.value = state
         if (state == PlaybackState.PLAYING) startProgressTicker() else stopProgressTicker()
+    }
+
+    private suspend fun resolveForPlayback(song: Song): Song {
+        val hasDirect = !song.localPath.isNullOrBlank() || !song.streamUrl.isNullOrBlank() || !song.previewUrl.isNullOrBlank()
+        val needsFallback = song.id.startsWith("yt_") || !hasDirect
+        if (!needsFallback) return song
+        val stream = streamingFallbackResolver.resolveSong(song) ?: return song
+        return song.copy(streamUrl = streamingFallbackResolver.encodeStreamUrl(stream))
     }
 
     private fun toMediaItem(song: Song): MediaItem? {

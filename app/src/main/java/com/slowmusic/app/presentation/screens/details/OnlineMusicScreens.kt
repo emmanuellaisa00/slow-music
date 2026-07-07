@@ -36,6 +36,7 @@ import com.slowmusic.app.data.repository.DownloadManager
 import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.domain.repository.LibraryRepository
 import com.slowmusic.app.domain.repository.MusicRepository
+import com.slowmusic.app.streaming.StreamingFallbackResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -487,12 +488,32 @@ class ArtistDetailsViewModel @Inject constructor(private val musicRepository: Mu
 data class ArtistDetailsState(val artist: Artist? = null, val songs: List<Song> = emptyList(), val albums: List<Album> = emptyList(), val isFollowing: Boolean = false)
 
 @HiltViewModel
-class AlbumDetailsViewModel @Inject constructor(private val musicRepository: MusicRepository, private val libraryRepository: LibraryRepository) : ViewModel() {
+class AlbumDetailsViewModel @Inject constructor(
+    private val musicRepository: MusicRepository,
+    private val libraryRepository: LibraryRepository,
+    private val streamingFallbackResolver: StreamingFallbackResolver
+) : ViewModel() {
     private val _state = MutableStateFlow(AlbumDetailsState())
     val state: StateFlow<AlbumDetailsState> = _state.asStateFlow()
     fun load(id: String) = viewModelScope.launch {
-        val album = musicRepository.getAlbumById(id) ?: Album(id, "Album $id", "Unknown Artist", "", null, 0, null, null)
-        _state.value = AlbumDetailsState(album, musicRepository.getSongsByAlbum(id))
+        if (id.startsWith("ytalbum_")) {
+            val songs = streamingFallbackResolver.playlistSongs(id)
+            val first = songs.firstOrNull()
+            val album = Album(
+                id = id,
+                title = first?.album ?: "YouTube Music Album",
+                artist = first?.artist ?: "YouTube Music",
+                artistId = (first?.artist ?: id).hashCode().toString(),
+                artworkUrl = first?.albumArtUrl,
+                trackCount = songs.size,
+                releaseDate = null,
+                genre = null
+            )
+            _state.value = AlbumDetailsState(album, songs)
+        } else {
+            val album = musicRepository.getAlbumById(id) ?: Album(id, "Album $id", "Unknown Artist", "", null, 0, null, null)
+            _state.value = AlbumDetailsState(album, musicRepository.getSongsByAlbum(id))
+        }
     }
     fun saveAlbum() = viewModelScope.launch { _state.value.songs.take(1).forEach { libraryRepository.addToFavorites(it) } }
 }
@@ -500,17 +521,36 @@ class AlbumDetailsViewModel @Inject constructor(private val musicRepository: Mus
 data class AlbumDetailsState(val album: Album? = null, val songs: List<Song> = emptyList())
 
 @HiltViewModel
-class PlaylistDetailsViewModel @Inject constructor(private val libraryRepository: LibraryRepository, savedStateHandle: SavedStateHandle) : ViewModel() {
+class PlaylistDetailsViewModel @Inject constructor(
+    private val libraryRepository: LibraryRepository,
+    private val streamingFallbackResolver: StreamingFallbackResolver,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
     private val playlistId: String = savedStateHandle["playlistId"] ?: ""
     private val _state = MutableStateFlow(PlaylistDetailsState())
     val state: StateFlow<PlaylistDetailsState> = _state.asStateFlow()
     fun load(id: String = playlistId) = viewModelScope.launch {
-        val playlist = libraryRepository.getPlaylistById(id)
-        val knownSongs = (libraryRepository.getFavorites().first() + libraryRepository.getDownloadedSongs().first() + libraryRepository.getRecentlyPlayed().first()).distinctBy { it.id }.associateBy { it.id }
-        val songs = playlist?.songIds.orEmpty().map { songId ->
-            knownSongs[songId] ?: Song(songId, "Song $songId", "Unknown Artist", "Unknown Album", null, null, null, 0, null, null)
+        if (id.startsWith("ytpl_") || id.startsWith("ytalbum_")) {
+            val songs = streamingFallbackResolver.playlistSongs(id)
+            val playlist = Playlist(
+                id = id,
+                name = songs.firstOrNull()?.album ?: "YouTube Music Playlist",
+                description = "Fetched with streaming fallback architecture",
+                artworkUrl = songs.firstOrNull()?.albumArtUrl,
+                songIds = songs.map { it.id },
+                createdAt = System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis(),
+                isUserCreated = false
+            )
+            _state.value = PlaylistDetailsState(playlist, songs)
+        } else {
+            val playlist = libraryRepository.getPlaylistById(id)
+            val knownSongs = (libraryRepository.getFavorites().first() + libraryRepository.getDownloadedSongs().first() + libraryRepository.getRecentlyPlayed().first()).distinctBy { it.id }.associateBy { it.id }
+            val songs = playlist?.songIds.orEmpty().map { songId ->
+                knownSongs[songId] ?: Song(songId, "Song $songId", "Unknown Artist", "Unknown Album", null, null, null, 0, null, null)
+            }
+            _state.value = PlaylistDetailsState(playlist, songs)
         }
-        _state.value = PlaylistDetailsState(playlist, songs)
     }
     fun rename(name: String) = viewModelScope.launch { _state.value.playlist?.let { libraryRepository.updatePlaylist(it.copy(name = name)); load(it.id) } }
     fun removeSong(songId: String) = viewModelScope.launch { _state.value.playlist?.let { libraryRepository.removeSongFromPlaylist(it.id, songId); load(it.id) } }

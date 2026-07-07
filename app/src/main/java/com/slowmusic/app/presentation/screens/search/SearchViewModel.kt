@@ -9,6 +9,7 @@ import com.slowmusic.app.domain.repository.MusicRepository
 import com.slowmusic.app.domain.repository.PreferencesRepository
 import com.slowmusic.app.domain.usecase.AddToSearchHistoryUseCase
 import com.slowmusic.app.domain.usecase.GetSearchHistoryUseCase
+import com.slowmusic.app.streaming.StreamingFallbackResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -38,7 +39,8 @@ class SearchViewModel @Inject constructor(
     private val libraryRepository: LibraryRepository,
     private val preferencesRepository: PreferencesRepository,
     private val getSearchHistoryUseCase: GetSearchHistoryUseCase,
-    private val addToSearchHistoryUseCase: AddToSearchHistoryUseCase
+    private val addToSearchHistoryUseCase: AddToSearchHistoryUseCase,
+    private val streamingFallbackResolver: StreamingFallbackResolver
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
@@ -76,25 +78,31 @@ class SearchViewModel @Inject constructor(
                 addToSearchHistoryUseCase(query)
 
                 val onlineSongs = async { runCatching { musicRepository.searchSongs(query) }.getOrDefault(emptyList()) }
+                val fallbackSongs = async { runCatching { streamingFallbackResolver.searchSongs(query) }.getOrDefault(emptyList()) }
                 val artists = async { runCatching { musicRepository.searchArtists(query) }.getOrDefault(emptyList()) }
                 val albums = async { runCatching { musicRepository.searchAlbums(query) }.getOrDefault(emptyList()) }
+                val fallbackAlbums = async { runCatching { streamingFallbackResolver.searchAlbums(query) }.getOrDefault(emptyList()) }
                 val localSongs = async { runCatching { localMusicRepository.getLocalSongs().filter { it.matches(query) } }.getOrDefault(emptyList()) }
                 val downloads = async { runCatching { libraryRepository.getDownloadedSongs().first().filter { it.matches(query) } }.getOrDefault(emptyList()) }
                 val playlists = async { runCatching { libraryRepository.getPlaylists().first().filter { it.name.contains(query, true) || it.description?.contains(query, true) == true } }.getOrDefault(emptyList()) }
+                val fallbackPlaylists = async { runCatching { streamingFallbackResolver.searchPlaylists(query) }.getOrDefault(emptyList()) }
 
                 val downloaded = downloads.await()
                 val locals = localSongs.await()
-                val online = onlineSongs.await()
+                val online = onlineSongs.await() + fallbackSongs.await()
                 val mergedSongs = mergePreferLocal(downloaded + locals, online)
+                val artistResults = artists.await()
+                val albumResults = (albums.await() + fallbackAlbums.await()).distinctBy { album -> album.id }
+                val playlistResults = (playlists.await() + fallbackPlaylists.await()).distinctBy { playlist -> playlist.id }
 
                 _uiState.update {
                     it.copy(
                         isSearching = false,
                         results = SearchResult(
                             songs = mergedSongs,
-                            artists = artists.await(),
-                            albums = albums.await(),
-                            playlists = playlists.await()
+                            artists = artistResults,
+                            albums = albumResults,
+                            playlists = playlistResults
                         ),
                         localSongs = locals,
                         downloadedSongs = downloaded,
