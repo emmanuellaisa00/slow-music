@@ -457,9 +457,8 @@ fun PlayingIndicator(
 }
 
 /**
- * Apple Music Style Swipeable List Item
+ * Apple Music Style List Item (compat fallback without Material3 swipe APIs)
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppleSwipeableListItem(
     song: Song,
@@ -470,119 +469,12 @@ fun AppleSwipeableListItem(
     onRemove: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            when (value) {
-                SwipeToDismissBoxValue.EndToStart -> {
-                    onRemove()
-                    true
-                }
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    onAddToPlaylist()
-                    false
-                }
-                else -> false
-            }
-        }
-    )
-    
-    SwipeToDismissBox(
-        state = dismissState,
-        modifier = modifier,
-        backgroundContent = {
-            // Background for start swipe (add to playlist)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(AppleColors.primary)
-                    .padding(start = 24.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.PlaylistAdd,
-                        contentDescription = null,
-                        tint = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Add to Playlist",
-                        style = AppleTypography.body,
-                        color = Color.White
-                    )
-                }
-            }
-        },
-        endBackgroundContent = {
-            // Background for end swipe (remove)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(AppleColors.secondary)
-                    .padding(end = 24.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Remove",
-                        style = AppleTypography.body,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = null,
-                        tint = Color.White
-                    )
-                }
-            }
-        }
-    ) {
-        AppleSongCard(
-            song = song,
-            onClick = onClick,
-            onMoreClick = { /* Show bottom sheet */ }
-        )
-    }
-}
-
-/**
- * Apple Music Style Section Header
- */
-@Composable
-fun AppleSectionHeader(
-    title: String,
-    onSeeAllClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
-) {
-    Row(
+    AppleSongCard(
+        song = song,
+        onClick = onClick,
+        onMoreClick = onAddToPlaylist,
         modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title,
-            style = AppleTypography.title3,
-            color = AppleColors.textPrimary,
-            fontWeight = FontWeight.Bold
-        )
-        
-        if (onSeeAllClick != null) {
-            TextButton(onClick = onSeeAllClick) {
-                Text(
-                    text = "See All",
-                    style = AppleTypography.subheadline,
-                    color = AppleColors.primary
-                )
-            }
-        }
-    }
+    )
 }
 
 private fun formatDuration(millis: Long): String {

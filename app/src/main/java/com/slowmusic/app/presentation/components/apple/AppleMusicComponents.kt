@@ -162,14 +162,7 @@ fun AppleSettingsRow(
             if (trailing != null) {
                 trailing()
             } else if (onClick != null) {
-                Image(
-                    imageVector = androidx.compose.material.icons.Icons.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(20.dp)
-                        .graphicsLayer { this.alpha = alpha },
-                    colorFilter = ColorFilter.tint(AppleColors.textTertiary)
-                )
+                Text(text = "›", color = AppleColors.textTertiary, modifier = Modifier.graphicsLayer { this.alpha = alpha })
             }
         }
     }
@@ -379,12 +372,7 @@ fun AppleNavigationBar(
             // Back button
             if (onBackClick != null) {
                 IconButton(onClick = onBackClick) {
-                    Image(
-                        imageVector = androidx.compose.material.icons.Icons.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        modifier = Modifier.size(20.dp),
-                        colorFilter = ColorFilter.tint(AppleColors.primary)
-                    )
+                    Text(text = "‹", color = AppleColors.primary, style = AppleTypography.title2)
                 }
             } else {
                 Spacer(modifier = Modifier.width(48.dp))
@@ -452,6 +440,7 @@ fun AppleBottomSheet(
     modifier: Modifier = Modifier
 ) {
     ModalBottomSheet(
+        onDismissRequest = {},
         sheetState = sheetState,
         modifier = modifier,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),

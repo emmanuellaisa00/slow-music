@@ -393,8 +393,8 @@ fun AppleMusicPlayerScreen(
             // Bottom Actions
             AnimatedVisibility(
                 visible = showControls,
-                enter = fadeIn() + slideInVertically(initialY = { it }),
-                exit = fadeOut() + slideOutVertically(targetY = { it })
+                enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+                exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
             ) {
                 Row(
                     modifier = Modifier

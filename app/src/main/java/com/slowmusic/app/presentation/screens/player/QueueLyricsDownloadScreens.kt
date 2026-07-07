@@ -342,7 +342,7 @@ fun LyricsScreen(
 
                         val textSize by animateDpAsState(
                             targetValue = if (isCurrentLine) 24.dp else 18.dp,
-                            animationSpec = AppleSpringAnimations.springBouncy,
+
                             label = "lyric_size"
                         )
 
@@ -353,7 +353,7 @@ fun LyricsScreen(
 
                         Text(
                             text = line.ifBlank { "♪" },
-                            style = AppleTypography.body.copy(fontSize = textSize.sp),
+                            style = AppleTypography.body.copy(fontSize = textSize.value.sp),
                             color = AppleColors.textPrimary.copy(alpha = textAlpha),
                             fontWeight = if (isCurrentLine) FontWeight.Bold else FontWeight.Normal,
                             textAlign = TextAlign.Center,
@@ -562,7 +562,7 @@ private fun DownloadProgressItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 CircularProgressIndicator(
-                    progress = { progress },
+                    progress = progress,
                     modifier = Modifier.size(40.dp),
                     color = AppleColors.primary,
                     trackColor = AppleColors.textTertiary.copy(alpha = 0.2f),
@@ -596,7 +596,7 @@ private fun DownloadProgressItem(
             Spacer(modifier = Modifier.height(8.dp))
 
             LinearProgressIndicator(
-                progress = { progress },
+                progress = progress,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)

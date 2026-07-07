@@ -195,7 +195,7 @@ fun AppleMusicSettingsScreen(
                             },
                             trailing = {
                                 AppleToggle(
-                                    checked = preferences.navigationStyle != NavigationStyle.SYSTEM,
+                                    checked = preferences.navigationStyle != NavigationStyle.TABS,
                                     onCheckedChange = { }
                                 )
                             }
