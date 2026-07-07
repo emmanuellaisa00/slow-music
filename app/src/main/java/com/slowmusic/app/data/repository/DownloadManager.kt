@@ -1,0 +1,322 @@
+package com.slowmusic.app.data.repository
+
+import android.content.Context
+import com.slowmusic.app.domain.model.Song
+import com.slowmusic.app.util.Logger
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.io.File
+import java.io.FileOutputStream
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Download Manager - Handles downloading songs for offline playback
+ */
+@Singleton
+class DownloadManager @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val okHttpClient: OkHttpClient,
+    private val libraryRepository: LibraryRepository
+) {
+    private val _downloads = MutableStateFlow<Map<String, DownloadState>>(emptyMap())
+    val downloads: StateFlow<Map<String, DownloadState>> = _downloads.asStateFlow()
+    
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    
+    suspend fun downloadSong(song: Song): Result<File> = withContext(Dispatchers.IO) {
+        try {
+            Logger.d("DownloadManager", "Starting download: ${song.title}")
+            
+            _downloads.update { it + (song.id to DownloadState.Downloading(0f)) }
+            
+            val request = Request.Builder()
+                .url(song.previewUrl ?: song.streamUrl ?: "")
+                .build()
+            
+            val response = okHttpClient.newCall(request).execute()
+            
+            if (!response.isSuccessful) {
+                Logger.e("DownloadManager", "Download failed: ${response.code}")
+                _downloads.update { it - song.id }
+                return@withContext Result.failure(Exception("Download failed: ${response.code}"))
+            }
+            
+            val body = response.body ?: run {
+                Logger.e("DownloadManager", "Empty response body")
+                _downloads.update { it - song.id }
+                return@withContext Result.failure(Exception("Empty response body"))
+            }
+            
+            val contentLength = body.contentLength()
+            val downloadsDir = File(context.filesDir, "downloads")
+            if (!downloadsDir.exists()) downloadsDir.mkdirs()
+            
+            val fileName = "${song.id}_${sanitizeFileName(song.title)}.mp4"
+            val file = File(downloadsDir, fileName)
+            
+            var totalBytesRead = 0L
+            
+            FileOutputStream(file).use { output ->
+                body.byteStream().use { input ->
+                    val buffer = ByteArray(8192)
+                    var bytesRead: Int
+                    
+                    while (input.read(buffer).also { bytesRead = it } != -1) {
+                        output.write(buffer, 0, bytesRead)
+                        totalBytesRead += bytesRead
+                        
+                        val progress = if (contentLength > 0) {
+                            totalBytesRead.toFloat() / contentLength
+                        } else {
+                            0f
+                        }
+                        
+                        _downloads.update { 
+                            it + (song.id to DownloadState.Downloading(progress)) 
+                        }
+                    }
+                }
+            }
+            
+            // Update library
+            val downloadedSong = song.copy(
+                isDownloaded = true,
+                localPath = file.absolutePath,
+                downloadProgress = 100
+            )
+            libraryRepository.downloadSong(downloadedSong)
+            
+            _downloads.update { it - song.id }
+            
+            Logger.d("DownloadManager", "Download complete: ${song.title}")
+            Result.success(file)
+            
+        } catch (e: Exception) {
+            Logger.e("DownloadManager", "Download error: ${e.message}", e)
+            _downloads.update { it - song.id }
+            Result.failure(e)
+        }
+    }
+    
+    fun cancelDownload(songId: String) {
+        Logger.d("DownloadManager", "Cancelled download: $songId")
+        _downloads.update { it - songId }
+    }
+    
+    suspend fun deleteDownload(song: Song) = withContext(Dispatchers.IO) {
+        song.localPath?.let { path ->
+            val file = File(path)
+            if (file.exists()) {
+                file.delete()
+                Logger.d("DownloadManager", "Deleted file: $path")
+            }
+        }
+        libraryRepository.deleteDownload(song.id)
+    }
+    
+    fun getDownloadedFiles(): List<File> {
+        val downloadsDir = File(context.filesDir, "downloads")
+        return downloadsDir.listFiles()?.toList() ?: emptyList()
+    }
+    
+    fun getStorageUsed(): Long {
+        return getDownloadedFiles().sumOf { it.length() }
+    }
+    
+    suspend fun clearAllDownloads() = withContext(Dispatchers.IO) {
+        getDownloadedFiles().forEach { it.delete() }
+        Logger.d("DownloadManager", "Cleared all downloads")
+    }
+    
+    private fun sanitizeFileName(name: String): String {
+        return name.replace(Regex("[^a-zA-Z0-9._-]"), "_")
+    }
+    
+    fun cleanup() {
+        scope.cancel()
+    }
+}
+
+sealed class DownloadState {
+    data class Downloading(val progress: Float) : DownloadState()
+    data class Completed(val file: File) : DownloadState()
+    data class Failed(val error: String) : DownloadState()
+}
+
+/**
+ * Share Manager - Handles sharing songs
+ */
+@Singleton
+class ShareManager @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
+    fun shareSong(song: Song): String {
+        val shareText = buildString {
+            append("🎵 Check out \"${song.title}\" by ${song.artist}\n")
+            append("🎧 Listen on Slow Music\n\n")
+            append("https://music.apple.com/song/${song.id}")
+        }
+        return shareText
+    }
+    
+    fun sharePlaylist(playlistName: String, songCount: Int): String {
+        return buildString {
+            append("🎶 Check out my \"$playlistName\" playlist!\n")
+            append("🎵 $songCount songs\n\n")
+            append("Listen on Slow Music")
+        }
+    }
+    
+    fun createShareIntent(text: String): android.content.Intent {
+        return android.content.Intent().apply {
+            action = android.content.Intent.ACTION_SEND
+            putExtra(android.content.Intent.EXTRA_TEXT, text)
+            type = "text/plain"
+        }
+    }
+}
+
+/**
+ * Sleep Timer Manager
+ */
+@Singleton
+class SleepTimerManager @Inject constructor() {
+    private val _remainingTime = MutableStateFlow<Long?>(null)
+    val remainingTime: StateFlow<Long?> = _remainingTime.asStateFlow()
+    
+    private val _isActive = MutableStateFlow(false)
+    val isActive: StateFlow<Boolean> = _isActive.asStateFlow()
+    
+    private var timerJob: Job? = null
+    private var endTime: Long = 0L
+    
+    suspend fun startTimer(minutes: Int, onFinish: () -> Unit) = withContext(Dispatchers.Main) {
+        cancel()
+        
+        _isActive.value = true
+        endTime = System.currentTimeMillis() + (minutes * 60 * 1000L)
+        
+        timerJob = CoroutineScope(Dispatchers.Main).launch {
+            while (isActive.value) {
+                val remaining = endTime - System.currentTimeMillis()
+                
+                if (remaining <= 0) {
+                    _isActive.value = false
+                    _remainingTime.value = null
+                    onFinish()
+                    break
+                }
+                
+                _remainingTime.value = remaining
+                delay(1000)
+            }
+        }
+        
+        Logger.d("SleepTimer", "Timer started for $minutes minutes")
+    }
+    
+    fun cancel() {
+        timerJob?.cancel()
+        timerJob = null
+        _isActive.value = false
+        _remainingTime.value = null
+        Logger.d("SleepTimer", "Timer cancelled")
+    }
+    
+    fun addTime(minutes: Int) {
+        if (_isActive.value) {
+            endTime += (minutes * 60 * 1000L)
+            Logger.d("SleepTimer", "Added $minutes minutes")
+        }
+    }
+    
+    fun getFormattedRemainingTime(): String {
+        val remaining = _remainingTime.value ?: return ""
+        val minutes = (remaining / 1000 / 60).toInt()
+        val seconds = ((remaining / 1000) % 60).toInt()
+        return "%02d:%02d".format(minutes, seconds)
+    }
+}
+
+/**
+ * Audio Focus Manager
+ */
+@Singleton
+class AudioFocusManager @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
+    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+    
+    private var focusChangeListener: android.media.AudioManager.OnAudioFocusChangeListener? = null
+    private var hasAudioFocus = false
+    
+    fun requestAudioFocus(
+        onFocusGained: () -> Unit,
+        onFocusLost: () -> Unit,
+        onFocusLostTransient: () -> Unit,
+        onFocusLostDuck: () -> Unit
+    ) {
+        focusChangeListener = android.media.AudioManager.OnAudioFocusChangeListener { focusChange ->
+            when (focusChange) {
+                android.media.AudioManager.AUDIOFOCUS_GAIN -> {
+                    hasAudioFocus = true
+                    onFocusGained()
+                    Logger.d("AudioFocus", "Focus gained")
+                }
+                android.media.AudioManager.AUDIOFOCUS_LOSS -> {
+                    hasAudioFocus = false
+                    onFocusLost()
+                    Logger.d("AudioFocus", "Focus lost")
+                }
+                android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                    onFocusLostTransient()
+                    Logger.d("AudioFocus", "Focus lost transient")
+                }
+                android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                    onFocusLostDuck()
+                    Logger.d("AudioFocus", "Focus lost duck")
+                }
+            }
+        }
+        
+        val result = audioManager.requestAudioFocus(
+            focusChangeListener,
+            android.media.AudioManager.STREAM_MUSIC,
+            android.media.AudioManager.AUDIOFOCUS_GAIN
+        )
+        
+        hasAudioFocus = result == android.media.AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        Logger.d("AudioFocus", "Request result: $result")
+    }
+    
+    fun abandonAudioFocus() {
+        focusChangeListener?.let {
+            audioManager.abandonAudioFocus(it)
+            hasAudioFocus = false
+            Logger.d("AudioFocus", "Focus abandoned")
+        }
+    }
+    
+    fun hasFocus(): Boolean = hasAudioFocus
+}
+
+/**
+ * Logger utility
+ */
+object Logger {
+    fun d(tag: String, message: String) {
+        android.util.Log.d(tag, message)
+    }
+    
+    fun e(tag: String, message: String, throwable: Throwable? = null) {
+        android.util.Log.e(tag, message, throwable)
+    }
+    
+    fun i(tag: String, message: String) {
+        android.util.Log.i(tag, message)
+    }
+}
