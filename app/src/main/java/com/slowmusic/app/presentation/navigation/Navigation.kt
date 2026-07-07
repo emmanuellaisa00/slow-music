@@ -54,11 +54,20 @@ sealed class Screen(val route: String) {
     object Subscription : Screen("settings/subscription")
     object About : Screen("settings/about")
     object Logs : Screen("settings/logs")
+    object DownloadStorage : Screen("settings/download_storage")
+    object PrivacyPolicy : Screen("legal/privacy")
+    object Terms : Screen("legal/terms")
+    object NotificationPermission : Screen("permissions/notifications")
+    object LocalFilesPermission : Screen("permissions/local_files")
+    object CastDevices : Screen("cast/devices")
     
     // Search
     object VoiceSearch : Screen("search/voice")
     object SearchResults : Screen("search/results/{query}") {
         fun createRoute(query: String) = "search/results/$query"
+    }
+    object AddToPlaylist : Screen("playlist/add/{songId}") {
+        fun createRoute(songId: String) = "playlist/add/$songId"
     }
 }
 

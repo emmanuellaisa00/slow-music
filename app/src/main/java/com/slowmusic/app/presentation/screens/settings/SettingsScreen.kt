@@ -18,10 +18,17 @@ import com.slowmusic.app.presentation.theme.PrimaryGreen
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToLogs: () -> Unit = {},
+    onNavigateToStorage: () -> Unit = {},
+    onNavigateToPrivacy: () -> Unit = {},
+    onNavigateToTerms: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToLocalFilesPermission: () -> Unit = {},
+    onNavigateToCastDevices: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val preferences by viewModel.preferences.collectAsState()
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -44,7 +51,7 @@ fun SettingsScreen(
             item {
                 SettingsSection(title = "Appearance")
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.Palette,
@@ -53,7 +60,7 @@ fun SettingsScreen(
                     onClick = { }
                 )
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.Navigation,
@@ -66,13 +73,13 @@ fun SettingsScreen(
                     onClick = { }
                 )
             }
-            
+
             // Playback
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 SettingsSection(title = "Playback")
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.PlayCircle,
@@ -81,7 +88,7 @@ fun SettingsScreen(
                     onClick = { }
                 )
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.Equalizer,
@@ -90,7 +97,7 @@ fun SettingsScreen(
                     onClick = { }
                 )
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.Speed,
@@ -99,7 +106,7 @@ fun SettingsScreen(
                     onClick = { }
                 )
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.Autorenew,
@@ -113,13 +120,13 @@ fun SettingsScreen(
                     }
                 )
             }
-            
+
             // Downloads
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 SettingsSection(title = "Downloads")
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.Wifi,
@@ -133,7 +140,7 @@ fun SettingsScreen(
                     }
                 )
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.HighQuality,
@@ -142,37 +149,37 @@ fun SettingsScreen(
                     onClick = { }
                 )
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.Storage,
                     title = "Storage",
                     subtitle = "Manage downloaded music",
-                    onClick = { }
+                    onClick = onNavigateToStorage
                 )
             }
-            
+
             // Network
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 SettingsSection(title = "Network")
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.NetworkCheck,
                     title = "Network Mode",
                     subtitle = "Online only",
-                    onClick = { }
+                    onClick = onNavigateToCastDevices
                 )
             }
-            
+
             // Subscription
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 SettingsSection(title = "Subscription")
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.CardMembership,
@@ -181,22 +188,22 @@ fun SettingsScreen(
                     onClick = { }
                 )
             }
-            
+
             // About
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 SettingsSection(title = "About")
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.BugReport,
                     title = "Logs",
                     subtitle = "View app logs for testing",
-                    onClick = { }
+                    onClick = onNavigateToLogs
                 )
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.Info,
@@ -205,31 +212,61 @@ fun SettingsScreen(
                     onClick = { }
                 )
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.Policy,
                     title = "Privacy Policy",
                     subtitle = "Read our privacy policy",
-                    onClick = { }
+                    onClick = onNavigateToPrivacy
                 )
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.Description,
                     title = "Terms of Service",
                     subtitle = "Read our terms",
-                    onClick = { }
+                    onClick = onNavigateToTerms
                 )
             }
-            
+
+            // Permissions
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                SettingsSection(title = "Permissions")
+            }
+            item {
+                SettingsItem(
+                    icon = Icons.Filled.Notifications,
+                    title = "Notifications",
+                    subtitle = "Allow playback and download alerts",
+                    onClick = onNavigateToNotifications
+                )
+            }
+            item {
+                SettingsItem(
+                    icon = Icons.Filled.Folder,
+                    title = "Local music access",
+                    subtitle = "Explain audio file permission",
+                    onClick = onNavigateToLocalFilesPermission
+                )
+            }
+            item {
+                SettingsItem(
+                    icon = Icons.Filled.Cast,
+                    title = "Connected devices",
+                    subtitle = "Cast and transfer playback",
+                    onClick = onNavigateToCastDevices
+                )
+            }
+
             // Danger Zone
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 SettingsSection(title = "Danger Zone")
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.DeleteForever,
@@ -239,7 +276,7 @@ fun SettingsScreen(
                     isDanger = true
                 )
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Filled.Logout,
@@ -279,7 +316,7 @@ private fun SettingsItem(
     } else {
         MaterialTheme.colorScheme.onSurface
     }
-    
+
     ListItem(
         modifier = if (onClick != null) {
             Modifier.clickable(onClick = onClick)
@@ -313,7 +350,7 @@ fun LogsScreen(
     viewModel: LogsViewModel = hiltViewModel()
 ) {
     val logs by viewModel.logs.collectAsState()
-    
+
     Scaffold(
         topBar = {
             TopAppBar(

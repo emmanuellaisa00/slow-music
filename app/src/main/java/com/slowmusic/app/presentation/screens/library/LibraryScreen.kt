@@ -26,6 +26,7 @@ fun LibraryScreen(
     onNavigateToDownloads: () -> Unit,
     onNavigateToLocalMusic: () -> Unit,
     onNavigateToPlaylists: () -> Unit,
+    onPlaylistClick: (String) -> Unit = {},
     onNavigateToArtists: () -> Unit,
     onNavigateToAlbums: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -124,7 +125,7 @@ fun LibraryScreen(
                     icon = Icons.Filled.QueueMusic,
                     title = playlist.name,
                     subtitle = "${playlist.songIds.size} songs",
-                    onClick = { /* Navigate to playlist */ }
+                    onClick = { onPlaylistClick(playlist.id) }
                 )
             }
             
