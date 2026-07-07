@@ -163,7 +163,7 @@ fun AppleSettingsRow(
                 trailing()
             } else if (onClick != null) {
                 Image(
-                    imageVector = androidx.compose.material.icons.Icons.Filled.ChevronRight,
+                    imageVector = androidx.compose.material.icons.Icons.Filled.KeyboardArrowRight,
                     contentDescription = null,
                     modifier = Modifier
                         .size(20.dp)
@@ -338,7 +338,7 @@ fun <T> AppleSegmentedControl(
                     Text(
                         text = labelProvider(option),
                         style = AppleTypography.subheadline,
-                        fontWeight = if (selectedIndex == index) FontWeight.SemiBold else FontWeight.Regular,
+                        fontWeight = if (selectedIndex == index) FontWeight.SemiBold else FontWeight.Normal,
                         color = if (selectedIndex == index) 
                             AppleColors.textPrimary 
                         else 
@@ -380,7 +380,7 @@ fun AppleNavigationBar(
             if (onBackClick != null) {
                 IconButton(onClick = onBackClick) {
                     Image(
-                        imageVector = androidx.compose.material.icons.Icons.Filled.ArrowBackIos,
+                        imageVector = androidx.compose.material.icons.Icons.Filled.ArrowBack,
                         contentDescription = "Back",
                         modifier = Modifier.size(20.dp),
                         colorFilter = ColorFilter.tint(AppleColors.primary)
@@ -418,7 +418,7 @@ fun AppleFloatingActionButton(
 ) {
     val scale by animateFloatAsState(
         targetValue = 1f,
-        animationSpec = springBouncy,
+        animationSpec = AppleSpringAnimations.springBouncy,
         label = "fab_scale"
     )
     

@@ -150,7 +150,7 @@ private fun BrowseContent(
         item { SectionHeader("Browse All") }
         item {
             LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(genres) { genre -> GenreChip(genre.name) { onGenreClick(genre.id) } }
+                items(genres) { genre -> GenreChip(name = genre.name, onClick = { onGenreClick(genre.id) }) }
             }
         }
         item { SectionHeader("Popular Categories") }
@@ -166,7 +166,7 @@ private fun SearchTextRow(icon: androidx.compose.ui.graphics.vector.ImageVector,
         modifier = Modifier.clickable(onClick = onClick),
         leadingContent = { Icon(icon, null) },
         headlineContent = { Text(text) },
-        trailingContent = { Icon(Icons.Filled.ChevronRight, null) }
+        trailingContent = { Icon(Icons.Filled.KeyboardArrowRight, null) }
     )
 }
 
@@ -211,17 +211,17 @@ private fun SearchResults(
                     leadingContent = { Icon(Icons.Filled.QueueMusic, null, tint = MaterialTheme.colorScheme.primary) },
                     headlineContent = { Text(playlist.name) },
                     supportingContent = { Text("${playlist.songIds.size} songs") },
-                    trailingContent = { Icon(Icons.Filled.ChevronRight, null) }
+                    trailingContent = { Icon(Icons.Filled.KeyboardArrowRight, null) }
                 )
             }
         }
         if (showArtists && results.artists.isNotEmpty()) {
             item { SectionHeader("Artists") }
-            item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(results.artists) { artist -> ArtistCard(artist.name, artist.imageUrl) { onArtistClick(artist.id) } } } }
+            item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(results.artists) { artist -> ArtistCard(name = artist.name, imageUrl = artist.imageUrl, onClick = { onArtistClick(artist.id) }) } } }
         }
         if (showAlbums && results.albums.isNotEmpty()) {
             item { SectionHeader("Albums") }
-            item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(results.albums) { album -> AlbumCard(album.title, album.artist, album.artworkUrl) { onAlbumClick(album.id) } } } }
+            item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(results.albums) { album -> AlbumCard(title = album.title, artist = album.artist, artworkUrl = album.artworkUrl, onClick = { onAlbumClick(album.id) }) } } }
         }
         if ((showSongs && songsForTab.isEmpty()) && (!showArtists || results.artists.isEmpty()) && (!showAlbums || results.albums.isEmpty()) && (!showPlaylists || results.playlists.isEmpty())) {
             item { EmptyState(icon = { Icon(Icons.Filled.SearchOff, null, Modifier.size(64.dp)) }, title = "No results found", subtitle = "Try another search or switch tabs") }

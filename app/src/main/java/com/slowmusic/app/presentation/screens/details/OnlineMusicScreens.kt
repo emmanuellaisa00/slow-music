@@ -79,7 +79,7 @@ fun ArtistDetailsScreen(
                     leadingContent = { Icon(Icons.Filled.Album, null, tint = MaterialTheme.colorScheme.primary) },
                     headlineContent = { Text(album.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     supportingContent = { Text(album.releaseDate ?: album.artist) },
-                    trailingContent = { Icon(Icons.Filled.ChevronRight, null) }
+                    trailingContent = { Icon(Icons.Filled.KeyboardArrowRight, null) }
                 )
             }
             item { SectionTitle("About") }
@@ -390,7 +390,7 @@ fun AddToPlaylistScreen(
                     leadingContent = { Icon(Icons.Filled.QueueMusic, null, tint = MaterialTheme.colorScheme.primary) },
                     headlineContent = { Text(playlist.name) },
                     supportingContent = { Text("${playlist.songIds.size} songs") },
-                    trailingContent = { Icon(Icons.Filled.ChevronRight, null) }
+                    trailingContent = { Icon(Icons.Filled.KeyboardArrowRight, null) }
                 )
             }
         }

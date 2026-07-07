@@ -91,7 +91,7 @@ fun AppleMusicSettingsScreen(
                             onClick = { }
                         )
                         
-                        HorizontalDivider(
+                        Divider(
                             color = AppleColors.glassBorder,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
@@ -151,7 +151,7 @@ fun AppleMusicSettingsScreen(
                             }
                         )
                         
-                        HorizontalDivider(
+                        Divider(
                             color = AppleColors.glassBorder,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
@@ -176,7 +176,7 @@ fun AppleMusicSettingsScreen(
                             }
                         )
                         
-                        HorizontalDivider(
+                        Divider(
                             color = AppleColors.glassBorder,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
@@ -201,7 +201,7 @@ fun AppleMusicSettingsScreen(
                             }
                         )
                         
-                        HorizontalDivider(
+                        Divider(
                             color = AppleColors.glassBorder,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
@@ -226,7 +226,7 @@ fun AppleMusicSettingsScreen(
                             }
                         )
                         
-                        HorizontalDivider(
+                        Divider(
                             color = AppleColors.glassBorder,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
@@ -277,7 +277,7 @@ fun AppleMusicSettingsScreen(
                             onClick = { }
                         )
                         
-                        HorizontalDivider(
+                        Divider(
                             color = AppleColors.glassBorder,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
@@ -297,7 +297,7 @@ fun AppleMusicSettingsScreen(
                             onClick = { }
                         )
                         
-                        HorizontalDivider(
+                        Divider(
                             color = AppleColors.glassBorder,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
@@ -353,7 +353,7 @@ fun AppleMusicSettingsScreen(
                             onClick = { }
                         )
                         
-                        HorizontalDivider(
+                        Divider(
                             color = AppleColors.glassBorder,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
@@ -373,7 +373,7 @@ fun AppleMusicSettingsScreen(
                             onClick = { }
                         )
                         
-                        HorizontalDivider(
+                        Divider(
                             color = AppleColors.glassBorder,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
@@ -434,7 +434,7 @@ fun AppleMusicSettingsScreen(
                             }
                         )
                         
-                        HorizontalDivider(
+                        Divider(
                             color = AppleColors.glassBorder,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
@@ -599,7 +599,7 @@ fun AppleMusicSettingsScreen(
                             }
                         )
                         
-                        HorizontalDivider(
+                        Divider(
                             color = AppleColors.glassBorder,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
@@ -618,7 +618,7 @@ fun AppleMusicSettingsScreen(
                             onClick = { }
                         )
                         
-                        HorizontalDivider(
+                        Divider(
                             color = AppleColors.glassBorder,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
@@ -670,7 +670,7 @@ fun AppleMusicSettingsScreen(
                             onClick = { }
                         )
                         
-                        HorizontalDivider(
+                        Divider(
                             color = AppleColors.glassBorder,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )

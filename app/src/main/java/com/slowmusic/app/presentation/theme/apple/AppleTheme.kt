@@ -103,6 +103,7 @@ object AppleColors {
     
     val secondary = Color(0xFFFE2952)
     val tertiary = Color(0xFFFF375F)
+    val accent = Color(0xFF007AFF)
     
     // Background colors
     val background = Color(0xFF000000)
@@ -137,7 +138,7 @@ object AppleColors {
 // Typography with Inter font
 object AppleTypography {
     val largeTitle = TextStyle(
-        fontFamily = FontFamily.Inter,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 34.sp,
         lineHeight = 41.sp,
@@ -145,7 +146,7 @@ object AppleTypography {
     )
     
     val title1 = TextStyle(
-        fontFamily = FontFamily.Inter,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 28.sp,
         lineHeight = 34.sp,
@@ -153,7 +154,7 @@ object AppleTypography {
     )
     
     val title2 = TextStyle(
-        fontFamily = FontFamily.Inter,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 22.sp,
         lineHeight = 28.sp,
@@ -161,7 +162,7 @@ object AppleTypography {
     )
     
     val title3 = TextStyle(
-        fontFamily = FontFamily.Inter,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,
         fontSize = 20.sp,
         lineHeight = 25.sp,
@@ -169,7 +170,7 @@ object AppleTypography {
     )
     
     val headline = TextStyle(
-        fontFamily = FontFamily.Inter,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,
         fontSize = 17.sp,
         lineHeight = 22.sp,
@@ -177,48 +178,48 @@ object AppleTypography {
     )
     
     val body = TextStyle(
-        fontFamily = FontFamily.Inter,
-        fontWeight = FontWeight.Regular,
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Normal,
         fontSize = 17.sp,
         lineHeight = 22.sp,
         letterSpacing = (-0.41).sp
     )
     
     val callout = TextStyle(
-        fontFamily = FontFamily.Inter,
-        fontWeight = FontWeight.Regular,
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 21.sp,
         letterSpacing = (-0.32).sp
     )
     
     val subheadline = TextStyle(
-        fontFamily = FontFamily.Inter,
-        fontWeight = FontWeight.Regular,
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Normal,
         fontSize = 15.sp,
         lineHeight = 20.sp,
         letterSpacing = (-0.24).sp
     )
     
     val footnote = TextStyle(
-        fontFamily = FontFamily.Inter,
-        fontWeight = FontWeight.Regular,
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Normal,
         fontSize = 13.sp,
         lineHeight = 18.sp,
         letterSpacing = (-0.08).sp
     )
     
     val caption1 = TextStyle(
-        fontFamily = FontFamily.Inter,
-        fontWeight = FontWeight.Regular,
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.sp
     )
     
     val caption2 = TextStyle(
-        fontFamily = FontFamily.Inter,
-        fontWeight = FontWeight.Regular,
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Normal,
         fontSize = 11.sp,
         lineHeight = 13.sp,
         letterSpacing = 0.07.sp
@@ -263,7 +264,6 @@ fun animateAsStateAppleMusic(
     return animateFloatAsState(
         targetValue = targetValue,
         animationSpec = animation,
-        key = key,
         label = "apple_animation"
     )
 }

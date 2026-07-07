@@ -151,7 +151,7 @@ fun LibraryScreen(
             
             item {
                 LibraryListItem(
-                    icon = Icons.Filled.ChevronRight,
+                    icon = Icons.Filled.KeyboardArrowRight,
                     title = "See all playlists",
                     subtitle = "",
                     onClick = onNavigateToPlaylists
@@ -166,7 +166,7 @@ fun LibraryScreen(
             
             item {
                 LibraryListItem(
-                    icon = Icons.Filled.ChevronRight,
+                    icon = Icons.Filled.KeyboardArrowRight,
                     title = "Following",
                     subtitle = "${followedArtists.size} artists",
                     onClick = onNavigateToArtists
@@ -181,7 +181,7 @@ fun LibraryScreen(
             
             item {
                 LibraryListItem(
-                    icon = Icons.Filled.ChevronRight,
+                    icon = Icons.Filled.KeyboardArrowRight,
                     title = "Your Albums",
                     subtitle = "Albums you've saved",
                     onClick = onNavigateToAlbums
@@ -238,7 +238,7 @@ private fun LibraryListItem(
         },
         trailingContent = {
             Icon(
-                imageVector = Icons.Filled.ChevronRight,
+                imageVector = Icons.Filled.KeyboardArrowRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -458,7 +458,7 @@ fun SavedAlbumsScreen(
     Scaffold(topBar = { TopAppBar(title = { Text("Saved Albums") }) }) { padding ->
         if (albums.isEmpty()) EmptyState(icon = { Icon(Icons.Filled.Album, null, Modifier.size(64.dp)) }, title = "No saved albums", subtitle = "Albums from favorites/downloads appear here", modifier = Modifier.padding(padding))
         else LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = 100.dp)) {
-            items(albums) { album -> ListItem(modifier = Modifier.clickable { onAlbumClick(album.id) }, leadingContent = { Icon(Icons.Filled.Album, null) }, headlineContent = { Text(album.title) }, supportingContent = { Text("${album.artist} • ${album.trackCount} songs") }, trailingContent = { Icon(Icons.Filled.ChevronRight, null) }) }
+            items(albums) { album -> ListItem(modifier = Modifier.clickable { onAlbumClick(album.id) }, leadingContent = { Icon(Icons.Filled.Album, null) }, headlineContent = { Text(album.title) }, supportingContent = { Text("${album.artist} • ${album.trackCount} songs") }, trailingContent = { Icon(Icons.Filled.KeyboardArrowRight, null) }) }
         }
     }
 }

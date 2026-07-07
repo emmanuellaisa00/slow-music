@@ -158,7 +158,7 @@ fun AppleBottomSheet(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
                 )
                 
-                HorizontalDivider(
+                Divider(
                     color = AppleColors.glassBorder,
                     modifier = Modifier.padding(horizontal = 24.dp)
                 )
@@ -289,7 +289,7 @@ fun AppleSongOptionsSheet(
                 }
             )
             
-            HorizontalDivider(
+            Divider(
                 color = AppleColors.glassBorder,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
@@ -361,7 +361,7 @@ private fun AppleSheetOption(
             }
             
             Icon(
-                imageVector = Icons.Filled.ChevronRight,
+                imageVector = Icons.Filled.KeyboardArrowRight,
                 contentDescription = null,
                 tint = AppleColors.textTertiary,
                 modifier = Modifier.size(20.dp)
@@ -461,7 +461,7 @@ fun AppleShareSheet(
             }
             
             // More apps would go here
-            HorizontalDivider(
+            Divider(
                 color = AppleColors.glassBorder,
                 modifier = Modifier.padding(vertical = 8.dp)
             )

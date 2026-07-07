@@ -73,7 +73,7 @@ fun AppleProfileScreen(
         
         item {
             ProfileMenuItem(
-                icon = Icons.Filled.Voucher,
+                icon = Icons.Filled.CardGiftcard,
                 title = "Redeem Code",
                 subtitle = "Enter a promo code",
                 onClick = { }
@@ -291,7 +291,7 @@ private fun ProfileMenuItem(
             }
             
             Icon(
-                imageVector = Icons.Filled.ChevronRight,
+                imageVector = Icons.Filled.KeyboardArrowRight,
                 contentDescription = null,
                 tint = AppleColors.textTertiary,
                 modifier = Modifier.size(20.dp)
@@ -668,7 +668,7 @@ fun EqualizerScreen(
                             }
                             
                             if (index < presets.lastIndex) {
-                                HorizontalDivider(
+                                Divider(
                                     color = AppleColors.glassBorder,
                                     modifier = Modifier.padding(vertical = 4.dp)
                                 )

@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package com.slowmusic.app.presentation.components.apple
 
 import androidx.compose.animation.*
@@ -22,6 +24,20 @@ import androidx.compose.ui.unit.*
 import coil.compose.AsyncImage
 import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.presentation.theme.apple.*
+
+
+private enum class SwipeToDismissBoxValue { Settled, StartToEnd, EndToStart }
+private class SimpleSwipeToDismissBoxState
+@Composable
+private fun rememberSwipeToDismissBoxState(confirmValueChange: (SwipeToDismissBoxValue) -> Boolean = { true }): SimpleSwipeToDismissBoxState = SimpleSwipeToDismissBoxState()
+@Composable
+private fun SwipeToDismissBox(
+    state: SimpleSwipeToDismissBoxState,
+    modifier: Modifier = Modifier,
+    backgroundContent: @Composable () -> Unit = {},
+    endBackgroundContent: @Composable () -> Unit = {},
+    content: @Composable () -> Unit
+) { Box(modifier) { content() } }
 
 /**
  * Apple Music Style Song Card (Horizontal Card)
@@ -90,7 +106,7 @@ fun AppleSongCard(
                 )
                 
                 // Playing indicator
-                AnimatedVisibility(
+                androidx.compose.animation.AnimatedVisibility(
                     visible = isPlaying,
                     enter = fadeIn() + scaleIn(),
                     exit = fadeOut() + scaleOut()
@@ -145,7 +161,7 @@ fun AppleSongCard(
                 IconButton(onClick = onFavoriteClick) {
                     val heartScale by animateFloatAsState(
                         targetValue = if (isFavorite) 1.2f else 1f,
-                        animationSpec = springBouncy,
+                        animationSpec = AppleSpringAnimations.springBouncy,
                         label = "heart_scale"
                     )
                     
@@ -228,7 +244,7 @@ fun AppleAlbumCard(
                     )
                     
                     // Hover overlay
-                    AnimatedVisibility(
+                    androidx.compose.animation.AnimatedVisibility(
                         visible = isHovered,
                         enter = fadeIn(),
                         exit = fadeOut()
@@ -353,7 +369,7 @@ fun AppleArtistCard(
             )
             
             // Hover overlay
-            AnimatedVisibility(
+            androidx.compose.animation.AnimatedVisibility(
                 visible = isHovered,
                 enter = fadeIn(),
                 exit = fadeOut()
@@ -437,7 +453,7 @@ fun PlayingIndicator(
                         durationMillis = 400,
                         delayMillis = index * 100
                     ),
-                    repeatMode = RepeatMode.Reverse
+                    repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
                 ),
                 label = "bar_$index"
             )

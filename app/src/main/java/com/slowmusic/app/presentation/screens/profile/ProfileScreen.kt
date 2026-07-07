@@ -84,7 +84,7 @@ fun ProfileScreen(
             
             item {
                 ProfileListItem(
-                    icon = Icons.Filled.Voucher,
+                    icon = Icons.Filled.CardGiftcard,
                     title = "Redeem Code",
                     subtitle = "Local database mode",
                     onClick = { message = "Redeem codes are disabled in local database mode" }
@@ -267,7 +267,7 @@ private fun ProfileListItem(
         },
         trailingContent = {
             Icon(
-                Icons.Filled.ChevronRight,
+                Icons.Filled.KeyboardArrowRight,
                 contentDescription = null
             )
         }
