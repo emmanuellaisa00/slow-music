@@ -36,7 +36,7 @@ fun AppleMusicPlayerScreen(
     song: Song,
     isPlaying: Boolean,
     progress: Float,
-    repeatMode: RepeatMode,
+    repeatMode: com.slowmusic.app.domain.model.RepeatMode,
     isShuffled: Boolean,
     isFavorite: Boolean,
     onPlayPause: () -> Unit,
@@ -59,7 +59,7 @@ fun AppleMusicPlayerScreen(
         targetValue = if (isPlaying) 360f * 100 else 0f,
         animationSpec = infiniteRepeatable(
             animation = tween(30000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
+            repeatMode = androidx.compose.animation.core.RepeatMode.Restart
         ),
         label = "album_rotation"
     )
@@ -377,11 +377,11 @@ fun AppleMusicPlayerScreen(
                     ) {
                         Icon(
                             imageVector = when (repeatMode) {
-                                RepeatMode.ONE -> Icons.Filled.RepeatOne
+                                com.slowmusic.app.domain.model.RepeatMode.ONE -> Icons.Filled.RepeatOne
                                 else -> Icons.Filled.Repeat
                             },
                             contentDescription = "Repeat",
-                            tint = if (repeatMode != RepeatMode.OFF) AppleColors.primary else AppleColors.textSecondary,
+                            tint = if (repeatMode != com.slowmusic.app.domain.model.RepeatMode.OFF) AppleColors.primary else AppleColors.textSecondary,
                             modifier = Modifier.size(24.dp)
                         )
                     }
