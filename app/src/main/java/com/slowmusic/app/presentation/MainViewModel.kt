@@ -1,17 +1,32 @@
 package com.slowmusic.app.presentation
 
 import android.app.Application
+import android.content.ComponentName
+import android.net.Uri
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.ListenableFuture
+import com.slowmusic.app.data.repository.DownloadManager
 import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.domain.repository.LibraryRepository
 import com.slowmusic.app.domain.repository.PreferencesRepository
-import com.slowmusic.app.data.repository.DownloadManager
+import com.slowmusic.app.service.MusicPlaybackService
 import com.slowmusic.app.service.MusicWidgetService
+import com.slowmusic.app.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -49,44 +64,134 @@ class MainViewModel @Inject constructor(
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> = _progress.asStateFlow()
 
+    private var controllerFuture: ListenableFuture<MediaController>? = null
+    private var mediaController: MediaController? = null
     private var progressJob: Job? = null
 
-    fun togglePlayPause() {
-        when (_playbackState.value) {
-            PlaybackState.PLAYING -> {
-                _playbackState.value = PlaybackState.PAUSED
-                stopProgressTicker()
-            }
-            PlaybackState.PAUSED, PlaybackState.IDLE, PlaybackState.ERROR -> {
-                if (_currentSong.value == null && _queue.value.isNotEmpty()) {
-                    playSong(_queue.value[_currentIndex.value.coerceIn(_queue.value.indices)])
-                } else {
-                    _playbackState.value = PlaybackState.PLAYING
-                    startProgressTicker()
+    private val playerListener = object : Player.Listener {
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            syncPlaybackState()
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            syncPlaybackState()
+            if (isPlaying) startProgressTicker() else stopProgressTicker()
+            updateWidget()
+        }
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            val mediaId = mediaItem?.mediaId
+            val index = _queue.value.indexOfFirst { it.id == mediaId }
+            if (index >= 0) {
+                _currentIndex.value = index
+                _currentSong.value = _queue.value[index]
+                viewModelScope.launch {
+                    _currentSong.value?.let { song ->
+                        libraryRepository.addToRecentlyPlayed(song)
+                        libraryRepository.incrementPlayCount(song.id)
+                    }
                 }
             }
-            PlaybackState.BUFFERING -> Unit
+            updateProgressFromController()
+            updateWidget()
         }
+
+        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+            _isShuffled.value = shuffleModeEnabled
+        }
+
+        override fun onRepeatModeChanged(repeatMode: Int) {
+            _repeatMode.value = when (repeatMode) {
+                Player.REPEAT_MODE_ONE -> RepeatMode.ONE
+                Player.REPEAT_MODE_ALL -> RepeatMode.ALL
+                else -> RepeatMode.OFF
+            }
+        }
+    }
+
+    init {
+        connectMediaController()
+    }
+
+    private fun connectMediaController() {
+        val app = getApplication<Application>()
+        val token = SessionToken(app, ComponentName(app, MusicPlaybackService::class.java))
+        controllerFuture = MediaController.Builder(app, token).buildAsync().also { future ->
+            future.addListener(
+                {
+                    runCatching {
+                        mediaController = future.get().also { controller ->
+                            controller.addListener(playerListener)
+                            controller.shuffleModeEnabled = _isShuffled.value
+                            controller.repeatMode = media3RepeatMode(_repeatMode.value)
+                            syncPlaybackState()
+                            updateProgressFromController()
+                        }
+                    }.onFailure { Logger.e("Player", "Failed to connect MediaController", it) }
+                },
+                ContextCompat.getMainExecutor(app)
+            )
+        }
+    }
+
+    fun togglePlayPause() {
+        val controller = mediaController
+        if (controller == null) {
+            fallbackTogglePlayPause()
+            return
+        }
+
+        if (controller.isPlaying) {
+            controller.pause()
+        } else {
+            if (controller.mediaItemCount == 0) {
+                _currentSong.value?.let { playSong(it, _queue.value.ifEmpty { listOf(it) }) }
+            } else {
+                controller.play()
+            }
+        }
+        syncPlaybackState()
         updateWidget()
     }
 
     fun playSong(song: Song, queue: List<Song> = listOf(song)) {
+        val playableQueue = queue.ifEmpty { listOf(song) }
         _currentSong.value = song
-        _queue.value = queue.ifEmpty { listOf(song) }
-        _currentIndex.value = _queue.value.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
+        _queue.value = playableQueue
+        _currentIndex.value = playableQueue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
         _progress.value = 0f
         _playbackState.value = PlaybackState.BUFFERING
+
+        val items = playableQueue.mapNotNull(::toMediaItem)
+        val startIndex = playableQueue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
+        val controller = mediaController
+
+        if (controller != null && items.isNotEmpty()) {
+            controller.setMediaItems(items, startIndex.coerceAtMost(items.lastIndex), 0L)
+            controller.prepare()
+            controller.play()
+            controller.shuffleModeEnabled = _isShuffled.value
+            controller.repeatMode = media3RepeatMode(_repeatMode.value)
+        } else {
+            Logger.w("Player", "No playable URL for ${song.title}; using local UI playback state")
+            fallbackStartPlayback(song, playableQueue)
+        }
+
         viewModelScope.launch {
             libraryRepository.addToRecentlyPlayed(song)
             libraryRepository.incrementPlayCount(song.id)
-            delay(250)
-            _playbackState.value = PlaybackState.PLAYING
-            startProgressTicker()
             updateWidget()
         }
     }
 
     fun playNext() {
+        val controller = mediaController
+        if (controller != null && controller.hasNextMediaItem()) {
+            controller.seekToNextMediaItem()
+            controller.play()
+            return
+        }
+
         val currentQueue = _queue.value
         if (currentQueue.isEmpty()) return
         val nextIndex = when (_repeatMode.value) {
@@ -98,6 +203,13 @@ class MainViewModel @Inject constructor(
     }
 
     fun playPrevious() {
+        val controller = mediaController
+        if (controller != null && controller.hasPreviousMediaItem()) {
+            controller.seekToPreviousMediaItem()
+            controller.play()
+            return
+        }
+
         val currentQueue = _queue.value
         if (currentQueue.isEmpty()) return
         val prevIndex = when (_repeatMode.value) {
@@ -109,15 +221,8 @@ class MainViewModel @Inject constructor(
     }
 
     fun toggleShuffle() {
-        val current = _queue.value
         _isShuffled.value = !_isShuffled.value
-        if (_isShuffled.value && current.size > 1) {
-            val active = _currentSong.value
-            _queue.value = current.shuffled().let { shuffled ->
-                if (active != null) listOf(active) + shuffled.filterNot { it.id == active.id } else shuffled
-            }
-            _currentIndex.value = 0
-        }
+        mediaController?.shuffleModeEnabled = _isShuffled.value
     }
 
     fun toggleRepeat() {
@@ -126,10 +231,12 @@ class MainViewModel @Inject constructor(
             RepeatMode.ALL -> RepeatMode.ONE
             RepeatMode.ONE -> RepeatMode.OFF
         }
+        mediaController?.repeatMode = media3RepeatMode(_repeatMode.value)
     }
 
     fun addToQueue(song: Song) {
         _queue.value = _queue.value + song
+        toMediaItem(song)?.let { mediaController?.addMediaItem(it) }
     }
 
     fun removeFromQueue(index: Int) {
@@ -137,11 +244,15 @@ class MainViewModel @Inject constructor(
         if (index !in currentQueue.indices) return
         currentQueue.removeAt(index)
         _queue.value = currentQueue
+        mediaController?.let { controller ->
+            if (index < controller.mediaItemCount) controller.removeMediaItem(index)
+        }
         if (index < _currentIndex.value) _currentIndex.value--
         if (currentQueue.isEmpty()) clearQueue()
     }
 
     fun clearQueue() {
+        mediaController?.clearMediaItems()
         _queue.value = emptyList()
         _currentIndex.value = 0
         _currentSong.value = null
@@ -152,7 +263,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun seekTo(progress: Float) {
-        _progress.value = progress.coerceIn(0f, 1f)
+        val clamped = progress.coerceIn(0f, 1f)
+        _progress.value = clamped
+        val controller = mediaController ?: return
+        val duration = controller.duration.takeIf { it > 0 } ?: _currentSong.value?.duration ?: 0L
+        if (duration > 0) controller.seekTo((duration * clamped).toLong())
     }
 
     fun downloadSong(song: Song) {
@@ -171,17 +286,44 @@ class MainViewModel @Inject constructor(
         if (state == PlaybackState.PLAYING) startProgressTicker() else stopProgressTicker()
     }
 
+    private fun toMediaItem(song: Song): MediaItem? {
+        val uri = song.localPath?.takeIf { it.isNotBlank() }
+            ?: song.streamUrl?.takeIf { it.isNotBlank() }
+            ?: song.previewUrl?.takeIf { it.isNotBlank() }
+            ?: return null
+
+        val metadata = MediaMetadata.Builder()
+            .setTitle(song.title)
+            .setArtist(song.artist)
+            .setAlbumTitle(song.album)
+            .setArtworkUri(song.albumArtUrl?.let(Uri::parse))
+            .build()
+
+        return MediaItem.Builder()
+            .setMediaId(song.id)
+            .setUri(Uri.parse(uri))
+            .setMediaMetadata(metadata)
+            .build()
+    }
+
+    private fun syncPlaybackState() {
+        val controller = mediaController
+        _playbackState.value = when {
+            controller == null -> _playbackState.value
+            controller.playbackState == Player.STATE_BUFFERING -> PlaybackState.BUFFERING
+            controller.playbackState == Player.STATE_ENDED -> PlaybackState.IDLE
+            controller.playbackState == Player.STATE_IDLE -> if (_currentSong.value == null) PlaybackState.IDLE else PlaybackState.PAUSED
+            controller.isPlaying -> PlaybackState.PLAYING
+            else -> PlaybackState.PAUSED
+        }
+    }
+
     private fun startProgressTicker() {
         progressJob?.cancel()
         progressJob = viewModelScope.launch {
-            while (_playbackState.value == PlaybackState.PLAYING) {
-                val song = _currentSong.value
-                val duration = song?.duration ?: 0L
-                val step = if (duration > 0) 1000f / duration else 0.003f
-                val next = (_progress.value + step).coerceAtMost(1f)
-                _progress.value = next
-                if (next >= 1f) playNext()
-                delay(1000)
+            while (_playbackState.value == PlaybackState.PLAYING || mediaController?.isPlaying == true) {
+                updateProgressFromController()
+                delay(500)
             }
         }
     }
@@ -189,9 +331,64 @@ class MainViewModel @Inject constructor(
     private fun stopProgressTicker() {
         progressJob?.cancel()
         progressJob = null
+        updateProgressFromController()
+    }
+
+    private fun updateProgressFromController() {
+        val controller = mediaController
+        if (controller != null) {
+            val duration = controller.duration
+            _progress.value = if (duration > 0) {
+                (controller.currentPosition.toFloat() / duration).coerceIn(0f, 1f)
+            } else {
+                _progress.value
+            }
+        } else {
+            val songDuration = _currentSong.value?.duration ?: 0L
+            if (songDuration > 0 && _playbackState.value == PlaybackState.PLAYING) {
+                _progress.value = (_progress.value + 500f / songDuration).coerceAtMost(1f)
+            }
+        }
+    }
+
+    private fun media3RepeatMode(mode: RepeatMode): Int = when (mode) {
+        RepeatMode.ONE -> Player.REPEAT_MODE_ONE
+        RepeatMode.ALL -> Player.REPEAT_MODE_ALL
+        RepeatMode.OFF -> Player.REPEAT_MODE_OFF
+    }
+
+    private fun fallbackTogglePlayPause() {
+        when (_playbackState.value) {
+            PlaybackState.PLAYING -> {
+                _playbackState.value = PlaybackState.PAUSED
+                stopProgressTicker()
+            }
+            PlaybackState.PAUSED, PlaybackState.IDLE, PlaybackState.ERROR -> {
+                _playbackState.value = PlaybackState.PLAYING
+                startProgressTicker()
+            }
+            PlaybackState.BUFFERING -> Unit
+        }
+        updateWidget()
+    }
+
+    private fun fallbackStartPlayback(song: Song, queue: List<Song>) {
+        _currentSong.value = song
+        _queue.value = queue
+        _currentIndex.value = queue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
+        _playbackState.value = PlaybackState.PLAYING
+        startProgressTicker()
     }
 
     private fun updateWidget() {
         MusicWidgetService.updateWidget(getApplication(), _currentSong.value, _playbackState.value == PlaybackState.PLAYING)
+    }
+
+    override fun onCleared() {
+        mediaController?.removeListener(playerListener)
+        mediaController?.release()
+        controllerFuture?.let { MediaController.releaseFuture(it) }
+        progressJob?.cancel()
+        super.onCleared()
     }
 }
