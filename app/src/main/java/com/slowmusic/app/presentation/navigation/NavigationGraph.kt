@@ -44,6 +44,8 @@ fun NavigationGraph(
     onDownload: (Song) -> Unit,
     onAddToQueue: (Song) -> Unit,
     onRemoveFromQueue: (Int) -> Unit,
+    onMoveQueueItem: (Int, Int) -> Unit,
+    onSaveQueueAsPlaylist: () -> Unit,
     onClearQueue: () -> Unit
 ) {
 
@@ -280,8 +282,9 @@ fun NavigationGraph(
                 queue = queue,
                 onSongClick = { song -> selectSong(song, queue) },
                 onRemoveFromQueue = onRemoveFromQueue,
+                onMoveQueueItem = onMoveQueueItem,
                 onClearQueue = onClearQueue,
-                onSaveAsPlaylist = { },
+                onSaveAsPlaylist = onSaveQueueAsPlaylist,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

@@ -33,6 +33,7 @@ fun QueueScreen(
     queue: List<Song>,
     onSongClick: (Song) -> Unit,
     onRemoveFromQueue: (Int) -> Unit,
+    onMoveQueueItem: (Int, Int) -> Unit,
     onClearQueue: () -> Unit,
     onSaveAsPlaylist: () -> Unit,
     onNavigateBack: () -> Unit,
@@ -194,6 +195,8 @@ fun QueueScreen(
                         song = song,
                         position = index + 1,
                         onClick = { onSongClick(song) },
+                        onMoveUp = { if (index > 0) onMoveQueueItem(index, index - 1) },
+                        onMoveDown = { if (index < queue.lastIndex) onMoveQueueItem(index, index + 1) },
                         onRemove = { onRemoveFromQueue(index) }
                     )
                 }
@@ -207,6 +210,8 @@ private fun QueueItem(
     song: Song,
     position: Int,
     onClick: () -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
     onRemove: () -> Unit
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
@@ -240,12 +245,18 @@ private fun QueueItem(
             }
         },
         content = {
-            AppleSongCard(
-                song = song,
-                onClick = onClick,
-                onMoreClick = { },
-                modifier = Modifier.fillMaxWidth()
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(onClick = onMoveUp, modifier = Modifier.size(32.dp)) { Icon(Icons.Filled.KeyboardArrowUp, "Move up", tint = AppleColors.textSecondary) }
+                    IconButton(onClick = onMoveDown, modifier = Modifier.size(32.dp)) { Icon(Icons.Filled.KeyboardArrowDown, "Move down", tint = AppleColors.textSecondary) }
+                }
+                AppleSongCard(
+                    song = song,
+                    onClick = onClick,
+                    onMoreClick = onRemove,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         },
         enableDismissFromStartToEnd = false,
         enableDismissFromEndToStart = true

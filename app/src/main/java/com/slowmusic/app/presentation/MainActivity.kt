@@ -62,6 +62,8 @@ class MainActivity : ComponentActivity() {
                     onDownload = { song -> mainViewModel.downloadSong(song) },
                     onAddToQueue = { song -> mainViewModel.addToQueue(song) },
                     onRemoveFromQueue = { index -> mainViewModel.removeFromQueue(index) },
+                    onMoveQueueItem = { from, to -> mainViewModel.moveQueueItem(from, to) },
+                    onSaveQueueAsPlaylist = { mainViewModel.saveQueueAsPlaylist() },
                     onClearQueue = { mainViewModel.clearQueue() },
                     onMiniPlayerClick = { }
                 )
@@ -99,6 +101,8 @@ fun SlowMusicApp(
     onDownload: (com.slowmusic.app.domain.model.Song) -> Unit,
     onAddToQueue: (com.slowmusic.app.domain.model.Song) -> Unit,
     onRemoveFromQueue: (Int) -> Unit,
+    onMoveQueueItem: (Int, Int) -> Unit,
+    onSaveQueueAsPlaylist: () -> Unit,
     onClearQueue: () -> Unit,
     onMiniPlayerClick: () -> Unit
 ) {
@@ -216,6 +220,8 @@ fun SlowMusicApp(
             onDownload = onDownload,
             onAddToQueue = onAddToQueue,
             onRemoveFromQueue = onRemoveFromQueue,
+            onMoveQueueItem = onMoveQueueItem,
+            onSaveQueueAsPlaylist = onSaveQueueAsPlaylist,
             onClearQueue = onClearQueue
         )
     }

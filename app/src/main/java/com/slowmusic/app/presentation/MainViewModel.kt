@@ -288,6 +288,27 @@ class MainViewModel @Inject constructor(
         toMediaItem(song)?.let { mediaController?.addMediaItem(it) }
     }
 
+    fun moveQueueItem(from: Int, to: Int) {
+        val currentQueue = _queue.value.toMutableList()
+        if (from !in currentQueue.indices || to !in currentQueue.indices || from == to) return
+        val item = currentQueue.removeAt(from)
+        currentQueue.add(to, item)
+        _queue.value = currentQueue
+        mediaController?.let { controller ->
+            if (from < controller.mediaItemCount && to < controller.mediaItemCount) controller.moveMediaItem(from, to)
+        }
+        if (_currentIndex.value == from) _currentIndex.value = to
+    }
+
+    fun saveQueueAsPlaylist() {
+        val items = _queue.value
+        if (items.isEmpty()) return
+        viewModelScope.launch {
+            val playlist = libraryRepository.createPlaylist("Queue ${System.currentTimeMillis()}", "Saved from now playing queue")
+            items.forEach { libraryRepository.addSongToPlaylist(playlist.id, it) }
+        }
+    }
+
     fun removeFromQueue(index: Int) {
         val currentQueue = _queue.value.toMutableList()
         if (index !in currentQueue.indices) return

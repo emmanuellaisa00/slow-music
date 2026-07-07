@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -33,6 +34,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.slowmusic.app.data.repository.DownloadManager
+import com.slowmusic.app.data.repository.DownloadState
 import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.domain.repository.LibraryRepository
 import com.slowmusic.app.domain.repository.MusicRepository
@@ -400,14 +402,22 @@ fun AddToPlaylistScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CastDevicePickerScreen(onNavigateBack: () -> Unit) {
-    val devices = listOf("Living Room TV" to "Chromecast", "Bedroom Speaker" to "Cast audio", "Kitchen Display" to "Smart display")
+    val context = LocalContext.current
+    val castContext = remember { runCatching { com.google.android.gms.cast.framework.CastContext.getSharedInstance(context) }.getOrNull() }
+    val session = castContext?.sessionManager?.currentCastSession
+    val connectedName = session?.castDevice?.friendlyName
     Scaffold(topBar = { TopAppBar(title = { Text("Connect to device") }, navigationIcon = { BackButton(onNavigateBack) }) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 120.dp)) {
-            item { Text("Available devices", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
-            items(devices) { (name, type) ->
-                ListItem(leadingContent = { Icon(Icons.Filled.Cast, null, tint = MaterialTheme.colorScheme.primary) }, headlineContent = { Text(name) }, supportingContent = { Text(type) }, trailingContent = { TextButton(onClick = {}) { Text("Connect") } })
+            item { Text("Cast", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+            item {
+                ListItem(
+                    leadingContent = { Icon(Icons.Filled.Cast, null, tint = MaterialTheme.colorScheme.primary) },
+                    headlineContent = { Text(connectedName ?: "No active Cast session") },
+                    supportingContent = { Text(if (connectedName == null) "Use the system Cast picker from the player/device menu to connect." else "Connected and ready for remote playback handoff.") },
+                    trailingContent = { if (connectedName != null) TextButton(onClick = { castContext.sessionManager.endCurrentSession(true) }) { Text("Disconnect") } }
+                )
             }
-            item { AssistChip(onClick = {}, label = { Text("Cast framework is ready; live device discovery is enabled on real devices with Google Play services.") }, leadingIcon = { Icon(Icons.Filled.Info, null) }) }
+            item { AssistChip(onClick = {}, label = { Text("Google Cast framework is initialized. Device discovery appears when Google Play services exposes routes on device.") }, leadingIcon = { Icon(Icons.Filled.Info, null) }) }
         }
     }
 }
@@ -416,10 +426,22 @@ fun CastDevicePickerScreen(onNavigateBack: () -> Unit) {
 @Composable
 fun DownloadStorageManagerScreen(onNavigateBack: () -> Unit, viewModel: DownloadStorageViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
+    val activeDownloads by viewModel.activeDownloads.collectAsState()
     LaunchedEffect(Unit) { viewModel.refresh() }
     Scaffold(topBar = { TopAppBar(title = { Text("Download storage") }, navigationIcon = { BackButton(onNavigateBack) }, actions = { IconButton(onClick = viewModel::refresh) { Icon(Icons.Filled.Refresh, "Refresh") } }) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 120.dp)) {
             item { StorageCard(state.storageUsed, state.downloads.size) }
+            if (activeDownloads.isNotEmpty()) {
+                item { SectionTitle("Active downloads") }
+                items(activeDownloads.entries.toList()) { entry ->
+                    val progress = (entry.value as? DownloadState.Downloading)?.progress ?: 0f
+                    ListItem(
+                        headlineContent = { Text(entry.key) },
+                        supportingContent = { LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth()) },
+                        trailingContent = { TextButton(onClick = { viewModel.cancel(entry.key) }) { Text("Cancel") } }
+                    )
+                }
+            }
             item { SectionTitle("Downloaded songs") }
             if (state.downloads.isEmpty()) item { EmptyPanel("No downloads", "Offline songs and failed downloads will appear here.") }
             items(state.downloads) { song ->
@@ -571,8 +593,10 @@ class AddToPlaylistViewModel @Inject constructor(private val libraryRepository: 
 class DownloadStorageViewModel @Inject constructor(private val libraryRepository: LibraryRepository, private val downloadManager: DownloadManager) : ViewModel() {
     private val _state = MutableStateFlow(DownloadStorageState())
     val state: StateFlow<DownloadStorageState> = _state.asStateFlow()
+    val activeDownloads: StateFlow<Map<String, DownloadState>> = downloadManager.downloads
     fun refresh() = viewModelScope.launch { _state.value = DownloadStorageState(libraryRepository.getDownloadedSongs().first(), downloadManager.getStorageUsed()) }
     fun delete(song: Song) = viewModelScope.launch { downloadManager.deleteDownload(song); refresh() }
+    fun cancel(songId: String) = downloadManager.cancelDownload(songId)
     fun clearAll() = viewModelScope.launch { _state.value.downloads.forEach { libraryRepository.deleteDownload(it.id) }; downloadManager.clearAllDownloads(); refresh() }
 }
 
