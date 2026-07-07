@@ -10,7 +10,10 @@ import android.os.Build
 import android.os.IBinder
 import android.os.Parcelable
 import android.widget.RemoteViews
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
@@ -51,11 +54,24 @@ class MusicWidgetService : Service() {
                 val isPlaying = intent.getBooleanExtra(EXTRA_IS_PLAYING, false)
                 song?.let { updateWidget(it, isPlaying) }
             }
-            ACTION_PLAY_PAUSE -> sendBroadcast(Intent(ACTION_PLAY_PAUSE_BROADCAST).setPackage(packageName))
-            ACTION_NEXT -> sendBroadcast(Intent(ACTION_NEXT_BROADCAST).setPackage(packageName))
-            ACTION_PREVIOUS -> sendBroadcast(Intent(ACTION_PREVIOUS_BROADCAST).setPackage(packageName))
+            ACTION_PLAY_PAUSE -> controlPlayer { controller -> if (controller.isPlaying) controller.pause() else controller.play() }
+            ACTION_NEXT -> controlPlayer { controller -> if (controller.hasNextMediaItem()) controller.seekToNextMediaItem() }
+            ACTION_PREVIOUS -> controlPlayer { controller -> if (controller.hasPreviousMediaItem()) controller.seekToPreviousMediaItem() else controller.seekTo(0) }
         }
         return START_NOT_STICKY
+    }
+
+    private fun controlPlayer(action: (MediaController) -> Unit) {
+        val token = SessionToken(this, ComponentName(this, MusicPlaybackService::class.java))
+        val future = MediaController.Builder(this, token).buildAsync()
+        future.addListener({
+            runCatching {
+                val controller = future.get()
+                action(controller)
+                controller.release()
+            }
+            MediaController.releaseFuture(future)
+        }, ContextCompat.getMainExecutor(this))
     }
 
     private fun updateWidget(song: Song, isPlaying: Boolean) {

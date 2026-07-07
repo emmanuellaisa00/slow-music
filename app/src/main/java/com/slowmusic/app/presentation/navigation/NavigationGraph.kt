@@ -16,6 +16,7 @@ import com.slowmusic.app.presentation.screens.profile.ProfileScreen
 import com.slowmusic.app.presentation.screens.search.SearchScreen
 import com.slowmusic.app.presentation.screens.settings.LogsScreen
 import com.slowmusic.app.presentation.screens.settings.SettingsScreen
+import com.slowmusic.app.presentation.screens.settings.EqualizerControlScreen
 import com.slowmusic.app.presentation.screens.player.AppleMusicPlayerScreen
 import com.slowmusic.app.presentation.screens.player.QueueScreen
 import com.slowmusic.app.presentation.screens.player.LyricsScreen
@@ -261,11 +262,7 @@ fun NavigationGraph(
 
 
         composable(Screen.Equalizer.route) {
-            LegalTextScreen(
-                title = "Equalizer",
-                body = "The audio effect engine is attached to the playback audio session. Presets and band sliders can now be wired to EqualizerManager.apply(settings) for device-specific tuning.",
-                onNavigateBack = { navController.popBackStack() }
-            )
+            EqualizerControlScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(Screen.Logs.route) {
@@ -294,6 +291,7 @@ fun NavigationGraph(
                 LyricsScreen(
                     song = song,
                     lyrics = lyrics,
+                    progress = progress,
                     isSynced = lyrics?.contains("[") == true,
                     onNavigateBack = { navController.popBackStack() },
                     onToggleSynced = { }

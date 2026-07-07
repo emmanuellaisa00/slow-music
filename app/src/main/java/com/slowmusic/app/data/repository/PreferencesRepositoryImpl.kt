@@ -38,6 +38,7 @@ class PreferencesRepositoryImpl @Inject constructor(
         val UI_STYLE = stringPreferencesKey("ui_style")
         val EQUALIZER_ENABLED = booleanPreferencesKey("equalizer_enabled")
         val EQUALIZER_PRESET = intPreferencesKey("equalizer_preset")
+        val EQUALIZER_BANDS = stringPreferencesKey("equalizer_bands")
         val SEARCH_HISTORY = stringPreferencesKey("search_history")
         val FAVORITES = stringPreferencesKey("favorites")
         val RECENTLY_PLAYED = stringPreferencesKey("recently_played")
@@ -92,7 +93,10 @@ class PreferencesRepositoryImpl @Inject constructor(
             EqualizerSettings(
                 enabled = prefs[PreferencesKeys.EQUALIZER_ENABLED] ?: false,
                 preset = prefs[PreferencesKeys.EQUALIZER_PRESET] ?: 0,
-                bandLevels = emptyMap()
+                bandLevels = runCatching {
+                    val type = object : TypeToken<Map<Int, Int>>() {}.type
+                    gson.fromJson<Map<Int, Int>>(prefs[PreferencesKeys.EQUALIZER_BANDS] ?: "{}", type)
+                }.getOrDefault(emptyMap())
             )
         }
     }
@@ -101,6 +105,7 @@ class PreferencesRepositoryImpl @Inject constructor(
         context.dataStore.edit { prefs ->
             prefs[PreferencesKeys.EQUALIZER_ENABLED] = settings.enabled
             prefs[PreferencesKeys.EQUALIZER_PRESET] = settings.preset
+            prefs[PreferencesKeys.EQUALIZER_BANDS] = gson.toJson(settings.bandLevels)
         }
     }
 

@@ -260,12 +260,13 @@ private fun QueueItem(
 fun LyricsScreen(
     song: Song,
     lyrics: String?,
+    progress: Float = 0f,
     isSynced: Boolean = false,
     onNavigateBack: () -> Unit,
     onToggleSynced: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var currentLine by remember { mutableIntStateOf(0) }
+    var manualLine by remember { mutableStateOf<Int?>(null) }
 
     Column(
         modifier = modifier
@@ -330,7 +331,16 @@ fun LyricsScreen(
                 .padding(horizontal = 24.dp)
         ) {
             if (lyrics != null) {
-                val lines = lyrics.split("\n")
+                val parsed = remember(lyrics) { parseLrcLines(lyrics) }
+                val lines = parsed.map { it.second }
+                val currentLine = manualLine ?: run {
+                    if (parsed.any { it.first >= 0L }) {
+                        val pos = ((song.duration.takeIf { it > 0 } ?: 1L) * progress).toLong()
+                        parsed.indexOfLast { it.first in 0..pos }.coerceAtLeast(0)
+                    } else {
+                        (((lines.lastIndex.coerceAtLeast(0)) * progress).toInt()).coerceIn(0, lines.lastIndex.coerceAtLeast(0))
+                    }
+                }
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -359,7 +369,7 @@ fun LyricsScreen(
                             textAlign = TextAlign.Center,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { currentLine = index }
+                                .clickable { manualLine = index }
 
                         )
                     }
@@ -606,4 +616,20 @@ private fun DownloadProgressItem(
             )
         }
     }
+}
+
+private fun parseLrcLines(raw: String): List<Pair<Long, String>> {
+    val regex = Regex("\\[(\\d{1,2}):(\\d{2})(?:\\.(\\d{1,3}))?]")
+    return raw.lines().mapNotNull { line ->
+        val match = regex.find(line)
+        if (match != null) {
+            val min = match.groupValues[1].toLongOrNull() ?: 0L
+            val sec = match.groupValues[2].toLongOrNull() ?: 0L
+            val msText = match.groupValues.getOrNull(3).orEmpty().padEnd(3, '0').take(3)
+            val ms = msText.toLongOrNull() ?: 0L
+            ((min * 60 + sec) * 1000 + ms) to line.replace(regex, "").trim().ifBlank { "♪" }
+        } else {
+            -1L to line.trim()
+        }
+    }.filter { it.second.isNotBlank() }
 }
