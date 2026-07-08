@@ -132,9 +132,7 @@ class LyricsRepositoryImpl @Inject constructor(
 
         val safe = fetched ?: Lyrics(
             songId = song.id,
-            text = "♪
-Lyrics are not available for this track yet.
-When a synced or plain lyric source is found, it will appear here automatically.",
+            text = "♪\nLyrics are not available for this track yet.\nWhen a synced or plain lyric source is found, it will appear here automatically.",
             source = "Unavailable"
         )
         cacheLyrics(song, safe)
