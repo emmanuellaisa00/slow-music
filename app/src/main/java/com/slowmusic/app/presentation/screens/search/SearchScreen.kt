@@ -41,6 +41,7 @@ fun SearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchHistory by viewModel.searchHistory.collectAsState()
+    val recentSelections by viewModel.recentSelections.collectAsState()
     val focusManager = LocalFocusManager.current
     var selectedSong by remember { mutableStateOf<Song?>(null) }
     var voiceMessage by remember { mutableStateOf<String?>(null) }
@@ -126,7 +127,17 @@ fun SearchScreen(
             voiceMessage?.let { Text(it, modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.primary) }
             when {
                 uiState.isSearching -> LoadingIndicator()
-                uiState.query.isEmpty() -> BrowseContent(uiState.genres, searchHistory, uiState.suggestions, onGenreClick, { viewModel.updateQuery(it); viewModel.search(it) }, viewModel::clearSearchHistory)
+                uiState.query.isEmpty() -> BrowseContent(
+                    genres = uiState.genres,
+                    recentSelections = recentSelections,
+                    searchHistory = searchHistory,
+                    suggestions = uiState.suggestions,
+                    onRecentSongClick = { song -> onSongClick(song, recentSelections.ifEmpty { listOf(song) }) },
+                    onRecentSongMore = { selectedSong = it },
+                    onGenreClick = onGenreClick,
+                    onHistoryItemClick = { viewModel.updateQuery(it); viewModel.search(it) },
+                    onClearHistory = viewModel::clearSearchHistory
+                )
                 uiState.error != null -> ErrorMessage(uiState.error ?: "Search failed", onRetry = { viewModel.search(uiState.query) })
                 else -> SearchResults(
                     state = uiState,
@@ -145,8 +156,11 @@ fun SearchScreen(
 @Composable
 private fun BrowseContent(
     genres: List<Genre>,
+    recentSelections: List<Song>,
     searchHistory: List<String>,
     suggestions: List<String>,
+    onRecentSongClick: (Song) -> Unit,
+    onRecentSongMore: (Song) -> Unit,
     onGenreClick: (String) -> Unit,
     onHistoryItemClick: (String) -> Unit,
     onClearHistory: () -> Unit
@@ -156,14 +170,23 @@ private fun BrowseContent(
             item { SectionHeader("Suggestions") }
             items(suggestions) { suggestion -> SearchTextRow(Icons.Filled.Lightbulb, suggestion) { onHistoryItemClick(suggestion) } }
         }
-        if (searchHistory.isNotEmpty()) {
+        if (recentSelections.isNotEmpty()) {
             item {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Recent Searches", style = MaterialTheme.typography.titleMedium)
-                    TextButton(onClick = onClearHistory) { Text("Clear all") }
+                    Text("Recently selected", style = MaterialTheme.typography.titleMedium)
+                    TextButton(onClick = onClearHistory) { Text("Clear searches") }
                 }
             }
-            items(searchHistory.take(8)) { query -> SearchTextRow(Icons.Filled.History, query) { onHistoryItemClick(query) } }
+            items(recentSelections.take(10)) { song ->
+                SongListItem(
+                    song = song,
+                    onClick = { onRecentSongClick(song) },
+                    onMoreClick = { onRecentSongMore(song) }
+                )
+            }
+        } else if (searchHistory.isNotEmpty()) {
+            item { SectionHeader("Suggestions from history") }
+            items(searchHistory.take(4)) { query -> SearchTextRow(Icons.Filled.History, query) { onHistoryItemClick(query) } }
         }
         item { SectionHeader("Browse All") }
         item {

@@ -27,19 +27,19 @@ fun MiniPlayer(
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    progress: Float = 0f
 ) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        color = PlayerBackground,
-        tonalElevation = 8.dp
+        color = PlayerBackground.copy(alpha = 0.96f),
+        tonalElevation = 4.dp
     ) {
         Column {
-            // Progress bar
             LinearProgressIndicator(
-                progress = 0.4f, // Would be actual progress
+                progress = progress.coerceIn(0f, 1f),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(2.dp),
@@ -50,7 +50,8 @@ fun MiniPlayer(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                    .height(56.dp)
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Album art
@@ -58,12 +59,12 @@ fun MiniPlayer(
                     model = song.albumArtUrl,
                     contentDescription = "Album art",
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(4.dp)),
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Crop
                 )
                 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 
                 // Song info
                 Column(
@@ -71,14 +72,14 @@ fun MiniPlayer(
                 ) {
                     Text(
                         text = song.title,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.labelLarge,
                         color = TextPrimaryDark,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = song.artist,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelSmall,
                         color = TextSecondaryDark,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -86,7 +87,7 @@ fun MiniPlayer(
                 }
                 
                 // Controls
-                IconButton(onClick = onPlayPause) {
+                IconButton(onClick = onPlayPause, modifier = Modifier.size(40.dp)) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                         contentDescription = if (isPlaying) "Pause" else "Play",
@@ -94,7 +95,7 @@ fun MiniPlayer(
                     )
                 }
                 
-                IconButton(onClick = onNext) {
+                IconButton(onClick = onNext, modifier = Modifier.size(40.dp)) {
                     Icon(
                         imageVector = Icons.Filled.SkipNext,
                         contentDescription = "Next",

@@ -51,6 +51,9 @@ class SearchViewModel @Inject constructor(
     val searchHistory: StateFlow<List<String>> = getSearchHistoryUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val recentSelections: StateFlow<List<Song>> = libraryRepository.getRecentlyPlayed()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     private var searchJob: Job? = null
 
     fun updateQuery(query: String) {

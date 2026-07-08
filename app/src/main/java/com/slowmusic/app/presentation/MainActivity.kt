@@ -156,7 +156,8 @@ fun SlowMusicApp(
                                         isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
                                         onPlayPause = onPlayPause,
                                         onNext = onNext,
-                                        onClick = { navController.navigate(Screen.Player.route) }
+                                        onClick = { navController.navigate(Screen.Player.route) },
+                                        progress = progress
                                     )
                                 }
                             }
