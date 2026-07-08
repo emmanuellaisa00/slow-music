@@ -118,7 +118,7 @@ class LyricsRepositoryImpl @Inject constructor(
         private fun stableKey(song: Song): String = (song.id.ifBlank { "${song.artist}_${song.title}" })
             .lowercase()
             .replace(Regex("[^a-z0-9_ -]"), "")
-            .replace(Regex("\s+"), "_")
+            .replace(Regex("""\s+"""), "_")
             .take(90)
     }
 
@@ -201,8 +201,8 @@ class LyricsRepositoryImpl @Inject constructor(
     }
 
     private fun cleanTitle(raw: String): String = raw
-        .replace(Regex("\(.*?\)|\[.*?]"), "")
-        .replace(Regex("(?i)\b(remaster(ed)?|radio edit|official audio|official video|lyrics?|feat\.|ft\.)\b.*"), "")
+        .replace(Regex("""\(.*?\)|\[.*?]"""), "")
+        .replace(Regex("""(?i)\b(remaster(ed)?|radio edit|official audio|official video|lyrics?|feat\.|ft\.)\b.*"""), "")
         .trim()
 
     private fun cleanArtist(raw: String): String = raw
