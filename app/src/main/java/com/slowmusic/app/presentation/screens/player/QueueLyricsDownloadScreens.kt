@@ -677,3 +677,4 @@ private fun parseLrcLines(raw: String): List<Pair<Long, String>> {
         }
     }.filter { it.second.isNotBlank() }
 }
+}
