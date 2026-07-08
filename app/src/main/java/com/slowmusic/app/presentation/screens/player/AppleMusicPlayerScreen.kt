@@ -147,13 +147,23 @@ fun AppleMusicPlayerScreen(
                         fontWeight = FontWeight.SemiBold
                     )
                     
-                    IconButton(onClick = onNavigateToQueue) {
-                        Icon(
-                            imageVector = Icons.Filled.QueueMusic,
-                            contentDescription = "Queue",
-                            tint = AppleColors.textPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onNavigateToLyrics) {
+                            Icon(
+                                imageVector = Icons.Filled.Lyrics,
+                                contentDescription = "Lyrics",
+                                tint = AppleColors.textPrimary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        IconButton(onClick = onNavigateToQueue) {
+                            Icon(
+                                imageVector = Icons.Filled.QueueMusic,
+                                contentDescription = "Queue",
+                                tint = AppleColors.textPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -291,27 +301,11 @@ fun AppleMusicPlayerScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
             ) {
-                AppleSlider(
+                IOSProgressBar(
                     value = progress,
-                    onValueChange = onSeek,
+                    onSeek = onSeek,
                     modifier = Modifier.fillMaxWidth()
                 )
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = formatDuration((progress * song.duration).toLong()),
-                        style = AppleTypography.caption1,
-                        color = AppleColors.textTertiary
-                    )
-                    Text(
-                        text = formatDuration(song.duration),
-                        style = AppleTypography.caption1,
-                        color = AppleColors.textTertiary
-                    )
-                }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -412,63 +406,42 @@ fun AppleMusicPlayerScreen(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Bottom Actions
-            AnimatedVisibility(
-                visible = showControls,
-                enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-                exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 32.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Lyrics
-                    IconButton(onClick = onNavigateToLyrics) {
-                        Icon(
-                            imageVector = Icons.Filled.Lyrics,
-                            contentDescription = "Lyrics",
-                            tint = AppleColors.textSecondary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    
-                    // AirPlay / Cast
-                    IconButton(onClick = onNavigateToCast) {
-                        Icon(
-                            imageVector = Icons.Filled.Cast,
-                            contentDescription = "Cast",
-                            tint = AppleColors.textSecondary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    
-                    // Share
-                    IconButton(onClick = onShare) {
-                        Icon(
-                            imageVector = Icons.Filled.Share,
-                            contentDescription = "Share",
-                            tint = AppleColors.textSecondary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    
-                    // More
-                    IconButton(onClick = onMoreOptions) {
-                        Icon(
-                            imageVector = Icons.Filled.MoreHoriz,
-                            contentDescription = "More",
-                            tint = AppleColors.textSecondary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-            }
-            
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+}
+
+@Composable
+private fun IOSProgressBar(
+    value: Float,
+    onSeek: (Float) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .height(30.dp)
+            .pointerInput(Unit) {
+                detectTapGestures { offset ->
+                    val width = size.width.toFloat().coerceAtLeast(1f)
+                    onSeek((offset.x / width).coerceIn(0f, 1f))
+                }
+            },
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Color.White.copy(alpha = 0.22f))
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(value.coerceIn(0f, 1f))
+                .height(6.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Color.White.copy(alpha = 0.86f))
+        )
     }
 }
 

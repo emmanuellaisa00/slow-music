@@ -345,7 +345,8 @@ fun NavigationGraph(
                     progress = progress,
                     isSynced = lyrics?.contains("[") == true,
                     onNavigateBack = { navController.popBackStack() },
-                    onToggleSynced = { }
+                    onToggleSynced = { },
+                    onSeekToProgress = onSeek
                 )
             } ?: LegalTextScreen(
                 title = "Lyrics",

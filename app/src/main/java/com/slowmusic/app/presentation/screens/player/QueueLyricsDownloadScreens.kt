@@ -39,12 +39,34 @@ fun QueueScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(AppleColors.background)
-            .statusBarsPadding()
     ) {
+        AsyncImage(
+            model = song.albumArtUrl,
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(60.dp)
+                .graphicsLayer { alpha = 0.45f },
+            contentScale = ContentScale.Crop
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Black.copy(alpha = 0.25f), AppleColors.background.copy(alpha = 0.82f), AppleColors.background)
+                    )
+                )
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+        ) {
         // Header
         AppleNavigationBar(
             title = "Queue",
@@ -275,16 +297,39 @@ fun LyricsScreen(
     isSynced: Boolean = false,
     onNavigateBack: () -> Unit,
     onToggleSynced: (Boolean) -> Unit,
+    onSeekToProgress: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var manualLine by remember { mutableStateOf<Int?>(null) }
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(AppleColors.background)
-            .statusBarsPadding()
     ) {
+        AsyncImage(
+            model = song.albumArtUrl,
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(60.dp)
+                .graphicsLayer { alpha = 0.45f },
+            contentScale = ContentScale.Crop
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Black.copy(alpha = 0.25f), AppleColors.background.copy(alpha = 0.82f), AppleColors.background)
+                    )
+                )
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+        ) {
         // Header
         AppleNavigationBar(
             title = "Lyrics",
@@ -300,40 +345,6 @@ fun LyricsScreen(
                 )
             }
         )
-
-        // Song info
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AsyncImage(
-                model = song.albumArtUrl,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = song.title,
-                    style = AppleTypography.headline,
-                    color = AppleColors.textPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = song.artist,
-                    style = AppleTypography.subheadline,
-                    color = AppleColors.textSecondary
-                )
-            }
-        }
 
         // Lyrics content
         Box(
@@ -396,7 +407,12 @@ fun LyricsScreen(
                                     RoundedCornerShape(18.dp)
                                 )
                                 .padding(horizontal = 10.dp, vertical = 8.dp)
-                                .clickable { manualLine = index }
+                                .clickable {
+                                    manualLine = index
+                                    val stamp = parsed.getOrNull(index)?.first ?: -1L
+                                    if (stamp >= 0L && song.duration > 0) onSeekToProgress((stamp.toFloat() / song.duration).coerceIn(0f, 1f))
+                                    else if (lines.isNotEmpty()) onSeekToProgress((index.toFloat() / (lines.size - 1).coerceAtLeast(1)).coerceIn(0f, 1f))
+                                }
                         )
                     }
                 }
@@ -437,6 +453,7 @@ fun LyricsScreen(
         }
     }
 }
+}
 
 /**
  * Apple Music Style Downloads Screen
@@ -453,12 +470,34 @@ fun DownloadsScreen(
     onClearAll: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(AppleColors.background)
-            .statusBarsPadding()
     ) {
+        AsyncImage(
+            model = song.albumArtUrl,
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(60.dp)
+                .graphicsLayer { alpha = 0.45f },
+            contentScale = ContentScale.Crop
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Black.copy(alpha = 0.25f), AppleColors.background.copy(alpha = 0.82f), AppleColors.background)
+                    )
+                )
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+        ) {
         // Header
         AppleNavigationBar(
             title = "Downloads",
