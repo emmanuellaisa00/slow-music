@@ -297,7 +297,7 @@ fun LyricsScreen(
     isSynced: Boolean = false,
     onNavigateBack: () -> Unit,
     onToggleSynced: (Boolean) -> Unit,
-    onSeekToProgress: (Float) -> Unit,
+    onSeekToProgress: (Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var manualLine by remember { mutableStateOf<Int?>(null) }
@@ -452,7 +452,7 @@ fun LyricsScreen(
             }
         }
     }
-}
+    }
 }
 
 /**
@@ -470,12 +470,34 @@ fun DownloadsScreen(
     onClearAll: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(AppleColors.background)
-            .statusBarsPadding()
     ) {
+        AsyncImage(
+            model = song.albumArtUrl,
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(60.dp)
+                .graphicsLayer { alpha = 0.45f },
+            contentScale = ContentScale.Crop
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Black.copy(alpha = 0.25f), AppleColors.background.copy(alpha = 0.82f), AppleColors.background)
+                    )
+                )
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+        ) {
         // Header
         AppleNavigationBar(
             title = "Downloads",
@@ -661,7 +683,6 @@ private fun DownloadProgressItem(
     }
 }
 
-
 private fun parseLrcLines(raw: String): List<Pair<Long, String>> {
     val regex = Regex("\\[(\\d{1,2}):(\\d{2})(?:\\.(\\d{1,3}))?]")
     return raw.lines().mapNotNull { line ->
@@ -676,5 +697,4 @@ private fun parseLrcLines(raw: String): List<Pair<Long, String>> {
             -1L to line.trim()
         }
     }.filter { it.second.isNotBlank() }
-}
 }
