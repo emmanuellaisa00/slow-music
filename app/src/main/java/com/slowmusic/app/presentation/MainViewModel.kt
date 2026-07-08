@@ -78,6 +78,7 @@ class MainViewModel @Inject constructor(
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private var mediaController: MediaController? = null
     private var progressJob: Job? = null
+    private var playRequestId: Long = 0L
 
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -191,7 +192,12 @@ class MainViewModel @Inject constructor(
     }
 
     fun playSong(song: Song, queue: List<Song> = listOf(song)) {
+        val requestId = ++playRequestId
         val playableQueue = queue.ifEmpty { listOf(song) }
+        val clickedIndex = playableQueue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
+
+        // Stop current audio immediately so the UI never waits for fallback resolution
+        // while the previous track continues playing.
         mediaController?.run {
             stop()
             clearMediaItems()
@@ -199,37 +205,50 @@ class MainViewModel @Inject constructor(
         stopProgressTicker()
         _currentSong.value = song
         _queue.value = playableQueue
-        _currentIndex.value = playableQueue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
+        _currentIndex.value = clickedIndex
         _progress.value = 0f
         _lyrics.value = null
         _playbackState.value = PlaybackState.BUFFERING
         updateWidget()
 
         viewModelScope.launch {
-            val resolvedQueue = playableQueue.map { resolveForPlayback(it) }
-            val clickedIndex = playableQueue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
-            val resolvedSong = resolvedQueue.getOrNull(clickedIndex) ?: resolveForPlayback(song)
-            _currentSong.value = resolvedSong
-            _queue.value = resolvedQueue
-            val items = resolvedQueue.mapNotNull(::toMediaItem)
-            val startIndex = clickedIndex.coerceAtMost(items.lastIndex.coerceAtLeast(0))
-            val controller = mediaController
+            val resolvedSong = resolveForPlayback(song)
+            if (requestId != playRequestId) return@launch
 
-            if (controller != null && items.isNotEmpty()) {
-                controller.setMediaItems(items, startIndex, 0L)
+            _currentSong.value = resolvedSong
+            val controller = mediaController
+            val firstItem = toMediaItem(resolvedSong)
+
+            if (controller != null && firstItem != null) {
+                controller.setMediaItem(firstItem, 0L)
                 controller.prepare()
                 controller.play()
                 controller.shuffleModeEnabled = _isShuffled.value
                 controller.repeatMode = media3RepeatMode(_repeatMode.value)
             } else {
                 Logger.w("Player", "No playable URL for ${song.title}; using local UI playback state")
-                fallbackStartPlayback(resolvedSong, resolvedQueue)
+                fallbackStartPlayback(resolvedSong, playableQueue)
             }
 
             libraryRepository.addToRecentlyPlayed(resolvedSong)
             libraryRepository.incrementPlayCount(resolvedSong.id)
             loadLyrics(resolvedSong)
             updateWidget()
+
+            // Resolve the rest of the queue after playback starts. This keeps first
+            // audio start fast while still preparing next/previous items.
+            viewModelScope.launch {
+                val resolvedQueue = playableQueue.toMutableList()
+                resolvedQueue[clickedIndex.coerceAtMost(resolvedQueue.lastIndex)] = resolvedSong
+                for ((index, candidate) in playableQueue.withIndex()) {
+                    if (requestId != playRequestId) return@launch
+                    if (index == clickedIndex) continue
+                    val resolved = resolveForPlayback(candidate)
+                    resolvedQueue[index] = resolved
+                    toMediaItem(resolved)?.let { mediaController?.addMediaItem(it) }
+                    _queue.value = resolvedQueue.toList()
+                }
+            }
         }
     }
 
@@ -285,7 +304,11 @@ class MainViewModel @Inject constructor(
 
     fun addToQueue(song: Song) {
         _queue.value = _queue.value + song
-        toMediaItem(song)?.let { mediaController?.addMediaItem(it) }
+        viewModelScope.launch {
+            val resolved = resolveForPlayback(song)
+            _queue.value = _queue.value.map { if (it.id == song.id) resolved else it }
+            toMediaItem(resolved)?.let { mediaController?.addMediaItem(it) }
+        }
     }
 
     fun moveQueueItem(from: Int, to: Int) {
