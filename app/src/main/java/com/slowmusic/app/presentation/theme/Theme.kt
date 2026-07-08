@@ -1,13 +1,12 @@
 package com.slowmusic.app.presentation.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.slowmusic.app.domain.model.ThemeMode
@@ -40,6 +39,27 @@ private val DarkColorScheme = darkColorScheme(
     inverseSurface = LightSurface,
     inverseOnSurface = TextPrimaryLight,
     inversePrimary = PrimaryGreenDark,
+    surfaceTint = PrimaryGreen
+)
+
+private val AppleGlassColorScheme = darkColorScheme(
+    primary = PrimaryGreen,
+    onPrimary = OnPrimary,
+    primaryContainer = PrimaryGreenDark,
+    onPrimaryContainer = OnPrimary,
+    secondary = AccentPink,
+    onSecondary = OnPrimary,
+    tertiary = AccentPurple,
+    background = Color(0xFF050507),
+    onBackground = TextPrimaryDark,
+    surface = Color(0x22FFFFFF),
+    onSurface = TextPrimaryDark,
+    surfaceVariant = Color(0x18FFFFFF),
+    onSurfaceVariant = TextSecondaryDark,
+    outline = Color(0x33FFFFFF),
+    outlineVariant = Color(0x22FFFFFF),
+    error = Error,
+    onError = OnError,
     surfaceTint = PrimaryGreen
 )
 
@@ -77,6 +97,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun SlowMusicTheme(
     themeMode: ThemeMode = ThemeMode.DARK,
+    useAppleMusicUi: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (themeMode) {
@@ -85,7 +106,7 @@ fun SlowMusicTheme(
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
 
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val colorScheme = if (useAppleMusicUi) AppleGlassColorScheme else if (darkTheme) DarkColorScheme else LightColorScheme
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -93,8 +114,8 @@ fun SlowMusicTheme(
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.background.toArgb()
             window.navigationBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme && !useAppleMusicUi
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme && !useAppleMusicUi
         }
     }
 

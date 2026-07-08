@@ -58,7 +58,7 @@ class PreferencesRepositoryImpl @Inject constructor(
                 crossfadeEnabled = prefs[PreferencesKeys.CROSSFADE_ENABLED] ?: false,
                 crossfadeDuration = prefs[PreferencesKeys.CROSSFADE_DURATION] ?: 5,
                 autoPlaySimilar = prefs[PreferencesKeys.AUTO_PLAY_SIMILAR] ?: true,
-                uiStyle = UIStyle.valueOf(prefs[PreferencesKeys.UI_STYLE] ?: UIStyle.DEFAULT.name)
+                uiStyle = UIStyle.valueOf(prefs[PreferencesKeys.UI_STYLE] ?: UIStyle.APPLE_MUSIC.name)
             )
         }
     }

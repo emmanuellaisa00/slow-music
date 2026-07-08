@@ -106,10 +106,10 @@ data class UserPreferences(
     val crossfadeDuration: Int = 5,
     val autoPlaySimilar: Boolean = true,
     // Apple Music Style Settings
-    val uiStyle: UIStyle = UIStyle.DEFAULT,
-    val enableGlassmorphism: Boolean = false,
-    val enableLiquidGlass: Boolean = false,
-    val enableDynamicColors: Boolean = false,
+    val uiStyle: UIStyle = UIStyle.APPLE_MUSIC,
+    val enableGlassmorphism: Boolean = true,
+    val enableLiquidGlass: Boolean = true,
+    val enableDynamicColors: Boolean = true,
     val enableSmoothAnimations: Boolean = true,
     val cornerRadiusStyle: CornerRadiusStyle = CornerRadiusStyle.LARGE
 )

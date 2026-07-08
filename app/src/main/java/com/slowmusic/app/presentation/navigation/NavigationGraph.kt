@@ -15,11 +15,13 @@ import com.slowmusic.app.domain.model.Song
 import com.slowmusic.app.presentation.screens.home.HomeScreen
 import com.slowmusic.app.presentation.screens.library.*
 import com.slowmusic.app.presentation.screens.profile.ProfileScreen
+import com.slowmusic.app.presentation.screens.profile.AppleProfileScreen
 import com.slowmusic.app.presentation.screens.search.SearchScreen
 import com.slowmusic.app.presentation.screens.splash.SplashScreen
 import com.slowmusic.app.presentation.screens.onboarding.OnboardingScreen
 import com.slowmusic.app.presentation.screens.settings.LogsScreen
 import com.slowmusic.app.presentation.screens.settings.SettingsScreen
+import com.slowmusic.app.presentation.screens.settings.AppleMusicSettingsScreen
 import com.slowmusic.app.presentation.screens.settings.EqualizerControlScreen
 import com.slowmusic.app.presentation.screens.player.AppleMusicPlayerScreen
 import com.slowmusic.app.presentation.screens.player.QueueScreen
@@ -32,6 +34,7 @@ fun NavigationGraph(
     modifier: Modifier = Modifier,
     playbackState: PlaybackState,
     currentSong: Song?,
+    useAppleMusicUi: Boolean = false,
     queue: List<Song>,
     lyrics: String?,
     onPlayPause: () -> Unit,
@@ -203,14 +206,23 @@ fun NavigationGraph(
         }
 
         composable(Screen.Profile.route) {
-            ProfileScreen(
-                onNavigateToSubscription = {
-                    navController.navigate(Screen.Subscription.route)
-                },
-                onNavigateToSettings = {
-                    navController.navigate(Screen.Settings.route)
-                }
-            )
+            if (useAppleMusicUi) {
+                AppleProfileScreen(
+                    subscription = com.slowmusic.app.domain.model.Subscription(
+                        type = com.slowmusic.app.domain.model.SubscriptionType.FREE,
+                        isActive = false,
+                        expiresAt = null,
+                        features = listOf("Local database mode", "Resolver-first streaming", "Cached discovery")
+                    ),
+                    onNavigateToSubscription = { navController.navigate(Screen.Subscription.route) },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                )
+            } else {
+                ProfileScreen(
+                    onNavigateToSubscription = { navController.navigate(Screen.Subscription.route) },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                )
+            }
         }
 
         // Library Sub-screens
@@ -285,17 +297,26 @@ fun NavigationGraph(
 
         // Settings
         composable(Screen.Settings.route) {
-            SettingsScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToLogs = { navController.navigate(Screen.Logs.route) },
-                onNavigateToStorage = { navController.navigate(Screen.DownloadStorage.route) },
-                onNavigateToPrivacy = { navController.navigate(Screen.PrivacyPolicy.route) },
-                onNavigateToTerms = { navController.navigate(Screen.Terms.route) },
-                onNavigateToNotifications = { navController.navigate(Screen.NotificationPermission.route) },
-                onNavigateToLocalFilesPermission = { navController.navigate(Screen.LocalFilesPermission.route) },
-                onNavigateToCastDevices = { navController.navigate(Screen.CastDevices.route) },
-                onNavigateToEqualizer = { navController.navigate(Screen.Equalizer.route) }
-            )
+            if (useAppleMusicUi) {
+                AppleMusicSettingsScreen(
+                    preferences = com.slowmusic.app.domain.model.UserPreferences(uiStyle = com.slowmusic.app.domain.model.UIStyle.APPLE_MUSIC),
+                    onPreferenceChange = { },
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToLogs = { navController.navigate(Screen.Logs.route) }
+                )
+            } else {
+                SettingsScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToLogs = { navController.navigate(Screen.Logs.route) },
+                    onNavigateToStorage = { navController.navigate(Screen.DownloadStorage.route) },
+                    onNavigateToPrivacy = { navController.navigate(Screen.PrivacyPolicy.route) },
+                    onNavigateToTerms = { navController.navigate(Screen.Terms.route) },
+                    onNavigateToNotifications = { navController.navigate(Screen.NotificationPermission.route) },
+                    onNavigateToLocalFilesPermission = { navController.navigate(Screen.LocalFilesPermission.route) },
+                    onNavigateToCastDevices = { navController.navigate(Screen.CastDevices.route) },
+                    onNavigateToEqualizer = { navController.navigate(Screen.Equalizer.route) }
+                )
+            }
         }
 
 
