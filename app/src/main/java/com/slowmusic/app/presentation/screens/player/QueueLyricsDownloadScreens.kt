@@ -352,8 +352,13 @@ fun LyricsScreen(
                         (((lines.lastIndex.coerceAtLeast(0)) * progress).toInt()).coerceIn(0, lines.lastIndex.coerceAtLeast(0))
                     }
                 }
+                val listState = rememberLazyListState()
+                LaunchedEffect(currentLine) {
+                    if (currentLine >= 0) listState.animateScrollToItem(currentLine.coerceAtLeast(0))
+                }
 
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(vertical = 32.dp)
@@ -368,8 +373,13 @@ fun LyricsScreen(
                         )
 
                         val textAlpha by animateFloatAsState(
-                            targetValue = if (isCurrentLine) 1f else 0.5f,
+                            targetValue = if (isCurrentLine) 1f else 0.38f,
                             label = "lyric_alpha"
+                        )
+                        val lineScale by animateFloatAsState(
+                            targetValue = if (isCurrentLine) 1.08f else 0.96f,
+                            animationSpec = spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow),
+                            label = "lyric_pop"
                         )
 
                         Text(
@@ -380,8 +390,13 @@ fun LyricsScreen(
                             textAlign = TextAlign.Center,
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .scale(lineScale)
+                                .background(
+                                    if (isCurrentLine) AppleColors.primary.copy(alpha = 0.10f) else Color.Transparent,
+                                    RoundedCornerShape(18.dp)
+                                )
+                                .padding(horizontal = 10.dp, vertical = 8.dp)
                                 .clickable { manualLine = index }
-
                         )
                     }
                 }

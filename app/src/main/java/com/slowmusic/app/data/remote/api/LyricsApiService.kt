@@ -19,6 +19,14 @@ data class LyricsResponse(
 
 /** LRCLib API for plain or synced lyrics. */
 interface LrcLibApiService {
+    @GET("api/get")
+    suspend fun getBestLyrics(
+        @Query("artist_name") artistName: String,
+        @Query("track_name") trackName: String,
+        @Query("album_name") albumName: String? = null,
+        @Query("duration") durationSeconds: Long? = null
+    ): LrcLibLyrics
+
     @GET("api/search")
     suspend fun searchLyrics(
         @Query("q") query: String

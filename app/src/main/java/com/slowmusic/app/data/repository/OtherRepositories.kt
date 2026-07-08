@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.slowmusic.app.data.remote.api.LrcLibApiService
@@ -24,9 +25,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private val Context.lyricsCacheDataStore: DataStore<Preferences> by preferencesDataStore(name = "lyrics_cache")
 
 private val Context.subscriptionDataStore: DataStore<androidx.datastore.preferences.core.Preferences> by preferencesDataStore(name = "subscription_prefs")
 
@@ -103,37 +107,111 @@ class SubscriptionRepositoryImpl @Inject constructor(
 
 @Singleton
 class LyricsRepositoryImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val lyricsApiService: LyricsApiService,
     private val lrcLibApiService: LrcLibApiService
 ) : LyricsRepository {
-    override suspend fun getLyrics(song: Song): Lyrics? {
-        return runCatching {
-            val query = "${song.artist} ${song.title}"
-            val lrcResult = lrcLibApiService.searchLyrics(query).firstOrNull { result ->
-                result.trackName?.contains(song.title, ignoreCase = true) == true &&
-                    result.artistName?.contains(song.artist, ignoreCase = true) == true
-            } ?: lrcLibApiService.searchLyrics(query).firstOrNull()
 
-            val lrcLyrics = if (lrcResult != null) {
-                val lyrics = lrcLibApiService.getLyrics(lrcResult.id)
-                val text = lyrics.syncedLyrics ?: lyrics.plainLyrics
-                if (!text.isNullOrBlank()) Lyrics(songId = song.id, text = text, source = "LRCLib") else null
-            } else {
-                null
-            }
-
-            if (lrcLyrics != null) {
-                lrcLyrics
-            } else {
-                val fallback = lyricsApiService.getLyrics(song.artist, song.title).lyrics
-                if (!fallback.isNullOrBlank()) {
-                    Lyrics(songId = song.id, text = fallback, source = "lyrics.ovh")
-                } else {
-                    null
-                }
-            }
-        }.onFailure { Logger.e("LyricsRepository", "Failed to fetch lyrics", it) }.getOrNull()
+    private object LyricsKeys {
+        fun key(song: Song) = stringPreferencesKey("lyrics_" + stableKey(song))
+        fun source(song: Song) = stringPreferencesKey("lyrics_source_" + stableKey(song))
+        private fun stableKey(song: Song): String = (song.id.ifBlank { "${song.artist}_${song.title}" })
+            .lowercase()
+            .replace(Regex("[^a-z0-9_ -]"), "")
+            .replace(Regex("\s+"), "_")
+            .take(90)
     }
+
+    override suspend fun getLyrics(song: Song): Lyrics? {
+        val cached = getCachedLyrics(song)
+        if (cached != null) return cached
+
+        val fetched = runCatching { fetchLyrics(song) }
+            .onFailure { Logger.e("LyricsRepository", "Failed to fetch lyrics", it) }
+            .getOrNull()
+
+        val safe = fetched ?: Lyrics(
+            songId = song.id,
+            text = "♪
+Lyrics are not available for this track yet.
+When a synced or plain lyric source is found, it will appear here automatically.",
+            source = "Unavailable"
+        )
+        cacheLyrics(song, safe)
+        return safe
+    }
+
+    private suspend fun fetchLyrics(song: Song): Lyrics? {
+        val cleanTitle = cleanTitle(song.title)
+        val cleanArtist = cleanArtist(song.artist)
+        val durationSeconds = song.duration.takeIf { it > 0 }?.div(1000)
+
+        // 1) LRCLib exact endpoint. Best chance for synced lyrics.
+        runCatching {
+            lrcLibApiService.getBestLyrics(
+                artistName = cleanArtist,
+                trackName = cleanTitle,
+                albumName = song.album.takeIf { it.isNotBlank() },
+                durationSeconds = durationSeconds
+            )
+        }.getOrNull()?.let { lrc ->
+            val text = lrc.syncedLyrics ?: lrc.plainLyrics
+            if (!text.isNullOrBlank()) return Lyrics(song.id, text, "LRCLib")
+        }
+
+        // 2) LRCLib search variants.
+        val variants = listOf(
+            "$cleanArtist $cleanTitle",
+            cleanTitle,
+            "${song.artist} ${song.title}"
+        ).distinct().filter { it.isNotBlank() }
+        for (query in variants) {
+            val result = runCatching { lrcLibApiService.searchLyrics(query) }.getOrDefault(emptyList())
+                .firstOrNull { candidate ->
+                    candidate.trackName?.contains(cleanTitle, ignoreCase = true) == true ||
+                        cleanTitle.contains(candidate.trackName.orEmpty(), ignoreCase = true)
+                }
+                ?: runCatching { lrcLibApiService.searchLyrics(query) }.getOrDefault(emptyList()).firstOrNull()
+            if (result != null) {
+                val lrc = runCatching { lrcLibApiService.getLyrics(result.id) }.getOrNull()
+                val text = lrc?.syncedLyrics ?: lrc?.plainLyrics
+                if (!text.isNullOrBlank()) return Lyrics(song.id, text, "LRCLib")
+            }
+        }
+
+        // 3) lyrics.ovh plain lyrics fallback, with cleaned title/artist.
+        val plain = runCatching { lyricsApiService.getLyrics(cleanArtist, cleanTitle).lyrics }
+            .getOrNull()
+            ?: runCatching { lyricsApiService.getLyrics(song.artist, song.title).lyrics }.getOrNull()
+        if (!plain.isNullOrBlank()) return Lyrics(song.id, plain, "lyrics.ovh")
+
+        return null
+    }
+
+    private suspend fun getCachedLyrics(song: Song): Lyrics? {
+        val prefs = context.lyricsCacheDataStore.data.first()
+        val text = prefs[LyricsKeys.key(song)] ?: return null
+        val source = prefs[LyricsKeys.source(song)] ?: "Cache"
+        return Lyrics(song.id, text, source)
+    }
+
+    private suspend fun cacheLyrics(song: Song, lyrics: Lyrics) {
+        context.lyricsCacheDataStore.edit { prefs ->
+            prefs[LyricsKeys.key(song)] = lyrics.text
+            prefs[LyricsKeys.source(song)] = lyrics.source ?: "Unknown"
+        }
+    }
+
+    private fun cleanTitle(raw: String): String = raw
+        .replace(Regex("\(.*?\)|\[.*?]"), "")
+        .replace(Regex("(?i)\b(remaster(ed)?|radio edit|official audio|official video|lyrics?|feat\.|ft\.)\b.*"), "")
+        .trim()
+
+    private fun cleanArtist(raw: String): String = raw
+        .substringBefore(",")
+        .substringBefore(" feat")
+        .substringBefore(" ft")
+        .trim()
 }
 
 @Singleton
