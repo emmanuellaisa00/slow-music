@@ -31,6 +31,7 @@ fun SettingsScreen(
     val preferences by viewModel.preferences.collectAsState()
     var dialog by remember { mutableStateOf<String?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
+    var resolverText by remember(preferences.resolverBackendUrl) { mutableStateOf(preferences.resolverBackendUrl) }
 
     when (dialog) {
         "theme" -> ChoiceDialog("Theme", ThemeMode.values().map { it.name }, { viewModel.updateTheme(ThemeMode.valueOf(it)); dialog = null }, { dialog = null })
@@ -38,10 +39,23 @@ fun SettingsScreen(
         "ui" -> ChoiceDialog("UI Style", UIStyle.values().map { it.name }, { viewModel.updateUiStyle(UIStyle.valueOf(it)); dialog = null }, { dialog = null })
         "quality" -> ChoiceDialog("Audio Quality", AudioQuality.values().map { it.name }, { viewModel.updateAudioQuality(AudioQuality.valueOf(it)); dialog = null }, { dialog = null })
         "crossfade" -> ChoiceDialog("Crossfade", listOf("Off", "On"), { viewModel.updateCrossfadeEnabled(it == "On"); dialog = null }, { dialog = null })
-        "speed" -> ChoiceDialog("Playback Speed", listOf("0.75x", "Normal", "1.25x", "1.5x"), { message = "Playback speed set to $it for this session"; dialog = null }, { dialog = null })
+        "speed" -> ChoiceDialog("Playback Speed", listOf("0.75x", "Normal", "1.25x", "1.5x"), {
+            val speed = when (it) { "0.75x" -> 0.75f; "1.25x" -> 1.25f; "1.5x" -> 1.5f; else -> 1f }
+            viewModel.updatePlaybackSpeed(speed)
+            message = "Playback speed set to $it"
+            dialog = null
+        }, { dialog = null })
+        "network" -> ChoiceDialog("Network Mode", NetworkMode.values().map { it.name }, { viewModel.updateNetworkMode(NetworkMode.valueOf(it)); dialog = null }, { dialog = null })
+        "resolver" -> AlertDialog(
+            onDismissRequest = { dialog = null },
+            title = { Text("Resolver backend") },
+            text = { OutlinedTextField(value = resolverText, onValueChange = { resolverText = it }, label = { Text("Backend URL") }, placeholder = { Text("https://your-worker.example.com") }) },
+            confirmButton = { TextButton(onClick = { viewModel.updateResolverBackend(resolverText); message = "Resolver backend saved"; dialog = null }) { Text("Save") } },
+            dismissButton = { TextButton(onClick = { resolverText = ""; viewModel.updateResolverBackend(""); message = "Resolver backend disabled"; dialog = null }) { Text("Disable") } }
+        )
         "about" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Slow Music") }, text = { Text("Version 1.0.0\nLocal database mode enabled\nOnline catalog powered by iTunes Search API") }, confirmButton = { TextButton(onClick = { dialog = null }) { Text("OK") } })
-        "clear" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Clear cache?") }, text = { Text("Downloaded-file management is available from Download Storage. Image/network caches will be cleared by Android when storage is reclaimed.") }, confirmButton = { TextButton(onClick = { message = "Cache cleanup requested"; dialog = null }) { Text("Clear") } }, dismissButton = { TextButton(onClick = { dialog = null }) { Text("Cancel") } })
-        "reset" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Reset app data?") }, text = { Text("For safety this demo does not erase local DataStore automatically. Add a confirmed repository reset before production.") }, confirmButton = { TextButton(onClick = { message = "Reset is disabled until production confirmation flow is added"; dialog = null }) { Text("OK") } })
+        "clear" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Clear cache?") }, text = { Text("This clears cached Home/Search metadata so the next refresh fetches fresh content.") }, confirmButton = { TextButton(onClick = { viewModel.clearCache { message = it }; dialog = null }) { Text("Clear") } }, dismissButton = { TextButton(onClick = { dialog = null }) { Text("Cancel") } })
+        "reset" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Reset app data?") }, text = { Text("This clears favorites, downloads, playlists, followed artists, search history, cached content, and preferences.") }, confirmButton = { TextButton(onClick = { viewModel.resetAppData { message = it }; dialog = null }) { Text("Reset") } }, dismissButton = { TextButton(onClick = { dialog = null }) { Text("Cancel") } })
     }
 
     Scaffold(
@@ -127,7 +141,7 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Filled.Speed,
                     title = "Playback Speed",
-                    subtitle = "Normal",
+                    subtitle = "${preferences.playbackSpeed}x",
                     onClick = { dialog = "speed" }
                 )
             }
@@ -194,8 +208,16 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Filled.NetworkCheck,
                     title = "Network Mode",
-                    subtitle = "Online only",
-                    onClick = onNavigateToCastDevices
+                    subtitle = preferences.networkMode.name.lowercase().replaceFirstChar { it.uppercase() },
+                    onClick = { dialog = "network" }
+                )
+            }
+            item {
+                SettingsItem(
+                    icon = Icons.Filled.Cloud,
+                    title = "Resolver Backend",
+                    subtitle = preferences.resolverBackendUrl.ifBlank { "Disabled" },
+                    onClick = { resolverText = preferences.resolverBackendUrl; dialog = "resolver" }
                 )
             }
 
@@ -489,4 +511,19 @@ data class LogEntry(
 
 enum class LogLevel {
     INFO, WARNING, ERROR
+}
+
+@Composable
+fun AppleMusicSettingsRoute(
+    onNavigateBack: () -> Unit,
+    onNavigateToLogs: () -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel()
+) {
+    val preferences by viewModel.preferences.collectAsState()
+    AppleMusicSettingsScreen(
+        preferences = preferences,
+        onPreferenceChange = { viewModel.updatePreferences(it) },
+        onNavigateBack = onNavigateBack,
+        onNavigateToLogs = onNavigateToLogs
+    )
 }

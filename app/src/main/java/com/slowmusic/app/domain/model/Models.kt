@@ -104,7 +104,10 @@ data class UserPreferences(
     val audioQuality: AudioQuality = AudioQuality.HIGH,
     val crossfadeEnabled: Boolean = false,
     val crossfadeDuration: Int = 5,
+    val playbackSpeed: Float = 1f,
     val autoPlaySimilar: Boolean = true,
+    val networkMode: NetworkMode = NetworkMode.ONLINE_ONLY,
+    val resolverBackendUrl: String = "",
     // Apple Music Style Settings
     val uiStyle: UIStyle = UIStyle.APPLE_MUSIC,
     val enableGlassmorphism: Boolean = true,

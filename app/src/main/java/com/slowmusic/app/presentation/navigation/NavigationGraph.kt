@@ -21,7 +21,7 @@ import com.slowmusic.app.presentation.screens.splash.SplashScreen
 import com.slowmusic.app.presentation.screens.onboarding.OnboardingScreen
 import com.slowmusic.app.presentation.screens.settings.LogsScreen
 import com.slowmusic.app.presentation.screens.settings.SettingsScreen
-import com.slowmusic.app.presentation.screens.settings.AppleMusicSettingsScreen
+import com.slowmusic.app.presentation.screens.settings.AppleMusicSettingsRoute
 import com.slowmusic.app.presentation.screens.settings.EqualizerControlScreen
 import com.slowmusic.app.presentation.screens.player.AppleMusicPlayerScreen
 import com.slowmusic.app.presentation.screens.player.QueueScreen
@@ -298,9 +298,7 @@ fun NavigationGraph(
         // Settings
         composable(Screen.Settings.route) {
             if (useAppleMusicUi) {
-                AppleMusicSettingsScreen(
-                    preferences = com.slowmusic.app.domain.model.UserPreferences(uiStyle = com.slowmusic.app.domain.model.UIStyle.APPLE_MUSIC),
-                    onPreferenceChange = { },
+                AppleMusicSettingsRoute(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToLogs = { navController.navigate(Screen.Logs.route) }
                 )

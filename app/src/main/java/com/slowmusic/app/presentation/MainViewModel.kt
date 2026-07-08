@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -148,6 +149,16 @@ class MainViewModel @Inject constructor(
 
     init {
         connectMediaController()
+        observeRuntimePreferences()
+    }
+
+    private fun observeRuntimePreferences() {
+        viewModelScope.launch {
+            userPreferences.collect { prefs ->
+                streamingFallbackResolver.setBackendUrl(prefs.resolverBackendUrl)
+                mediaController?.playbackParameters = PlaybackParameters(prefs.playbackSpeed.coerceIn(0.5f, 2f))
+            }
+        }
     }
 
     private fun connectMediaController() {
@@ -161,6 +172,9 @@ class MainViewModel @Inject constructor(
                             controller.addListener(playerListener)
                             controller.shuffleModeEnabled = _isShuffled.value
                             controller.repeatMode = media3RepeatMode(_repeatMode.value)
+                controller.playbackParameters = PlaybackParameters(userPreferences.value.playbackSpeed.coerceIn(0.5f, 2f))
+                            controller.playbackParameters = PlaybackParameters(userPreferences.value.playbackSpeed.coerceIn(0.5f, 2f))
+                            streamingFallbackResolver.setBackendUrl(userPreferences.value.resolverBackendUrl)
                             syncPlaybackState()
                             updateProgressFromController()
                         }
@@ -225,6 +239,7 @@ class MainViewModel @Inject constructor(
                 controller.play()
                 controller.shuffleModeEnabled = _isShuffled.value
                 controller.repeatMode = media3RepeatMode(_repeatMode.value)
+                controller.playbackParameters = PlaybackParameters(userPreferences.value.playbackSpeed.coerceIn(0.5f, 2f))
             } else {
                 Logger.w("Player", "No playable URL for ${song.title}; using local UI playback state")
                 fallbackStartPlayback(resolvedSong, playableQueue)

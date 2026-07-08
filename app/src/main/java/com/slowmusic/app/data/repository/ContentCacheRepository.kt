@@ -83,6 +83,10 @@ class ContentCacheRepository @Inject constructor(
         context.contentCacheDataStore.edit { it.remove(Keys.HOME); it.remove(Keys.HOME_TIME) }
     }
 
+    suspend fun clearAll() {
+        context.contentCacheDataStore.edit { it.clear() }
+    }
+
     private fun normalize(value: String): String = value.trim().lowercase().replace(Regex("[^a-z0-9_ -]"), "").replace(Regex("\\s+"), "_").take(80)
 
     companion object {

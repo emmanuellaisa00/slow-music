@@ -34,8 +34,10 @@ class PreferencesRepositoryImpl @Inject constructor(
         val AUDIO_QUALITY = stringPreferencesKey("audio_quality")
         val CROSSFADE_ENABLED = booleanPreferencesKey("crossfade_enabled")
         val CROSSFADE_DURATION = intPreferencesKey("crossfade_duration")
+        val PLAYBACK_SPEED = floatPreferencesKey("playback_speed")
         val AUTO_PLAY_SIMILAR = booleanPreferencesKey("auto_play_similar")
         val UI_STYLE = stringPreferencesKey("ui_style")
+        val RESOLVER_BACKEND_URL = stringPreferencesKey("resolver_backend_url")
         val EQUALIZER_ENABLED = booleanPreferencesKey("equalizer_enabled")
         val EQUALIZER_PRESET = intPreferencesKey("equalizer_preset")
         val EQUALIZER_BANDS = stringPreferencesKey("equalizer_bands")
@@ -57,7 +59,10 @@ class PreferencesRepositoryImpl @Inject constructor(
                 audioQuality = AudioQuality.valueOf(prefs[PreferencesKeys.AUDIO_QUALITY] ?: AudioQuality.HIGH.name),
                 crossfadeEnabled = prefs[PreferencesKeys.CROSSFADE_ENABLED] ?: false,
                 crossfadeDuration = prefs[PreferencesKeys.CROSSFADE_DURATION] ?: 5,
+                playbackSpeed = prefs[PreferencesKeys.PLAYBACK_SPEED] ?: 1f,
                 autoPlaySimilar = prefs[PreferencesKeys.AUTO_PLAY_SIMILAR] ?: true,
+                networkMode = NetworkMode.valueOf(prefs[PreferencesKeys.NETWORK_MODE] ?: NetworkMode.ONLINE_ONLY.name),
+                resolverBackendUrl = prefs[PreferencesKeys.RESOLVER_BACKEND_URL] ?: "",
                 uiStyle = UIStyle.valueOf(prefs[PreferencesKeys.UI_STYLE] ?: UIStyle.APPLE_MUSIC.name)
             )
         }
@@ -71,7 +76,10 @@ class PreferencesRepositoryImpl @Inject constructor(
             prefs[PreferencesKeys.AUDIO_QUALITY] = preferences.audioQuality.name
             prefs[PreferencesKeys.CROSSFADE_ENABLED] = preferences.crossfadeEnabled
             prefs[PreferencesKeys.CROSSFADE_DURATION] = preferences.crossfadeDuration
+            prefs[PreferencesKeys.PLAYBACK_SPEED] = preferences.playbackSpeed
             prefs[PreferencesKeys.AUTO_PLAY_SIMILAR] = preferences.autoPlaySimilar
+            prefs[PreferencesKeys.NETWORK_MODE] = preferences.networkMode.name
+            prefs[PreferencesKeys.RESOLVER_BACKEND_URL] = preferences.resolverBackendUrl
             prefs[PreferencesKeys.UI_STYLE] = preferences.uiStyle.name
         }
     }

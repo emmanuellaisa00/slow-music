@@ -25,6 +25,10 @@ class StreamingFallbackResolver @Inject constructor(
     private val streamCache = ConcurrentHashMap<String, CacheEntry>()
     private val ttlMs = 90L * 60L * 1000L
 
+    fun setBackendUrl(url: String) {
+        resolverBackend.baseUrl = url.trim().ifBlank { null }
+    }
+
     suspend fun searchSongs(query: String, maxResults: Int = 20): List<Song> =
         youtubeMusicSearch.searchSongs(query, maxResults).map { it.toSong() }
 

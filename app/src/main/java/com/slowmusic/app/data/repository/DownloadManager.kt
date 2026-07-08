@@ -1,8 +1,11 @@
 package com.slowmusic.app.data.repository
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import com.slowmusic.app.domain.model.Song
 import com.slowmusic.app.domain.repository.LibraryRepository
+import com.slowmusic.app.domain.repository.PreferencesRepository
 import com.slowmusic.app.streaming.StreamHeaderCodec
 import com.slowmusic.app.streaming.StreamingFallbackResolver
 import com.slowmusic.app.util.Logger
@@ -25,7 +28,8 @@ class DownloadManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val okHttpClient: OkHttpClient,
     private val libraryRepository: LibraryRepository,
-    private val streamingFallbackResolver: StreamingFallbackResolver
+    private val streamingFallbackResolver: StreamingFallbackResolver,
+    private val preferencesRepository: PreferencesRepository
 ) {
     private val _downloads = MutableStateFlow<Map<String, DownloadState>>(emptyMap())
     val downloads: StateFlow<Map<String, DownloadState>> = _downloads.asStateFlow()
@@ -35,6 +39,11 @@ class DownloadManager @Inject constructor(
     suspend fun downloadSong(song: Song): Result<File> = withContext(Dispatchers.IO) {
         try {
             Logger.d("DownloadManager", "Starting download: ${song.title}")
+            val prefs = preferencesRepository.getUserPreferences().first()
+            if (prefs.downloadOnWifiOnly && !isOnWifi()) {
+                _downloads.update { it + (song.id to DownloadState.Failed("Wi-Fi only is enabled")) }
+                return@withContext Result.failure(Exception("Wi-Fi only is enabled"))
+            }
             _downloads.update { it + (song.id to DownloadState.Downloading(0f)) }
 
             val resolved = resolveDownloadUrl(song)
@@ -155,6 +164,13 @@ class DownloadManager @Inject constructor(
         libraryRepository.deleteDownload(song.id)
     }
     
+    private fun isOnWifi(): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+    }
+
     fun getDownloadedFiles(): List<File> {
         val downloadsDir = File(context.filesDir, "downloads")
         return downloadsDir.listFiles()?.toList() ?: emptyList()

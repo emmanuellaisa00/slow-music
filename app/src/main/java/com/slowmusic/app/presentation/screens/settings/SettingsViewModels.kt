@@ -2,7 +2,10 @@ package com.slowmusic.app.presentation.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.slowmusic.app.data.repository.ContentCacheRepository
+import com.slowmusic.app.data.repository.DownloadManager
 import com.slowmusic.app.domain.model.*
+import com.slowmusic.app.domain.repository.LibraryRepository
 import com.slowmusic.app.domain.repository.PreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -13,7 +16,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val preferencesRepository: PreferencesRepository
+    private val preferencesRepository: PreferencesRepository,
+    private val libraryRepository: LibraryRepository,
+    private val contentCacheRepository: ContentCacheRepository,
+    private val downloadManager: DownloadManager
 ) : ViewModel() {
     
     val preferences: StateFlow<UserPreferences> = preferencesRepository.getUserPreferences()
@@ -71,10 +77,66 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun updatePreferences(preferences: UserPreferences) {
+        viewModelScope.launch {
+            val current = this@SettingsViewModel.preferences.value
+            preferencesRepository.updateUserPreferences(
+                preferences.copy(
+                    playbackSpeed = current.playbackSpeed,
+                    networkMode = current.networkMode,
+                    resolverBackendUrl = current.resolverBackendUrl
+                )
+            )
+        }
+    }
+
     fun updateUiStyle(style: UIStyle) {
         viewModelScope.launch {
             val current = preferences.value
             preferencesRepository.updateUserPreferences(current.copy(uiStyle = style))
+        }
+    }
+
+    fun updatePlaybackSpeed(speed: Float) {
+        viewModelScope.launch {
+            val current = preferences.value
+            preferencesRepository.updateUserPreferences(current.copy(playbackSpeed = speed))
+        }
+    }
+
+    fun updateNetworkMode(mode: NetworkMode) {
+        viewModelScope.launch {
+            val current = preferences.value
+            preferencesRepository.updateUserPreferences(current.copy(networkMode = mode))
+            preferencesRepository.setNetworkMode(mode)
+        }
+    }
+
+    fun updateResolverBackend(url: String) {
+        viewModelScope.launch {
+            val current = preferences.value
+            preferencesRepository.updateUserPreferences(current.copy(resolverBackendUrl = url.trim()))
+        }
+    }
+
+    fun clearCache(onDone: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            contentCacheRepository.clearAll()
+            onDone("Cached home/search content cleared")
+        }
+    }
+
+    fun resetAppData(onDone: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            libraryRepository.getFavorites().first().forEach { libraryRepository.removeFromFavorites(it.id) }
+            libraryRepository.getDownloadedSongs().first().forEach { downloadManager.deleteDownload(it) }
+            libraryRepository.getPlaylists().first().forEach { libraryRepository.deletePlaylist(it.id) }
+            libraryRepository.getFollowedArtists().first().forEach { libraryRepository.unfollowArtist(it.id) }
+            libraryRepository.clearRecentlyPlayed()
+            preferencesRepository.clearSearchHistory()
+            contentCacheRepository.clearAll()
+            preferencesRepository.updateUserPreferences(UserPreferences())
+            onDone("App data reset")
         }
     }
 }
