@@ -470,34 +470,12 @@ fun DownloadsScreen(
     onClearAll: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(AppleColors.background)
+            .statusBarsPadding()
     ) {
-        AsyncImage(
-            model = song.albumArtUrl,
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxSize()
-                .blur(60.dp)
-                .graphicsLayer { alpha = 0.45f },
-            contentScale = ContentScale.Crop
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color.Black.copy(alpha = 0.25f), AppleColors.background.copy(alpha = 0.82f), AppleColors.background)
-                    )
-                )
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-        ) {
         // Header
         AppleNavigationBar(
             title = "Downloads",
@@ -682,6 +660,7 @@ private fun DownloadProgressItem(
         }
     }
 }
+
 
 private fun parseLrcLines(raw: String): List<Pair<Long, String>> {
     val regex = Regex("\\[(\\d{1,2}):(\\d{2})(?:\\.(\\d{1,3}))?]")
