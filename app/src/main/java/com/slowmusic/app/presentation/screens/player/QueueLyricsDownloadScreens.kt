@@ -32,10 +32,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.slowmusic.app.domain.model.Song
-import com.slowmusic.app.presentation.components.apple.AppleColors
 import com.slowmusic.app.presentation.components.apple.AppleGlassCard
 import com.slowmusic.app.presentation.components.apple.AppleNavigationBar
 import com.slowmusic.app.presentation.components.apple.AppleSongCard
+import com.slowmusic.app.presentation.theme.apple.AppleColors
 import com.slowmusic.app.presentation.theme.apple.AppleTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
