@@ -297,24 +297,17 @@ fun NavigationGraph(
 
         // Settings
         composable(Screen.Settings.route) {
-            if (useAppleMusicUi) {
-                AppleMusicSettingsRoute(
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToLogs = { navController.navigate(Screen.Logs.route) }
-                )
-            } else {
-                SettingsScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToLogs = { navController.navigate(Screen.Logs.route) },
-                    onNavigateToStorage = { navController.navigate(Screen.DownloadStorage.route) },
-                    onNavigateToPrivacy = { navController.navigate(Screen.PrivacyPolicy.route) },
-                    onNavigateToTerms = { navController.navigate(Screen.Terms.route) },
-                    onNavigateToNotifications = { navController.navigate(Screen.NotificationPermission.route) },
-                    onNavigateToLocalFilesPermission = { navController.navigate(Screen.LocalFilesPermission.route) },
-                    onNavigateToCastDevices = { navController.navigate(Screen.CastDevices.route) },
-                    onNavigateToEqualizer = { navController.navigate(Screen.Equalizer.route) }
-                )
-            }
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToLogs = { navController.navigate(Screen.Logs.route) },
+                onNavigateToStorage = { navController.navigate(Screen.DownloadStorage.route) },
+                onNavigateToPrivacy = { navController.navigate(Screen.PrivacyPolicy.route) },
+                onNavigateToTerms = { navController.navigate(Screen.Terms.route) },
+                onNavigateToNotifications = { navController.navigate(Screen.NotificationPermission.route) },
+                onNavigateToLocalFilesPermission = { navController.navigate(Screen.LocalFilesPermission.route) },
+                onNavigateToCastDevices = { navController.navigate(Screen.CastDevices.route) },
+                onNavigateToEqualizer = { navController.navigate(Screen.Equalizer.route) }
+            )
         }
 
 

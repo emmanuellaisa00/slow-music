@@ -134,6 +134,7 @@ fun SlowMusicApp(
             modifier = Modifier.fillMaxSize(),
             containerColor = if (useAppleMusicUi) Color.Transparent else MaterialTheme.colorScheme.background,
             bottomBar = {
+                if (showBottomBar) {
                 when (navigationStyle) {
                     com.slowmusic.app.domain.model.NavigationStyle.TABS,
                     com.slowmusic.app.domain.model.NavigationStyle.BOTTOM_NAV -> {
@@ -213,6 +214,7 @@ fun SlowMusicApp(
                             }
                         }
                     }
+                }
                 }
             }
         ) { paddingValues ->

@@ -50,7 +50,7 @@ fun SplashScreen(
     )
     
     LaunchedEffect(Unit) {
-        delay(1400)
+        delay(650)
         if (showOnboarding) {
             onNavigateToOnboarding()
         } else {
