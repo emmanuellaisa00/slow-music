@@ -2,7 +2,9 @@
 
 package com.slowmusic.app.presentation.screens.library
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material.icons.Icons
@@ -10,7 +12,11 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -76,10 +82,27 @@ fun LibraryScreen(
                 .padding(paddingValues),
             contentPadding = PaddingValues(bottom = 100.dp)
         ) {
-            // Library Sections
             item {
-                LibrarySection(title = "Library")
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.68f))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.22f), Color.Transparent)))
+                            .padding(18.dp)
+                    ) {
+                        Column {
+                            Text("Your Library", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(4.dp))
+                            Text("${favorites.size} favorites • ${downloadedSongs.size} downloads • ${playlists.size} playlists", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
             }
+            item { LibrarySection(title = "Library") }
             
             item {
                 LibraryListItem(
@@ -213,7 +236,11 @@ private fun LibraryListItem(
     modifier: Modifier = Modifier
 ) {
     ListItem(
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = modifier
+            .padding(horizontal = 12.dp, vertical = 3.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.32f))
+            .clickable(onClick = onClick),
         headlineContent = {
             Text(
                 text = title,

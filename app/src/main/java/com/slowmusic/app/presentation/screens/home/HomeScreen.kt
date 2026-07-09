@@ -1,6 +1,8 @@
 package com.slowmusic.app.presentation.screens.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material.icons.Icons
@@ -8,6 +10,9 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -128,11 +133,32 @@ private fun HomeContent(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 100.dp)
     ) {
-        // Good Evening Section
+        // Hero / cached status
         item {
-            Row(Modifier.fillMaxWidth().padding(end = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                SectionHeader(title = "Good Evening")
-                if (uiState.loadedFromCache) AssistChip(onClick = {}, label = { Text("Cached") })
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f)),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.28f), Color.Transparent)))
+                        .padding(18.dp)
+                ) {
+                    Column {
+                        Text("Slow Music", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            if (uiState.loadedFromCache) "Instant from cache • pull down for fresh picks" else "Fresh picks, local music and resolver-first streaming",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (uiState.loadedFromCache) AssistChip(onClick = {}, label = { Text("Cached") }, modifier = Modifier.align(Alignment.TopEnd))
+                }
             }
         }
         

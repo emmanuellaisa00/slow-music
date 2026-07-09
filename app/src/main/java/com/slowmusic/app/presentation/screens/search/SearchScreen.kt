@@ -110,17 +110,7 @@ fun SearchScreen(
     ) { paddingValues ->
         Column(Modifier.fillMaxSize().padding(paddingValues)) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(
-                    onClick = {
-                        recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                        }
-                        runCatching { voiceSearchLauncher.launch(intent) }.onFailure { voiceMessage = "Voice search is not available on this device" }
-                    },
-                    label = { Text("Voice Search") },
-                    leadingIcon = { Icon(Icons.Filled.Mic, null) }
-                )
+                AssistChip(onClick = { viewModel.selectTab(SearchTab.ALL) }, label = { Text("All") })
                 if (uiState.downloadedSongs.isNotEmpty()) AssistChip(onClick = { viewModel.selectTab(SearchTab.DOWNLOADS) }, label = { Text("Downloaded") })
                 if (uiState.localSongs.isNotEmpty()) AssistChip(onClick = { viewModel.selectTab(SearchTab.LOCAL) }, label = { Text("Local") })
             }
@@ -132,7 +122,7 @@ fun SearchScreen(
                     recentSelections = recentSelections,
                     searchHistory = searchHistory,
                     suggestions = uiState.suggestions,
-                    onRecentSongClick = { song -> onSongClick(song, recentSelections.ifEmpty { listOf(song) }) },
+                    onRecentSongClick = { song -> viewModel.showSelectedSong(song); onSongClick(song, recentSelections.ifEmpty { listOf(song) }) },
                     onRecentSongMore = { selectedSong = it },
                     onGenreClick = onGenreClick,
                     onHistoryItemClick = { viewModel.updateQuery(it); viewModel.search(it) },
@@ -142,7 +132,7 @@ fun SearchScreen(
                 else -> SearchResults(
                     state = uiState,
                     onTabSelected = viewModel::selectTab,
-                    onSongClick = onSongClick,
+                    onSongClick = { song, queue -> viewModel.showSelectedSong(song); onSongClick(song, queue) },
                     onArtistClick = onArtistClick,
                     onAlbumClick = onAlbumClick,
                     onPlaylistClick = onPlaylistClick,

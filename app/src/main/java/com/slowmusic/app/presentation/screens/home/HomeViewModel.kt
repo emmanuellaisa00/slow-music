@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class HomeUiState(
-    val isLoading: Boolean = true,
+    val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val loadedFromCache: Boolean = false,
     val error: String? = null,
@@ -41,7 +41,19 @@ class HomeViewModel @Inject constructor(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
     private var hasLoaded = false
 
-    init { observeRecentlyPlayed() }
+    init {
+        observeRecentlyPlayed()
+        warmStartFromCache()
+    }
+
+    private fun warmStartFromCache() {
+        viewModelScope.launch {
+            contentCacheRepository.getHome(maxAgeMs = Long.MAX_VALUE)?.let { cached ->
+                applySnapshot(cached, fromCache = true)
+                _uiState.update { it.copy(isLoading = false, isRefreshing = false, error = null) }
+            }
+        }
+    }
 
     private fun observeRecentlyPlayed() {
         viewModelScope.launch {

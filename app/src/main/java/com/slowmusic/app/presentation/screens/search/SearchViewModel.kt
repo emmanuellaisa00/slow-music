@@ -76,6 +76,10 @@ class SearchViewModel @Inject constructor(
         _uiState.update { it.copy(selectedTab = tab) }
     }
 
+    fun showSelectedSong(song: Song) {
+        _uiState.update { it.copy(query = "${song.title} • ${song.artist}", suggestions = emptyList()) }
+    }
+
     fun search(query: String) {
         if (query.isBlank()) return
         viewModelScope.launch {
