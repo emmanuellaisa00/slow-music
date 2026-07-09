@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -27,6 +28,8 @@ import com.slowmusic.app.presentation.screens.ios.IosGlassMiniPlayer
 import com.slowmusic.app.presentation.theme.SlowMusicTheme
 import com.slowmusic.app.streaming.WebViewStreamResolver
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -35,7 +38,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        cleanupWebViewResolver = WebViewStreamResolver.init(this)
+        // WebView creation is expensive. Defer it until after the first frames so
+        // cold start, splash, and initial navigation feel instant. The resolver
+        // still becomes available shortly after launch for hard streaming cases.
+        lifecycleScope.launch {
+            delay(2_000)
+            if (!isFinishing && cleanupWebViewResolver == null) {
+                cleanupWebViewResolver = WebViewStreamResolver.init(this@MainActivity)
+            }
+        }
 
         setContent {
             val mainViewModel: MainViewModel = hiltViewModel()

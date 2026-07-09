@@ -4,23 +4,46 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
 import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
-class SlowMusicApp : Application() {
+class SlowMusicApp : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()
-        MobileAds.initialize(this)
+        // Keep ad SDK initialization async and non-blocking for first composition.
+        runCatching { MobileAds.initialize(this) }
+    }
+
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader.Builder(this)
+            .crossfade(false)
+            .allowHardware(true)
+            .memoryCache {
+                MemoryCache.Builder(this)
+                    .maxSizePercent(0.22)
+                    .build()
+            }
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(cacheDir.resolve("image_cache"))
+                    .maxSizeBytes(256L * 1024L * 1024L)
+                    .build()
+            }
+            .respectCacheHeaders(false)
+            .build()
     }
 
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager = getSystemService(NotificationManager::class.java)
 
-            // Music Playback Channel
             val playbackChannel = NotificationChannel(
                 PLAYBACK_CHANNEL_ID,
                 "Music Playback",
@@ -30,7 +53,6 @@ class SlowMusicApp : Application() {
                 setShowBadge(false)
             }
 
-            // Download Channel
             val downloadChannel = NotificationChannel(
                 DOWNLOAD_CHANNEL_ID,
                 "Downloads",
@@ -39,9 +61,7 @@ class SlowMusicApp : Application() {
                 description = "Download progress and completion"
             }
 
-            notificationManager.createNotificationChannels(
-                listOf(playbackChannel, downloadChannel)
-            )
+            notificationManager.createNotificationChannels(listOf(playbackChannel, downloadChannel))
         }
     }
 
