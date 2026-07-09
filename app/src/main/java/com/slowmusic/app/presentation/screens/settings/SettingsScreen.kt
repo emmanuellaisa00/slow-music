@@ -51,12 +51,12 @@ fun SettingsScreen(
         "network" -> ChoiceDialog("Network Mode", NetworkMode.values().map { it.name }, { viewModel.updateNetworkMode(NetworkMode.valueOf(it)); dialog = null }, { dialog = null })
         "resolver" -> AlertDialog(
             onDismissRequest = { dialog = null },
-            title = { Text("Resolver backend") },
+            title = { Text("Streaming backend") },
             text = { OutlinedTextField(value = resolverText, onValueChange = { resolverText = it }, label = { Text("Backend URL") }, placeholder = { Text("https://your-worker.example.com") }) },
-            confirmButton = { TextButton(onClick = { viewModel.updateResolverBackend(resolverText); message = "Resolver backend saved"; dialog = null }) { Text("Save") } },
-            dismissButton = { TextButton(onClick = { resolverText = ""; viewModel.updateResolverBackend(""); message = "Resolver backend disabled"; dialog = null }) { Text("Disable") } }
+            confirmButton = { TextButton(onClick = { viewModel.updateResolverBackend(resolverText); message = "Streaming backend saved"; dialog = null }) { Text("Save") } },
+            dismissButton = { TextButton(onClick = { resolverText = ""; viewModel.updateResolverBackend(""); message = "Streaming backend disabled"; dialog = null }) { Text("Disable") } }
         )
-        "about" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Slow Music") }, text = { Text("Version 1.0.0\nLocal database mode enabled\nOnline catalog powered by iTunes Search API") }, confirmButton = { TextButton(onClick = { dialog = null }) { Text("OK") } })
+        "about" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Slow Music") }, text = { Text("Version 1.0.0\nLocal library mode enabled\nCached discovery and full-song playback") }, confirmButton = { TextButton(onClick = { dialog = null }) { Text("OK") } })
         "clear" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Clear cache?") }, text = { Text("This clears cached Home/Search metadata so the next refresh fetches fresh content.") }, confirmButton = { TextButton(onClick = { viewModel.clearCache { message = it }; dialog = null }) { Text("Clear") } }, dismissButton = { TextButton(onClick = { dialog = null }) { Text("Cancel") } })
         "reset" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Reset app data?") }, text = { Text("This clears favorites, downloads, playlists, followed artists, search history, cached content, and preferences.") }, confirmButton = { TextButton(onClick = { viewModel.resetAppData { message = it }; dialog = null }) { Text("Reset") } }, dismissButton = { TextButton(onClick = { dialog = null }) { Text("Cancel") } })
     }
@@ -218,7 +218,7 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Filled.Cloud,
-                    title = "Resolver Backend",
+                    title = "Streaming Backend",
                     subtitle = preferences.resolverBackendUrl.ifBlank { "Disabled" },
                     onClick = { resolverText = preferences.resolverBackendUrl; dialog = "resolver" }
                 )

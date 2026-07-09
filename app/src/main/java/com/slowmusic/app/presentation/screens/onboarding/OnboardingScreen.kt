@@ -304,7 +304,7 @@ val onboardingPages = listOf(
         title = "Welcome to Slow Music",
         description = "Your ultimate music streaming companion. Stream millions of songs or play from your device.",
         features = listOf(
-            "Stream from iTunes catalog",
+            "Stream music online",
             "Play local music files",
             "Ad-free experience with Premium"
         ),

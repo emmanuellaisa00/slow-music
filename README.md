@@ -23,7 +23,7 @@
 
 ### 📱 Core Features
 
-- 🎵 **Music Streaming** - iTunes API + Local files
+- 🎵 **Music Streaming** - Online discovery + Local files
 - 🔍 **Search** - Songs, artists, albums, voice search
 - ❤️ **Favorites** - Like songs
 - 📋 **Playlists** - Create & manage
@@ -169,7 +169,7 @@ slow-music/
 │   │   ├── repository/         # Repository interfaces
 │   │   └── usecase/            # Use cases
 │   ├── data/                   # Data layer
-│   │   ├── remote/             # iTunes API
+│   │   ├── remote/             # Online discovery API
 │   │   └── repository/         # Repository implementations
 │   ├── presentation/           # UI layer
 │   │   ├── screens/            # All screens
@@ -239,7 +239,7 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ## 🙏 Credits
 
-- [iTunes Search API](https://developer.apple.com/library/archive/documentation/AudioVideo/Conceptual/iTuneSearchAPI/) - Music data
+- Online music discovery providers - Music data
 - [Jetpack Compose](https://developer.android.com/jetpack/compose) - UI toolkit
 - [Material Design](https://material.io/design) - Design system
 - [Coil](https://github.com/coil-kt/coil) - Image loading

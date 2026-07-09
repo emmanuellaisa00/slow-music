@@ -150,7 +150,7 @@ private fun HomeContent(
                         Text("Slow Music", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            if (uiState.loadedFromCache) "Instant from cache • pull down for fresh picks" else "Fresh picks, local music and resolver-first streaming",
+                            if (uiState.loadedFromCache) "Instant from cache • pull down for fresh picks" else "Fresh picks, local music and full-song playback",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

@@ -63,7 +63,7 @@ data class OnlinePlaylistResult(
     fun toPlaylist(): Playlist = Playlist(
         id = "ytpl_$playlistId",
         name = title,
-        description = author.ifBlank { "YouTube Music playlist" },
+        description = author.ifBlank { "Discovered playlist" },
         artworkUrl = thumbnailUrl,
         songIds = emptyList(),
         createdAt = System.currentTimeMillis(),

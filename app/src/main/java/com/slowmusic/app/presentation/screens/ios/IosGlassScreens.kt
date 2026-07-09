@@ -137,7 +137,7 @@ fun IosGlassHomeScreen(
                 Spacer(Modifier.height(10.dp))
                 val hero = state.recentlyPlayed.firstOrNull() ?: state.trendingSongs.firstOrNull()
                 Text(hero?.title ?: "Discover your next sound", color = Text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(hero?.artist ?: "Cached discovery • resolver-first playback", color = Muted)
+                Text(hero?.artist ?: "Cached discovery • full-song playback", color = Muted)
                 Spacer(Modifier.height(12.dp))
                 Button(onClick = { hero?.let { onSongClick(it, state.recentlyPlayed.ifEmpty { state.trendingSongs }) } }, colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Void)) { Text("Resume") }
             }
@@ -246,7 +246,7 @@ fun IosGlassProfileScreen(
                 Text(sub.type.name.lowercase().replaceFirstChar { it.uppercase() }, color = Muted)
             }
         }
-        item { GlassCard(Modifier.fillMaxWidth().padding(horizontal = 20.dp), radius = 22) { Text("Resolver-first streaming • cached discovery • local database mode", color = Text) } }
+        item { GlassCard(Modifier.fillMaxWidth().padding(horizontal = 20.dp), radius = 22) { Text("Full-song playback • cached discovery • local library mode", color = Text) } }
         item { Section("Shortcuts") }
         item { LibraryButton(Icons.Filled.Settings, "Settings", "Appearance, cache, playback", onSettings) }
     }

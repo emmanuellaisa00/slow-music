@@ -230,7 +230,7 @@ fun NavigationGraph(
                         type = com.slowmusic.app.domain.model.SubscriptionType.FREE,
                         isActive = false,
                         expiresAt = null,
-                        features = listOf("Local database mode", "Resolver-first streaming", "Cached discovery")
+                        features = listOf("Local library", "Full-song streaming", "Cached discovery")
                     ),
                     onNavigateToSubscription = { navController.navigate(Screen.Subscription.route) },
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
@@ -433,7 +433,7 @@ fun NavigationGraph(
             val genreId = backStackEntry.arguments?.getString("genreId") ?: ""
             LegalTextScreen(
                 title = "Genre",
-                body = "Browse playlists, new releases, and top artists for genre $genreId. This screen is ready to connect to the online catalog and local cache.",
+                body = "Browse playlists, new releases, and top artists for genre $genreId. This screen is ready to use your saved cache and music discovery sources.",
                 onNavigateBack = { navController.popBackStack() }
             )
         }

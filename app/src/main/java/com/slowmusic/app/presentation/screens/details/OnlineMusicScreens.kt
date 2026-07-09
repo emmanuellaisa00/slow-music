@@ -85,7 +85,7 @@ fun ArtistDetailsScreen(
                 )
             }
             item { SectionTitle("About") }
-            item { Text("Follow ${state.artist?.name ?: "this artist"} to keep their new releases and top songs in your library. Artist biographies and verified metadata can be synced from your online catalog later.") }
+            item { Text("Follow ${state.artist?.name ?: "this artist"} to keep their new releases and top songs in your library. Artist biographies and verified metadata can be enhanced as more music data is discovered.") }
         }
     }
 }
@@ -148,7 +148,7 @@ fun AlbumDetailsScreen(
             }
             item {
                 Text(
-                    text = "Released by ${album?.artist ?: "Unknown label"}. Track metadata is sourced from the online catalog and cached locally for library use.",
+                    text = "Released by ${album?.artist ?: "Unknown label"}. Track metadata is cached locally for faster library use.",
                     modifier = Modifier.padding(16.dp),
                     color = Color.White.copy(alpha = 0.62f),
                     style = MaterialTheme.typography.bodySmall
@@ -509,9 +509,9 @@ class ArtistDetailsViewModel @Inject constructor(
     fun load(id: String) = viewModelScope.launch {
         val baseArtist = musicRepository.getArtistById(id)
         val artistName = baseArtist?.name ?: id.replace('_', ' ').replaceFirstChar { it.uppercase() }
-        val iTunesSongs = runCatching { musicRepository.getSongsByArtist(id) }.getOrDefault(emptyList())
+        val catalogSongs = runCatching { musicRepository.getSongsByArtist(id) }.getOrDefault(emptyList())
         val fallbackSongs = runCatching { streamingFallbackResolver.searchSongs(artistName, 20) }.getOrDefault(emptyList())
-        val songs = (iTunesSongs + fallbackSongs).distinctBy { it.title.lowercase() to it.artist.lowercase() }
+        val songs = (catalogSongs + fallbackSongs).distinctBy { it.title.lowercase() to it.artist.lowercase() }
         val albums = (runCatching { musicRepository.searchAlbums(artistName) }.getOrDefault(emptyList()) +
             runCatching { streamingFallbackResolver.searchAlbums(artistName) }.getOrDefault(emptyList()))
             .distinctBy { it.title.lowercase() to it.artist.lowercase() }
@@ -548,8 +548,8 @@ class AlbumDetailsViewModel @Inject constructor(
             val first = songs.firstOrNull()
             val album = Album(
                 id = id,
-                title = first?.album ?: "YouTube Music Album",
-                artist = first?.artist ?: "YouTube Music",
+                title = first?.album ?: "Album",
+                artist = first?.artist ?: "Music",
                 artistId = (first?.artist ?: id).hashCode().toString(),
                 artworkUrl = first?.albumArtUrl,
                 trackCount = songs.size,
@@ -581,8 +581,8 @@ class PlaylistDetailsViewModel @Inject constructor(
             val songs = streamingFallbackResolver.playlistSongs(id)
             val playlist = Playlist(
                 id = id,
-                name = songs.firstOrNull()?.album ?: "YouTube Music Playlist",
-                description = "Fetched with streaming fallback architecture",
+                name = songs.firstOrNull()?.album ?: "Music Playlist",
+                description = "Discovered playlist",
                 artworkUrl = songs.firstOrNull()?.albumArtUrl,
                 songIds = songs.map { it.id },
                 createdAt = System.currentTimeMillis(),
@@ -663,7 +663,7 @@ Replace this draft with your hosted privacy policy before Play Store release.
 val TermsBody = """
 Slow Music is provided as a music discovery and playback application. You are responsible for using content according to applicable licenses and regional rules.
 
-Subscriptions, ads, casting, downloads, and online catalog features depend on third-party services and may vary by region.
+Subscriptions, ads, casting, downloads, and music discovery features may vary by region.
 
 Replace this draft with your official terms of service before release.
 """.trimIndent()
