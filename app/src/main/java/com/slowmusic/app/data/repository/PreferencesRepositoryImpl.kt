@@ -63,7 +63,7 @@ class PreferencesRepositoryImpl @Inject constructor(
                 autoPlaySimilar = prefs[PreferencesKeys.AUTO_PLAY_SIMILAR] ?: true,
                 networkMode = NetworkMode.valueOf(prefs[PreferencesKeys.NETWORK_MODE] ?: NetworkMode.ONLINE_ONLY.name),
                 resolverBackendUrl = prefs[PreferencesKeys.RESOLVER_BACKEND_URL] ?: "",
-                uiStyle = UIStyle.valueOf(prefs[PreferencesKeys.UI_STYLE] ?: UIStyle.APPLE_MUSIC.name)
+                uiStyle = UIStyle.valueOf(prefs[PreferencesKeys.UI_STYLE] ?: UIStyle.IOS_GLASS.name)
             )
         }
     }

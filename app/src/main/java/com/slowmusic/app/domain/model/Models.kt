@@ -109,7 +109,7 @@ data class UserPreferences(
     val networkMode: NetworkMode = NetworkMode.ONLINE_ONLY,
     val resolverBackendUrl: String = "",
     // Apple Music Style Settings
-    val uiStyle: UIStyle = UIStyle.APPLE_MUSIC,
+    val uiStyle: UIStyle = UIStyle.IOS_GLASS,
     val enableGlassmorphism: Boolean = true,
     val enableLiquidGlass: Boolean = true,
     val enableDynamicColors: Boolean = true,
@@ -119,7 +119,8 @@ data class UserPreferences(
 
 enum class UIStyle {
     DEFAULT,
-    APPLE_MUSIC
+    APPLE_MUSIC,
+    IOS_GLASS
 }
 
 enum class CornerRadiusStyle {

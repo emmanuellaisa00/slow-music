@@ -40,7 +40,8 @@ class MainActivity : ComponentActivity() {
             val themeMode by mainViewModel.themeMode.collectAsState()
             val navigationStyle by mainViewModel.navigationStyle.collectAsState()
             val userPreferences by mainViewModel.userPreferences.collectAsState()
-            val useAppleMusicUi = userPreferences.uiStyle == com.slowmusic.app.domain.model.UIStyle.APPLE_MUSIC
+            val useIosGlass = userPreferences.uiStyle == com.slowmusic.app.domain.model.UIStyle.IOS_GLASS
+            val useAppleMusicUi = userPreferences.uiStyle == com.slowmusic.app.domain.model.UIStyle.APPLE_MUSIC || useIosGlass
             val playbackState by mainViewModel.playbackState.collectAsState()
             val currentSong by mainViewModel.currentSong.collectAsState()
             val queue by mainViewModel.queue.collectAsState()
@@ -53,6 +54,7 @@ class MainActivity : ComponentActivity() {
                 SlowMusicApp(
                     navigationStyle = navigationStyle,
                     useAppleMusicUi = useAppleMusicUi,
+                    useIosGlass = useIosGlass,
                     playbackState = playbackState,
                     currentSong = currentSong,
                     queue = queue,
@@ -92,6 +94,7 @@ class MainActivity : ComponentActivity() {
 fun SlowMusicApp(
     navigationStyle: com.slowmusic.app.domain.model.NavigationStyle,
     useAppleMusicUi: Boolean,
+    useIosGlass: Boolean,
     playbackState: com.slowmusic.app.domain.model.PlaybackState,
     currentSong: com.slowmusic.app.domain.model.Song?,
     queue: List<com.slowmusic.app.domain.model.Song>,
@@ -225,6 +228,7 @@ fun SlowMusicApp(
                 playbackState = playbackState,
                 currentSong = currentSong,
                 useAppleMusicUi = useAppleMusicUi,
+                useIosGlass = useIosGlass,
                 queue = queue,
                 lyrics = lyrics,
                 onPlayPause = onPlayPause,
