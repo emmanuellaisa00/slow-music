@@ -359,29 +359,52 @@ fun NavigationGraph(
 
 
         composable(Screen.Queue.route) {
-            QueueScreen(
-                currentSong = currentSong,
-                queue = queue,
-                onSongClick = { song -> selectSong(song, queue) },
-                onRemoveFromQueue = onRemoveFromQueue,
-                onMoveQueueItem = onMoveQueueItem,
-                onClearQueue = onClearQueue,
-                onSaveAsPlaylist = onSaveQueueAsPlaylist,
-                onNavigateBack = { navController.popBackStack() }
-            )
+            if (useIosGlass) {
+                IosGlassQueueScreen(
+                    currentSong = currentSong,
+                    queue = queue,
+                    onSongClick = { song -> selectSong(song, queue) },
+                    onRemoveFromQueue = onRemoveFromQueue,
+                    onMoveQueueItem = onMoveQueueItem,
+                    onClearQueue = onClearQueue,
+                    onSaveAsPlaylist = onSaveQueueAsPlaylist,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            } else {
+                QueueScreen(
+                    currentSong = currentSong,
+                    queue = queue,
+                    onSongClick = { song -> selectSong(song, queue) },
+                    onRemoveFromQueue = onRemoveFromQueue,
+                    onMoveQueueItem = onMoveQueueItem,
+                    onClearQueue = onClearQueue,
+                    onSaveAsPlaylist = onSaveQueueAsPlaylist,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(Screen.Lyrics.route) {
             currentSong?.let { song ->
-                LyricsScreen(
-                    song = song,
-                    lyrics = lyrics,
-                    progress = progress,
-                    isSynced = lyrics?.contains("[") == true,
-                    onNavigateBack = { navController.popBackStack() },
-                    onToggleSynced = { },
-                    onSeekToProgress = onSeek
-                )
+                if (useIosGlass) {
+                    IosGlassLyricsScreen(
+                        song = song,
+                        lyrics = lyrics,
+                        progress = progress,
+                        onSeekToProgress = onSeek,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                } else {
+                    LyricsScreen(
+                        song = song,
+                        lyrics = lyrics,
+                        progress = progress,
+                        isSynced = lyrics?.contains("[") == true,
+                        onNavigateBack = { navController.popBackStack() },
+                        onToggleSynced = { },
+                        onSeekToProgress = onSeek
+                    )
+                }
             } ?: LegalTextScreen(
                 title = "Lyrics",
                 body = "Start a song to view lyrics.",

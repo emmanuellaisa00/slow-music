@@ -256,3 +256,151 @@ fun IosGlassProfileScreen(
 fun IosGlassSettingsSkin(content: @Composable () -> Unit) {
     Box(Modifier.fillMaxSize().background(Void)) { IosAurora(); content() }
 }
+
+@Composable
+fun IosGlassBottomNav(
+    items: List<com.slowmusic.app.presentation.navigation.BottomNavItem>,
+    currentRoute: String?,
+    onNavigate: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .clip(RoundedCornerShape(26.dp))
+            .background(Panel.copy(alpha = 0.72f))
+            .border(1.dp, Color.White.copy(alpha = 0.16f), RoundedCornerShape(26.dp))
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        items.forEach { item ->
+            val selected = currentRoute == item.screen.route
+            Column(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { onNavigate(item.screen.route) }
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                    contentDescription = item.title,
+                    tint = if (selected) Text else Muted,
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(Modifier.height(3.dp))
+                Box(Modifier.size(4.dp).clip(CircleShape).background(if (selected) Violet else Color.Transparent))
+            }
+        }
+    }
+}
+
+@Composable
+fun IosGlassMiniPlayer(
+    song: Song,
+    isPlaying: Boolean,
+    progress: Float,
+    onPlayPause: () -> Unit,
+    onNext: () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    GlassCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clickable(onClick = onClick),
+        radius = 20
+    ) {
+        Box(Modifier.fillMaxWidth()) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(48.dp)) {
+                AsyncImage(song.albumArtUrl, null, Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)), contentScale = ContentScale.Crop)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(song.title, color = Text, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(song.artist, color = Muted, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                IconButton(onClick = onPlayPause, modifier = Modifier.size(34.dp)) { Icon(if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, null, tint = Text) }
+                IconButton(onClick = onNext, modifier = Modifier.size(34.dp)) { Icon(Icons.Filled.SkipNext, null, tint = Text) }
+            }
+            Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(2.dp).clip(RoundedCornerShape(2.dp)).background(Color.White.copy(alpha = .12f)))
+            Box(Modifier.align(Alignment.BottomStart).fillMaxWidth(progress.coerceIn(0f, 1f)).height(2.dp).clip(RoundedCornerShape(2.dp)).background(Brush.horizontalGradient(listOf(Violet, Ember))))
+        }
+    }
+}
+
+@Composable
+fun IosGlassQueueScreen(
+    currentSong: Song?,
+    queue: List<Song>,
+    onSongClick: (Song) -> Unit,
+    onRemoveFromQueue: (Int) -> Unit,
+    onMoveQueueItem: (Int, Int) -> Unit,
+    onClearQueue: () -> Unit,
+    onSaveAsPlaylist: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
+    IosPage(title = "Queue", trailing = { GlassIcon(Icons.Filled.Close, onNavigateBack) }) {
+        currentSong?.let { now ->
+            item {
+                GlassCard(Modifier.fillMaxWidth().padding(horizontal = 20.dp), radius = 22) {
+                    Text("NOW PLAYING", color = Violet, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(10.dp))
+                    SongRow(now, onClick = { onSongClick(now) })
+                }
+            }
+        }
+        item {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Up next", color = Text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Row { Text("Save", color = Violet, modifier = Modifier.clickable(onClick = onSaveAsPlaylist)); Spacer(Modifier.width(16.dp)); Text("Clear", color = Ember, modifier = Modifier.clickable(onClick = onClearQueue)) }
+            }
+        }
+        items(queue) { song ->
+            val index = queue.indexOf(song)
+            Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(onClick = { if (index > 0) onMoveQueueItem(index, index - 1) }, modifier = Modifier.size(30.dp)) { Icon(Icons.Filled.KeyboardArrowUp, null, tint = Muted) }
+                    IconButton(onClick = { if (index < queue.lastIndex) onMoveQueueItem(index, index + 1) }, modifier = Modifier.size(30.dp)) { Icon(Icons.Filled.KeyboardArrowDown, null, tint = Muted) }
+                }
+                Box(Modifier.weight(1f)) { SongRow(song, { onSongClick(song) }, { onRemoveFromQueue(index) }) }
+            }
+        }
+    }
+}
+
+@Composable
+fun IosGlassLyricsScreen(
+    song: Song,
+    lyrics: String?,
+    progress: Float,
+    onSeekToProgress: (Float) -> Unit,
+    onNavigateBack: () -> Unit
+) {
+    Box(Modifier.fillMaxSize().background(Void)) {
+        AsyncImage(song.albumArtUrl, null, Modifier.fillMaxSize().blur(58.dp), contentScale = ContentScale.Crop)
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = .22f), Void.copy(alpha = .88f), Void))))
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 20.dp, start = 28.dp, end = 28.dp, bottom = 100.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Column { Text("LYRICS", color = Muted, style = MaterialTheme.typography.labelSmall); Text(song.title, color = Text, fontWeight = FontWeight.Bold) }
+                    GlassIcon(Icons.Filled.Close, onNavigateBack)
+                }
+            }
+            val rawLines = lyrics?.lines()?.filter { it.isNotBlank() }.orEmpty().ifEmpty { listOf("Lyrics are not available yet", "When lyrics are found they will appear here") }
+            items(rawLines) { line ->
+                val index = rawLines.indexOf(line)
+                val active = index == ((rawLines.lastIndex.coerceAtLeast(0)) * progress).toInt().coerceIn(0, rawLines.lastIndex.coerceAtLeast(0))
+                Text(
+                    line.replace(Regex("""\[\d{1,2}:\d{2}(?:\.\d{1,3})?]"""), ""),
+                    color = if (active) Text else Text.copy(alpha = .32f),
+                    style = if (active) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth().clickable { onSeekToProgress(index.toFloat() / rawLines.lastIndex.coerceAtLeast(1)) }
+                )
+            }
+        }
+    }
+}

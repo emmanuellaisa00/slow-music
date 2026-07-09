@@ -22,6 +22,8 @@ import androidx.navigation.compose.rememberNavController
 import com.slowmusic.app.presentation.components.MiniPlayer
 import com.slowmusic.app.presentation.components.apple.AppleMiniPlayer
 import com.slowmusic.app.presentation.navigation.*
+import com.slowmusic.app.presentation.screens.ios.IosGlassBottomNav
+import com.slowmusic.app.presentation.screens.ios.IosGlassMiniPlayer
 import com.slowmusic.app.presentation.theme.SlowMusicTheme
 import com.slowmusic.app.streaming.WebViewStreamResolver
 import dagger.hilt.android.AndroidEntryPoint
@@ -143,7 +145,16 @@ fun SlowMusicApp(
                     com.slowmusic.app.domain.model.NavigationStyle.BOTTOM_NAV -> {
                         Column {
                             if (showMiniPlayer) {
-                                if (useAppleMusicUi) {
+                                if (useIosGlass) {
+                                    IosGlassMiniPlayer(
+                                        song = currentSong!!,
+                                        isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
+                                        progress = progress,
+                                        onPlayPause = onPlayPause,
+                                        onNext = onNext,
+                                        onClick = { navController.navigate(Screen.Player.route) }
+                                    )
+                                } else if (useAppleMusicUi) {
                                     AppleMiniPlayer(
                                         song = currentSong!!,
                                         isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
@@ -164,40 +175,58 @@ fun SlowMusicApp(
                                     )
                                 }
                             }
-                            NavigationBar(
-                                containerColor = if (useAppleMusicUi) Color.White.copy(alpha = 0.08f) else NavigationBarDefaults.containerColor,
-                                tonalElevation = if (useAppleMusicUi) 0.dp else NavigationBarDefaults.Elevation,
-                                modifier = if (useAppleMusicUi) Modifier
-                                    .padding(horizontal = 12.dp, vertical = 8.dp)
-                                    .clip(RoundedCornerShape(28.dp))
-                                    .border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(28.dp))
-                                else Modifier
-                            ) {
-                                bottomNavItems.forEach { item ->
-                                    NavigationBarItem(
-                                        icon = {
-                                            Icon(
-                                                imageVector = if (currentRoute == item.screen.route) item.selectedIcon else item.unselectedIcon,
-                                                contentDescription = item.title
-                                            )
-                                        },
-                                        label = { Text(item.title) },
-                                        selected = currentRoute == item.screen.route,
-                                        onClick = {
-                                            navController.navigate(item.screen.route) {
-                                                popUpTo(Screen.Home.route) { saveState = true }
-                                                launchSingleTop = true
-                                                restoreState = true
-                                            }
+                            if (useIosGlass) {
+                                IosGlassBottomNav(
+                                    items = bottomNavItems,
+                                    currentRoute = currentRoute,
+                                    onNavigate = { route ->
+                                        navController.navigate(route) {
+                                            popUpTo(Screen.Home.route) { saveState = true }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
-                                    )
+                                    }
+                                )
+                            } else {
+                                NavigationBar(
+                                    containerColor = if (useAppleMusicUi) Color.White.copy(alpha = 0.08f) else NavigationBarDefaults.containerColor,
+                                    tonalElevation = if (useAppleMusicUi) 0.dp else NavigationBarDefaults.Elevation,
+                                    modifier = if (useAppleMusicUi) Modifier
+                                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                                        .clip(RoundedCornerShape(28.dp))
+                                        .border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(28.dp))
+                                    else Modifier
+                                ) {
+                                    bottomNavItems.forEach { item ->
+                                        NavigationBarItem(
+                                            icon = { Icon(if (currentRoute == item.screen.route) item.selectedIcon else item.unselectedIcon, contentDescription = item.title) },
+                                            label = { Text(item.title) },
+                                            selected = currentRoute == item.screen.route,
+                                            onClick = {
+                                                navController.navigate(item.screen.route) {
+                                                    popUpTo(Screen.Home.route) { saveState = true }
+                                                    launchSingleTop = true
+                                                    restoreState = true
+                                                }
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                     com.slowmusic.app.domain.model.NavigationStyle.DRAWER -> {
                         if (showMiniPlayer) {
-                            if (useAppleMusicUi) {
+                            if (useIosGlass) {
+                                IosGlassMiniPlayer(
+                                    song = currentSong!!,
+                                    isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
+                                    progress = progress,
+                                    onPlayPause = onPlayPause,
+                                    onNext = onNext,
+                                    onClick = { navController.navigate(Screen.Player.route) }
+                                )
+                            } else if (useAppleMusicUi) {
                                 AppleMiniPlayer(
                                     song = currentSong!!,
                                     isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
