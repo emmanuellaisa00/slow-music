@@ -191,7 +191,7 @@ fun LyricsScreen(
                                     .background(if (active) AppleColors.primary.copy(alpha = 0.10f) else Color.Transparent, RoundedCornerShape(18.dp))
                                     .padding(horizontal = 10.dp, vertical = 8.dp)
                                     .clickable {
-                                        manualLine = index
+                                        manualLine = null
                                         onSeekToProgress(progressForLine(parsed, index, lines.size, song.duration))
                                     }
                             )

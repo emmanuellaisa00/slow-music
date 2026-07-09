@@ -71,9 +71,6 @@ fun HomeScreen(
                     IconButton(onClick = onNavigateToSearch) {
                         Icon(Icons.Filled.Search, contentDescription = "Search")
                     }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
-                    }
                 }
             )
         }

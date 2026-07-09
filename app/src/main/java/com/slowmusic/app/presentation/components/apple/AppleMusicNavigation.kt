@@ -116,7 +116,7 @@ private fun AppleNavItem(
             imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
             contentDescription = item.label,
             tint = if (isSelected) AppleColors.primary else AppleColors.textSecondary,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(20.dp)
         )
         
         Spacer(modifier = Modifier.height(4.dp))
@@ -230,9 +230,11 @@ fun AppleMiniPlayer(
             AppleGlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
                     .clickable(onClick = onClick),
-                cornerRadius = 0.dp,
-                backgroundColor = AppleColors.background.copy(alpha = 0.98f)
+                cornerRadius = 18.dp,
+                backgroundColor = AppleColors.background.copy(alpha = 0.82f),
+                borderColor = AppleColors.glassBorder.copy(alpha = 0.75f)
             ) {
                 Column {
                     // Progress bar
@@ -242,7 +244,7 @@ fun AppleMiniPlayer(
                             .fillMaxWidth()
                             .height(2.dp)
                             .clip(RoundedCornerShape(1.dp))
-                            .graphicsLayer { translationY = -8f },
+                            .graphicsLayer { translationY = -4f },
                         color = AppleColors.primary,
                         trackColor = AppleColors.textTertiary.copy(alpha = 0.2f)
                     )
@@ -250,7 +252,8 @@ fun AppleMiniPlayer(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 8.dp),
+                            .height(48.dp)
+                            .padding(top = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Album art with glow
@@ -259,8 +262,8 @@ fun AppleMiniPlayer(
                                 model = song.albumArtUrl,
                                 contentDescription = null,
                                 modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(9.dp))
                                     .border(
                                         width = 1.dp,
                                         brush = Brush.linearGradient(
@@ -275,7 +278,7 @@ fun AppleMiniPlayer(
                             )
                         }
                         
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         
                         // Song info
                         Column(
@@ -302,7 +305,7 @@ fun AppleMiniPlayer(
                         Row {
                             IconButton(
                                 onClick = onPlayPause,
-                                modifier = Modifier.size(40.dp)
+                                modifier = Modifier.size(34.dp)
                             ) {
                                 val scale by animateFloatAsState(
                                     targetValue = if (isPlaying) 1f else 1f,
@@ -315,20 +318,20 @@ fun AppleMiniPlayer(
                                     contentDescription = if (isPlaying) "Pause" else "Play",
                                     tint = AppleColors.textPrimary,
                                     modifier = Modifier
-                                        .size(28.dp)
+                                        .size(22.dp)
                                         .scale(scale)
                                 )
                             }
                             
                             IconButton(
                                 onClick = onNext,
-                                modifier = Modifier.size(40.dp)
+                                modifier = Modifier.size(34.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.SkipNext,
                                     contentDescription = "Next",
                                     tint = AppleColors.textPrimary,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
@@ -399,7 +402,7 @@ fun AppleSearchBar(
         if (query.isNotEmpty()) {
             IconButton(
                 onClick = { onQueryChange("") },
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(20.dp)
             ) {
                 Icon(
                     imageVector = Icons.Filled.Clear,

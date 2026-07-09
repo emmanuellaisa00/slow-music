@@ -1,6 +1,7 @@
 package com.slowmusic.app.presentation.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,9 +34,13 @@ fun MiniPlayer(
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 6.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(18.dp))
             .clickable(onClick = onClick),
-        color = PlayerBackground.copy(alpha = 0.96f),
-        tonalElevation = 4.dp
+        color = PlayerBackground.copy(alpha = 0.90f),
+        tonalElevation = 2.dp,
+        shape = RoundedCornerShape(18.dp)
     ) {
         Column {
             LinearProgressIndicator(
@@ -50,8 +55,8 @@ fun MiniPlayer(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .height(50.dp)
+                    .padding(horizontal = 8.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Album art
@@ -59,8 +64,8 @@ fun MiniPlayer(
                     model = song.albumArtUrl,
                     contentDescription = "Album art",
                     modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(8.dp)),
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(9.dp)),
                     contentScale = ContentScale.Crop
                 )
                 
@@ -87,19 +92,21 @@ fun MiniPlayer(
                 }
                 
                 // Controls
-                IconButton(onClick = onPlayPause, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = onPlayPause, modifier = Modifier.size(36.dp)) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                         contentDescription = if (isPlaying) "Pause" else "Play",
-                        tint = TextPrimaryDark
+                        tint = TextPrimaryDark,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
                 
-                IconButton(onClick = onNext, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = onNext, modifier = Modifier.size(34.dp)) {
                     Icon(
                         imageVector = Icons.Filled.SkipNext,
                         contentDescription = "Next",
-                        tint = TextPrimaryDark
+                        tint = TextPrimaryDark,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
