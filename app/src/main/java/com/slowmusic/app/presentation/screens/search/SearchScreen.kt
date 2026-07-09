@@ -184,10 +184,6 @@ private fun BrowseContent(
                 items(genres) { genre -> GenreChip(name = genre.name, onClick = { onGenreClick(genre.id) }) }
             }
         }
-        item { SectionHeader("Popular Categories") }
-        items(listOf("Pop", "Rock", "Hip-Hop", "Latin", "R&B", "Electronic", "Country", "Jazz", "Afrobeats", "Gospel")) { category ->
-            SearchTextRow(Icons.Filled.MusicNote, category) { onHistoryItemClick(category) }
-        }
     }
 }
 

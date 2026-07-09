@@ -346,7 +346,15 @@ private fun SpotifyTrackRow(
         modifier = Modifier.clickable(onClick = onClick),
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         leadingContent = {
-            Text(index.toString(), color = Color.White.copy(alpha = 0.55f), modifier = Modifier.width(24.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(index.toString(), color = Color.White.copy(alpha = 0.55f), modifier = Modifier.width(24.dp))
+                AsyncImage(
+                    model = song.albumArtUrl,
+                    contentDescription = null,
+                    modifier = Modifier.size(46.dp).clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
         },
         headlineContent = { Text(song.title, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         supportingContent = { Text(song.artist, color = Color.White.copy(alpha = 0.58f), maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -491,13 +499,30 @@ private fun permissionLabel(permission: String): String = when (permission) {
 }
 
 @HiltViewModel
-class ArtistDetailsViewModel @Inject constructor(private val musicRepository: MusicRepository, private val libraryRepository: LibraryRepository) : ViewModel() {
+class ArtistDetailsViewModel @Inject constructor(
+    private val musicRepository: MusicRepository,
+    private val libraryRepository: LibraryRepository,
+    private val streamingFallbackResolver: StreamingFallbackResolver
+) : ViewModel() {
     private val _state = MutableStateFlow(ArtistDetailsState())
     val state: StateFlow<ArtistDetailsState> = _state.asStateFlow()
     fun load(id: String) = viewModelScope.launch {
-        val artist = musicRepository.getArtistById(id) ?: Artist(id, "Artist $id", null, null)
-        val songs = musicRepository.getSongsByArtist(id)
-        val albums = musicRepository.searchAlbums(artist.name)
+        val baseArtist = musicRepository.getArtistById(id)
+        val artistName = baseArtist?.name ?: id.replace('_', ' ').replaceFirstChar { it.uppercase() }
+        val iTunesSongs = runCatching { musicRepository.getSongsByArtist(id) }.getOrDefault(emptyList())
+        val fallbackSongs = runCatching { streamingFallbackResolver.searchSongs(artistName, 20) }.getOrDefault(emptyList())
+        val songs = (iTunesSongs + fallbackSongs).distinctBy { it.title.lowercase() to it.artist.lowercase() }
+        val albums = (runCatching { musicRepository.searchAlbums(artistName) }.getOrDefault(emptyList()) +
+            runCatching { streamingFallbackResolver.searchAlbums(artistName) }.getOrDefault(emptyList()))
+            .distinctBy { it.title.lowercase() to it.artist.lowercase() }
+        val artist = baseArtist ?: Artist(
+            id = id,
+            name = artistName,
+            imageUrl = songs.firstOrNull { !it.albumArtUrl.isNullOrBlank() }?.albumArtUrl,
+            genre = songs.firstOrNull()?.genre,
+            albumCount = albums.size,
+            songCount = songs.size
+        )
         val following = libraryRepository.isFollowing(id)
         _state.value = ArtistDetailsState(artist, songs, albums, following)
     }

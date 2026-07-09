@@ -109,7 +109,7 @@ data class UserPreferences(
     val networkMode: NetworkMode = NetworkMode.ONLINE_ONLY,
     val resolverBackendUrl: String = "",
     // Apple Music Style Settings
-    val uiStyle: UIStyle = UIStyle.IOS_GLASS,
+    val uiStyle: UIStyle = UIStyle.DEFAULT,
     val enableGlassmorphism: Boolean = true,
     val enableLiquidGlass: Boolean = true,
     val enableDynamicColors: Boolean = true,

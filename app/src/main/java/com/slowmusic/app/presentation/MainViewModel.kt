@@ -509,8 +509,21 @@ class MainViewModel @Inject constructor(
         if (!userPreferences.value.autoPlaySimilar) return
         val seed = _currentSong.value ?: return
         viewModelScope.launch {
-            val similar = streamingFallbackResolver.searchSongs("${seed.artist} ${seed.genre ?: seed.title}", 12)
-                .filterNot { candidate -> _queue.value.any { it.id == candidate.id || (it.title.equals(candidate.title, true) && it.artist.equals(candidate.artist, true)) } }
+            val seeds = buildList {
+                add("${seed.artist} ${seed.genre ?: "songs"}")
+                add("${seed.artist} radio")
+                add("${seed.title} ${seed.artist}")
+                seed.genre?.takeIf { it.isNotBlank() }?.let { add("$it ${seed.artist}") }
+                _queue.value.takeLast(8).forEach { queued ->
+                    if (!queued.artist.equals(seed.artist, true)) add("${seed.artist} ${queued.artist} collab similar")
+                }
+            }.distinct()
+            val similar = seeds.flatMap { query -> streamingFallbackResolver.searchSongs(query, 8) }
+                .distinctBy { it.title.lowercase() to it.artist.lowercase() }
+                .filterNot { candidate ->
+                    _queue.value.any { it.id == candidate.id || (it.title.equals(candidate.title, true) && it.artist.equals(candidate.artist, true)) }
+                }
+                .take(12)
             if (similar.isNotEmpty()) {
                 val expanded = _queue.value + similar
                 _queue.value = expanded
