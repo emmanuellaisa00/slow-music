@@ -14,6 +14,8 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
+import com.slowmusic.app.data.local.QueueStateRepository
+import com.slowmusic.app.data.local.SavedQueueState
 import com.slowmusic.app.data.repository.DownloadManager
 import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.domain.repository.LibraryRepository
@@ -41,7 +43,8 @@ class MainViewModel @Inject constructor(
     private val libraryRepository: LibraryRepository,
     private val lyricsRepository: LyricsRepository,
     private val downloadManager: DownloadManager,
-    private val streamingFallbackResolver: StreamingFallbackResolver
+    private val streamingFallbackResolver: StreamingFallbackResolver,
+    private val queueStateRepository: QueueStateRepository
 ) : AndroidViewModel(application) {
 
     val themeMode: StateFlow<ThemeMode> = preferencesRepository.getThemeMode()
@@ -103,7 +106,9 @@ class MainViewModel @Inject constructor(
                     _currentSong.value?.let { song ->
                         libraryRepository.addToRecentlyPlayed(song)
                         libraryRepository.incrementPlayCount(song.id)
+                        queueStateRepository.recordPlay(song)
                         loadLyrics(song)
+                        persistQueueState()
                     }
                 }
             }
@@ -150,6 +155,7 @@ class MainViewModel @Inject constructor(
     init {
         connectMediaController()
         observeRuntimePreferences()
+        restoreQueueState()
     }
 
     private fun observeRuntimePreferences() {
@@ -158,6 +164,38 @@ class MainViewModel @Inject constructor(
                 streamingFallbackResolver.setBackendUrl(prefs.resolverBackendUrl)
                 mediaController?.playbackParameters = PlaybackParameters(prefs.playbackSpeed.coerceIn(0.5f, 2f))
             }
+        }
+    }
+
+    private fun restoreQueueState() {
+        viewModelScope.launch {
+            val saved = queueStateRepository.restore() ?: return@launch
+            _queue.value = saved.queue
+            _currentIndex.value = saved.currentIndex
+            _currentSong.value = saved.queue.getOrNull(saved.currentIndex) ?: saved.queue.firstOrNull()
+            _repeatMode.value = saved.repeatMode
+            _isShuffled.value = saved.shuffleEnabled
+            _progress.value = if ((_currentSong.value?.duration ?: 0L) > 0) {
+                (saved.positionMs.toFloat() / (_currentSong.value?.duration ?: 1L)).coerceIn(0f, 1f)
+            } else 0f
+            _playbackState.value = PlaybackState.PAUSED
+        }
+    }
+
+    private fun persistQueueState() {
+        val queue = _queue.value
+        if (queue.isEmpty()) return
+        viewModelScope.launch {
+            queueStateRepository.save(
+                SavedQueueState(
+                    queue = queue,
+                    currentSongId = _currentSong.value?.id,
+                    currentIndex = _currentIndex.value.coerceIn(0, queue.lastIndex),
+                    positionMs = mediaController?.currentPosition ?: ((_currentSong.value?.duration ?: 0L) * _progress.value).toLong(),
+                    repeatMode = _repeatMode.value,
+                    shuffleEnabled = _isShuffled.value
+                )
+            )
         }
     }
 
@@ -247,7 +285,9 @@ class MainViewModel @Inject constructor(
 
             libraryRepository.addToRecentlyPlayed(resolvedSong)
             libraryRepository.incrementPlayCount(resolvedSong.id)
+            queueStateRepository.recordPlay(resolvedSong)
             loadLyrics(resolvedSong)
+            persistQueueState()
             updateWidget()
 
             // Resolve the rest of the queue after playback starts. This keeps first
@@ -272,6 +312,7 @@ class MainViewModel @Inject constructor(
         if (controller != null && controller.hasNextMediaItem()) {
             controller.seekToNextMediaItem()
             controller.play()
+            persistQueueState()
             return
         }
 
@@ -290,6 +331,7 @@ class MainViewModel @Inject constructor(
         if (controller != null && controller.hasPreviousMediaItem()) {
             controller.seekToPreviousMediaItem()
             controller.play()
+            persistQueueState()
             return
         }
 
@@ -306,6 +348,7 @@ class MainViewModel @Inject constructor(
     fun toggleShuffle() {
         _isShuffled.value = !_isShuffled.value
         mediaController?.shuffleModeEnabled = _isShuffled.value
+        persistQueueState()
     }
 
     fun toggleRepeat() {
@@ -315,6 +358,7 @@ class MainViewModel @Inject constructor(
             RepeatMode.ONE -> RepeatMode.OFF
         }
         mediaController?.repeatMode = media3RepeatMode(_repeatMode.value)
+        persistQueueState()
     }
 
     fun addToQueue(song: Song) {
@@ -323,6 +367,7 @@ class MainViewModel @Inject constructor(
             val resolved = resolveForPlayback(song)
             _queue.value = _queue.value.map { if (it.id == song.id) resolved else it }
             toMediaItem(resolved)?.let { mediaController?.addMediaItem(it) }
+            persistQueueState()
         }
     }
 
@@ -336,6 +381,7 @@ class MainViewModel @Inject constructor(
             if (from < controller.mediaItemCount && to < controller.mediaItemCount) controller.moveMediaItem(from, to)
         }
         if (_currentIndex.value == from) _currentIndex.value = to
+        persistQueueState()
     }
 
     fun saveQueueAsPlaylist() {
@@ -356,7 +402,7 @@ class MainViewModel @Inject constructor(
             if (index < controller.mediaItemCount) controller.removeMediaItem(index)
         }
         if (index < _currentIndex.value) _currentIndex.value--
-        if (currentQueue.isEmpty()) clearQueue()
+        if (currentQueue.isEmpty()) clearQueue() else persistQueueState()
     }
 
     fun clearQueue() {
@@ -367,6 +413,7 @@ class MainViewModel @Inject constructor(
         _progress.value = 0f
         _playbackState.value = PlaybackState.IDLE
         stopProgressTicker()
+        viewModelScope.launch { queueStateRepository.clear() }
         updateWidget()
     }
 
