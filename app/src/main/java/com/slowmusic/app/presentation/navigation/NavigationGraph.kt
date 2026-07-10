@@ -73,6 +73,38 @@ fun NavigationGraph(
         }
     }
 
+    fun smartSearchQueue(seed: Song, candidates: List<Song>): List<Song> {
+        val seedArtist = seed.artist.lowercase().trim()
+        val seedTitle = seed.title.lowercase().trim()
+        val seedGenre = seed.genre?.lowercase()?.trim().orEmpty()
+        val seedAlbum = seed.album.lowercase().trim()
+        fun Song.identity() = title.lowercase().trim() to artist.lowercase().trim()
+        fun Song.score(): Int {
+            val artistNorm = artist.lowercase().trim()
+            val titleNorm = title.lowercase().trim()
+            val genreNorm = genre?.lowercase()?.trim().orEmpty()
+            val albumNorm = album.lowercase().trim()
+            var score = 0
+            if (id == seed.id || identity() == seed.identity()) score += 10_000
+            if (artistNorm == seedArtist) score += 1_200
+            if (artistNorm.contains(seedArtist) || seedArtist.contains(artistNorm)) score += 700
+            if (seedGenre.isNotBlank() && genreNorm == seedGenre) score += 550
+            if (seedGenre.isNotBlank() && genreNorm.contains(seedGenre)) score += 380
+            if (seedAlbum.isNotBlank() && albumNorm == seedAlbum) score += 260
+            if (titleNorm.contains(seedArtist) || seedTitle.contains(artistNorm)) score += 240
+            val seedTokens = seedTitle.split(' ', '-', '/', '&').filter { it.length > 3 }.toSet()
+            score += titleNorm.split(' ', '-', '/', '&').count { it in seedTokens } * 50
+            if (isDownloaded || isLocal) score += 70
+            return score
+        }
+        val unique = (listOf(seed) + candidates).distinctBy { it.identity() }
+        val related = unique
+            .filterNot { it.id == seed.id || it.identity() == seed.identity() }
+            .sortedWith(compareByDescending<Song> { it.score() }.thenBy { it.title })
+            .take(24)
+        return (listOf(seed) + related).distinctBy { it.identity() }
+    }
+
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route,
@@ -121,7 +153,7 @@ fun NavigationGraph(
                 )
             } else {
                 HomeScreen(
-                    onSongClick = { song, queue -> selectSong(song, queue) },
+                    onSongClick = { song, queue -> selectSong(song, smartSearchQueue(song, queue)) },
                     onArtistClick = { artistId -> navController.navigate(Screen.ArtistDetails.createRoute(artistId)) },
                     onAlbumClick = { albumId -> navController.navigate(Screen.AlbumDetails.createRoute(albumId)) },
                     onGenreClick = { genreId -> navController.navigate(Screen.GenreDetails.createRoute(genreId)) },
@@ -139,7 +171,7 @@ fun NavigationGraph(
         composable(Screen.Search.route) {
             if (useIosGlass) {
                 IosGlassSearchScreen(
-                    onSongClick = { song, queue -> selectSong(song, queue) },
+                    onSongClick = { song, queue -> selectSong(song, smartSearchQueue(song, queue)) },
                     onArtistClick = { artistId -> navController.navigate(Screen.ArtistDetails.createRoute(artistId)) },
                     onAlbumClick = { albumId -> navController.navigate(Screen.AlbumDetails.createRoute(albumId)) },
                     onPlaylistClick = { playlistId -> navController.navigate(Screen.PlaylistDetails.createRoute(playlistId)) }
@@ -147,7 +179,7 @@ fun NavigationGraph(
             } else {
             SearchScreen(
                 onSongClick = { song, queue ->
-                    selectSong(song, queue)
+                    selectSong(song, smartSearchQueue(song, queue))
                 },
                 onArtistClick = { artistId ->
                     navController.navigate(Screen.ArtistDetails.createRoute(artistId))
