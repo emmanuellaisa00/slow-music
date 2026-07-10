@@ -417,36 +417,66 @@ fun NavigationGraph(
             route = Screen.ArtistDetails.route,
             arguments = listOf(navArgument("artistId") { type = NavType.StringType })
         ) { backStackEntry ->
-            ArtistDetailsScreen(
-                artistId = backStackEntry.arguments?.getString("artistId") ?: "",
-                onNavigateBack = { navController.popBackStack() },
-                onAlbumClick = { navController.navigate(Screen.AlbumDetails.createRoute(it)) },
-                onSongClick = { song, queue -> selectSong(song, queue) }
-            )
+            val artistId = backStackEntry.arguments?.getString("artistId") ?: ""
+            if (useIosGlass) {
+                IosGlassArtistDetailScreen(
+                    artistId = artistId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onAlbumClick = { navController.navigate(Screen.AlbumDetails.createRoute(it)) },
+                    onSongClick = { song, queue -> selectSong(song, queue) }
+                )
+            } else {
+                ArtistDetailsScreen(
+                    artistId = artistId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onAlbumClick = { navController.navigate(Screen.AlbumDetails.createRoute(it)) },
+                    onSongClick = { song, queue -> selectSong(song, queue) }
+                )
+            }
         }
 
         composable(
             route = Screen.AlbumDetails.route,
             arguments = listOf(navArgument("albumId") { type = NavType.StringType })
         ) { backStackEntry ->
-            AlbumDetailsScreen(
-                albumId = backStackEntry.arguments?.getString("albumId") ?: "",
-                onNavigateBack = { navController.popBackStack() },
-                onSongClick = { song, queue -> selectSong(song, queue) },
-                onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) }
-            )
+            val albumId = backStackEntry.arguments?.getString("albumId") ?: ""
+            if (useIosGlass) {
+                IosGlassAlbumDetailScreen(
+                    albumId = albumId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onSongClick = { song, queue -> selectSong(song, queue) },
+                    onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) }
+                )
+            } else {
+                AlbumDetailsScreen(
+                    albumId = albumId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onSongClick = { song, queue -> selectSong(song, queue) },
+                    onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) }
+                )
+            }
         }
 
         composable(
             route = Screen.PlaylistDetails.route,
             arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
         ) { backStackEntry ->
-            PlaylistDetailsScreen(
-                playlistId = backStackEntry.arguments?.getString("playlistId") ?: "",
-                onNavigateBack = { navController.popBackStack() },
-                onAddSongs = { navController.navigate(Screen.Search.route) },
-                onSongClick = { song, queue -> selectSong(song, queue) }
-            )
+            val playlistId = backStackEntry.arguments?.getString("playlistId") ?: ""
+            if (useIosGlass) {
+                IosGlassPlaylistDetailScreen(
+                    playlistId = playlistId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onAddSongs = { navController.navigate(Screen.Search.route) },
+                    onSongClick = { song, queue -> selectSong(song, queue) }
+                )
+            } else {
+                PlaylistDetailsScreen(
+                    playlistId = playlistId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onAddSongs = { navController.navigate(Screen.Search.route) },
+                    onSongClick = { song, queue -> selectSong(song, queue) }
+                )
+            }
         }
 
         composable(

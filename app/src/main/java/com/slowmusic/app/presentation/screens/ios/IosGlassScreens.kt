@@ -405,3 +405,100 @@ fun IosGlassLyricsScreen(
         }
     }
 }
+
+@Composable
+fun IosGlassArtistDetailScreen(
+    artistId: String,
+    onNavigateBack: () -> Unit,
+    onAlbumClick: (String) -> Unit,
+    onSongClick: (Song, List<Song>) -> Unit,
+    viewModel: com.slowmusic.app.presentation.screens.details.ArtistDetailsViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    LaunchedEffect(artistId) { viewModel.load(artistId) }
+    IosPage(title = state.artist?.name ?: "Artist", trailing = { GlassIcon(Icons.Filled.Close, onNavigateBack) }) {
+        item {
+            GlassCard(Modifier.fillMaxWidth().padding(horizontal = 20.dp), radius = 28) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AsyncImage(state.artist?.imageUrl ?: state.songs.firstOrNull()?.albumArtUrl, null, Modifier.size(86.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+                    Spacer(Modifier.width(16.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(state.artist?.name ?: "Artist", color = Text, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+                        Text("${state.songs.size} songs • ${state.albums.size} albums", color = Muted)
+                        Spacer(Modifier.height(8.dp))
+                        FilledTonalButton(onClick = { state.songs.firstOrNull()?.let { onSongClick(it, state.songs) } }) { Text("Play") }
+                    }
+                }
+            }
+        }
+        item { Section("Popular") }
+        items(state.songs.take(12)) { song -> SongRow(song, { onSongClick(song, state.songs) }) }
+        item { Section("Albums") }
+        item { LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(state.albums) { album -> AlbumRail(album) { onAlbumClick(album.id) } } } }
+    }
+}
+
+@Composable
+fun IosGlassAlbumDetailScreen(
+    albumId: String,
+    onNavigateBack: () -> Unit,
+    onSongClick: (Song, List<Song>) -> Unit,
+    onAddToPlaylist: (Song) -> Unit,
+    viewModel: com.slowmusic.app.presentation.screens.details.AlbumDetailsViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    LaunchedEffect(albumId) { viewModel.load(albumId) }
+    val album = state.album
+    IosPage(title = album?.title ?: "Album", trailing = { GlassIcon(Icons.Filled.Close, onNavigateBack) }) {
+        item {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                AsyncImage(album?.artworkUrl ?: state.songs.firstOrNull()?.albumArtUrl, null, Modifier.size(210.dp).clip(RoundedCornerShape(24.dp)).border(1.dp, Stroke, RoundedCornerShape(24.dp)), contentScale = ContentScale.Crop)
+                Spacer(Modifier.height(16.dp))
+                Text(album?.title ?: "Album", color = Text, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(album?.artist ?: "", color = Muted)
+                Spacer(Modifier.height(12.dp))
+                Button(onClick = { state.songs.firstOrNull()?.let { onSongClick(it, state.songs) } }, colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Void)) { Text("Play album") }
+            }
+        }
+        item { Section("Tracks") }
+        items(state.songs) { song -> SongRow(song, { onSongClick(song, state.songs) }, { onAddToPlaylist(song) }) }
+    }
+}
+
+@Composable
+fun IosGlassPlaylistDetailScreen(
+    playlistId: String,
+    onNavigateBack: () -> Unit,
+    onAddSongs: () -> Unit,
+    onSongClick: (Song, List<Song>) -> Unit,
+    viewModel: com.slowmusic.app.presentation.screens.details.PlaylistDetailsViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    LaunchedEffect(playlistId) { viewModel.load(playlistId) }
+    IosPage(title = state.playlist?.name ?: "Playlist", trailing = { GlassIcon(Icons.Filled.Close, onNavigateBack) }) {
+        item {
+            GlassCard(Modifier.fillMaxWidth().padding(horizontal = 20.dp), radius = 28) {
+                Text("PLAYLIST", color = Violet, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                Text(state.playlist?.name ?: "Playlist", color = Text, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text("${state.songs.size} songs", color = Muted)
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Button(onClick = { state.songs.firstOrNull()?.let { onSongClick(it, state.songs) } }, colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Void)) { Text("Play") }
+                    OutlinedButton(onClick = onAddSongs) { Text("Add songs") }
+                }
+            }
+        }
+        item { Section("Songs") }
+        items(state.songs) { song -> SongRow(song, { onSongClick(song, state.songs) }, { viewModel.removeSong(song.id) }) }
+    }
+}
+
+@Composable
+private fun AlbumRail(album: Album, onClick: () -> Unit) {
+    GlassCard(Modifier.width(148.dp).clickable(onClick = onClick), radius = 16) {
+        AsyncImage(album.artworkUrl, null, Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(14.dp)), contentScale = ContentScale.Crop)
+        Spacer(Modifier.height(8.dp))
+        Text(album.title, color = Text, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(album.artist, color = Muted, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
