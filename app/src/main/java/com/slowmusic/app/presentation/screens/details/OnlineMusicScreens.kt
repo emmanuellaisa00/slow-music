@@ -3,6 +3,7 @@
 package com.slowmusic.app.presentation.screens.details
 
 import android.Manifest
+import android.content.Context
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,6 +34,7 @@ import coil.compose.AsyncImage
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.slowmusic.app.data.repository.ContentCacheRepository
 import com.slowmusic.app.data.repository.DownloadManager
 import com.slowmusic.app.data.repository.DownloadState
 import com.slowmusic.app.domain.model.*
@@ -40,6 +42,7 @@ import com.slowmusic.app.domain.repository.LibraryRepository
 import com.slowmusic.app.domain.repository.MusicRepository
 import com.slowmusic.app.streaming.StreamingFallbackResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -439,6 +442,13 @@ fun DownloadStorageManagerScreen(onNavigateBack: () -> Unit, viewModel: Download
     Scaffold(topBar = { TopAppBar(title = { Text("Download storage") }, navigationIcon = { BackButton(onNavigateBack) }, actions = { IconButton(onClick = viewModel::refresh) { Icon(Icons.Filled.Refresh, "Refresh") } }) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 120.dp)) {
             item { StorageCard(state.storageUsed, state.downloads.size) }
+            item {
+                CacheCard(
+                    cacheBytes = state.cacheUsed,
+                    onClearMetadata = { viewModel.clearMetadataCache() },
+                    onClearRuntime = { viewModel.clearRuntimeCaches() }
+                )
+            }
             if (activeDownloads.isNotEmpty()) {
                 item { SectionTitle("Active downloads") }
                 items(activeDownloads.entries.toList()) { entry ->
@@ -615,17 +625,30 @@ class AddToPlaylistViewModel @Inject constructor(private val libraryRepository: 
 }
 
 @HiltViewModel
-class DownloadStorageViewModel @Inject constructor(private val libraryRepository: LibraryRepository, private val downloadManager: DownloadManager) : ViewModel() {
+class DownloadStorageViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val libraryRepository: LibraryRepository,
+    private val downloadManager: DownloadManager,
+    private val contentCacheRepository: ContentCacheRepository
+) : ViewModel() {
     private val _state = MutableStateFlow(DownloadStorageState())
     val state: StateFlow<DownloadStorageState> = _state.asStateFlow()
     val activeDownloads: StateFlow<Map<String, DownloadState>> = downloadManager.downloads
-    fun refresh() = viewModelScope.launch { _state.value = DownloadStorageState(libraryRepository.getDownloadedSongs().first(), downloadManager.getStorageUsed()) }
+    fun refresh() = viewModelScope.launch {
+        _state.value = DownloadStorageState(libraryRepository.getDownloadedSongs().first(), downloadManager.getStorageUsed(), cacheSize(context.cacheDir))
+    }
     fun delete(song: Song) = viewModelScope.launch { downloadManager.deleteDownload(song); refresh() }
     fun cancel(songId: String) = downloadManager.cancelDownload(songId)
     fun clearAll() = viewModelScope.launch { _state.value.downloads.forEach { libraryRepository.deleteDownload(it.id) }; downloadManager.clearAllDownloads(); refresh() }
+    fun clearMetadataCache() = viewModelScope.launch { contentCacheRepository.clearAll(); refresh() }
+    fun clearRuntimeCaches() = viewModelScope.launch {
+        listOf("image_cache", "playback_cache").forEach { name -> context.cacheDir.resolve(name).deleteRecursively() }
+        refresh()
+    }
+    private fun cacheSize(file: java.io.File): Long = if (!file.exists()) 0L else if (file.isFile) file.length() else file.listFiles()?.sumOf { cacheSize(it) } ?: 0L
 }
 
-data class DownloadStorageState(val downloads: List<Song> = emptyList(), val storageUsed: Long = 0L)
+data class DownloadStorageState(val downloads: List<Song> = emptyList(), val storageUsed: Long = 0L, val cacheUsed: Long = 0L)
 
 @Composable private fun BackButton(onNavigateBack: () -> Unit) { IconButton(onClick = onNavigateBack) { Icon(Icons.Filled.ArrowBack, "Back") } }
 
@@ -645,6 +668,22 @@ private fun SongRow(song: Song, onClick: () -> Unit, onMore: (() -> Unit)? = nul
 }
 
 @Composable private fun EmptyPanel(title: String, subtitle: String) { Card(Modifier.fillMaxWidth().padding(vertical = 8.dp)) { Column(Modifier.padding(20.dp)) { Text(title, fontWeight = FontWeight.Bold); Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant) } } }
+
+@Composable
+private fun CacheCard(cacheBytes: Long, onClearMetadata: () -> Unit, onClearRuntime: () -> Unit) {
+    Card(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+        Column(Modifier.padding(20.dp)) {
+            Text("App cache", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(6.dp))
+            Text("${"%.1f".format(cacheBytes / 1024f / 1024f)} MB cached images, playback and metadata", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = onClearMetadata) { Text("Clear metadata") }
+                OutlinedButton(onClick = onClearRuntime) { Text("Clear images/audio cache") }
+            }
+        }
+    }
+}
 
 @Composable
 private fun StorageCard(bytes: Long, count: Int) {
