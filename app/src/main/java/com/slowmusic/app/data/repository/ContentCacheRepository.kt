@@ -8,6 +8,8 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
+import com.slowmusic.app.data.local.SearchCacheDao
+import com.slowmusic.app.data.local.SearchCacheEntity
 import com.slowmusic.app.domain.model.Album
 import com.slowmusic.app.domain.model.Artist
 import com.slowmusic.app.domain.model.Genre
@@ -39,7 +41,8 @@ data class SearchContentSnapshot(
 @Singleton
 class ContentCacheRepository @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val gson: Gson
+    private val gson: Gson,
+    private val searchCacheDao: SearchCacheDao
 ) {
     private object Keys {
         val HOME = stringPreferencesKey("home_snapshot")
@@ -65,6 +68,13 @@ class ContentCacheRepository @Inject constructor(
     }
 
     suspend fun getSearch(query: String, maxAgeMs: Long = SEARCH_TTL_MS): SearchContentSnapshot? {
+        val entity = searchCacheDao.get(normalize(query))
+        if (entity != null) {
+            if (System.currentTimeMillis() - entity.updatedAt <= maxAgeMs) {
+                return runCatching { gson.fromJson(entity.payloadJson, SearchContentSnapshot::class.java) }.getOrNull()
+            }
+        }
+        // Backward-compatible fallback for older installs that had DataStore cache.
         val key = stringPreferencesKey(Keys.SEARCH_PREFIX + normalize(query))
         val json = context.contentCacheDataStore.data.first()[key] ?: return null
         val snapshot = runCatching { gson.fromJson(json, SearchContentSnapshot::class.java) }.getOrNull() ?: return null
@@ -74,9 +84,15 @@ class ContentCacheRepository @Inject constructor(
     }
 
     suspend fun saveSearch(query: String, snapshot: SearchContentSnapshot) {
-        val key = stringPreferencesKey(Keys.SEARCH_PREFIX + normalize(query))
         val withTime = snapshot.copy(cachedAt = System.currentTimeMillis())
-        context.contentCacheDataStore.edit { prefs -> prefs[key] = gson.toJson(withTime) }
+        searchCacheDao.put(
+            SearchCacheEntity(
+                queryKey = normalize(query),
+                query = query,
+                payloadJson = gson.toJson(withTime),
+                updatedAt = withTime.cachedAt
+            )
+        )
     }
 
     suspend fun clearHome() {
@@ -85,6 +101,7 @@ class ContentCacheRepository @Inject constructor(
 
     suspend fun clearAll() {
         context.contentCacheDataStore.edit { it.clear() }
+        searchCacheDao.clear()
     }
 
     private fun normalize(value: String): String = value.trim().lowercase().replace(Regex("[^a-z0-9_ -]"), "").replace(Regex("\\s+"), "_").take(80)

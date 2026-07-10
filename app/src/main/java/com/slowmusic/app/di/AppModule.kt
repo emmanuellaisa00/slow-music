@@ -175,10 +175,11 @@ object RepositoryModule {
     @Singleton
     fun provideLyricsRepository(
         @ApplicationContext context: Context,
+        lyricsCacheDao: LyricsCacheDao,
         lyricsApiService: LyricsApiService,
         lrcLibApiService: LrcLibApiService
     ): LyricsRepository {
-        return LyricsRepositoryImpl(context, lyricsApiService, lrcLibApiService)
+        return LyricsRepositoryImpl(context, lyricsCacheDao, lyricsApiService, lrcLibApiService)
     }
 
     @Provides

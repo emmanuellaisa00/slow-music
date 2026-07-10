@@ -8,6 +8,8 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.slowmusic.app.data.local.LyricsCacheDao
+import com.slowmusic.app.data.local.LyricsCacheEntity
 import com.slowmusic.app.data.remote.api.LrcLibApiService
 import com.slowmusic.app.data.remote.api.LyricsApiService
 import com.slowmusic.app.domain.model.Ad
@@ -108,6 +110,7 @@ class SubscriptionRepositoryImpl @Inject constructor(
 @Singleton
 class LyricsRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val lyricsCacheDao: LyricsCacheDao,
     private val lyricsApiService: LyricsApiService,
     private val lrcLibApiService: LrcLibApiService
 ) : LyricsRepository {
@@ -115,7 +118,7 @@ class LyricsRepositoryImpl @Inject constructor(
     private object LyricsKeys {
         fun key(song: Song) = stringPreferencesKey("lyrics_" + stableKey(song))
         fun source(song: Song) = stringPreferencesKey("lyrics_source_" + stableKey(song))
-        private fun stableKey(song: Song): String = (song.id.ifBlank { "${song.artist}_${song.title}" })
+        fun stableKey(song: Song): String = (song.id.ifBlank { "${song.artist}_${song.title}" })
             .lowercase()
             .replace(Regex("[^a-z0-9_ -]"), "")
             .replace(Regex("""\s+"""), "_")
@@ -187,6 +190,10 @@ class LyricsRepositoryImpl @Inject constructor(
     }
 
     private suspend fun getCachedLyrics(song: Song): Lyrics? {
+        lyricsCacheDao.get(LyricsKeys.stableKey(song))?.let { entity ->
+            return Lyrics(song.id, entity.lyrics, entity.source ?: "Cache")
+        }
+        // Backward-compatible fallback for old DataStore lyric cache.
         val prefs = context.lyricsCacheDataStore.data.first()
         val text = prefs[LyricsKeys.key(song)] ?: return null
         val source = prefs[LyricsKeys.source(song)] ?: "Cache"
@@ -194,10 +201,15 @@ class LyricsRepositoryImpl @Inject constructor(
     }
 
     private suspend fun cacheLyrics(song: Song, lyrics: Lyrics) {
-        context.lyricsCacheDataStore.edit { prefs ->
-            prefs[LyricsKeys.key(song)] = lyrics.text
-            prefs[LyricsKeys.source(song)] = lyrics.source ?: "Unknown"
-        }
+        lyricsCacheDao.put(
+            LyricsCacheEntity(
+                songKey = LyricsKeys.stableKey(song),
+                songId = song.id,
+                lyrics = lyrics.text,
+                source = lyrics.source ?: "Unknown",
+                updatedAt = System.currentTimeMillis()
+            )
+        )
     }
 
     private fun cleanTitle(raw: String): String = raw
