@@ -268,34 +268,41 @@ fun SlowMusicApp(
                 }
             }
         ) { paddingValues ->
-            NavigationGraph(
-                navController = navController,
-                modifier = Modifier.padding(paddingValues),
-                playbackState = playbackState,
-                currentSong = currentSong,
-                useAppleMusicUi = useAppleMusicUi,
-                useIosGlass = useIosGlass,
-                queue = queue,
-                lyrics = lyrics,
-                onPlayPause = onPlayPause,
-                onNext = onNext,
-                onPrevious = onPrevious,
-                onPlaySong = onPlaySong,
-                progress = progress,
-                repeatMode = repeatMode,
-                isShuffled = isShuffled,
-                onSeek = onSeek,
-                onToggleShuffle = onToggleShuffle,
-                onToggleRepeat = onToggleRepeat,
-                onToggleFavorite = onToggleFavorite,
-                onDownload = onDownload,
-                onPlayNext = onPlayNext,
-                onAddToQueue = onAddToQueue,
-                onRemoveFromQueue = onRemoveFromQueue,
-                onMoveQueueItem = onMoveQueueItem,
-                onSaveQueueAsPlaylist = onSaveQueueAsPlaylist,
-                onClearQueue = onClearQueue
-            )
+            IosGestureNavigationLayer(
+                enabled = useAppleMusicUi,
+                currentRoute = currentRoute,
+                canNavigateBack = navController.previousBackStackEntry != null,
+                onNavigateBack = { navController.popBackStack() }
+            ) {
+                NavigationGraph(
+                    navController = navController,
+                    modifier = Modifier.padding(paddingValues),
+                    playbackState = playbackState,
+                    currentSong = currentSong,
+                    useAppleMusicUi = useAppleMusicUi,
+                    useIosGlass = useIosGlass,
+                    queue = queue,
+                    lyrics = lyrics,
+                    onPlayPause = onPlayPause,
+                    onNext = onNext,
+                    onPrevious = onPrevious,
+                    onPlaySong = onPlaySong,
+                    progress = progress,
+                    repeatMode = repeatMode,
+                    isShuffled = isShuffled,
+                    onSeek = onSeek,
+                    onToggleShuffle = onToggleShuffle,
+                    onToggleRepeat = onToggleRepeat,
+                    onToggleFavorite = onToggleFavorite,
+                    onDownload = onDownload,
+                    onPlayNext = onPlayNext,
+                    onAddToQueue = onAddToQueue,
+                    onRemoveFromQueue = onRemoveFromQueue,
+                    onMoveQueueItem = onMoveQueueItem,
+                    onSaveQueueAsPlaylist = onSaveQueueAsPlaylist,
+                    onClearQueue = onClearQueue
+                )
+            }
         }
     }
 }
