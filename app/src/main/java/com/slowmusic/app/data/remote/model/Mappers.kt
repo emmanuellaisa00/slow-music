@@ -15,7 +15,7 @@ fun SongDto.toDomain(): Song {
         album = collectionName ?: "Unknown Album",
         albumArtUrl = baseArtwork?.replace("100x100", "600x600") ?: baseArtwork,
         previewUrl = previewUrl,
-        streamUrl = previewUrl, // iTunes preview URL can be used for streaming
+        streamUrl = previewUrl, // Preview URL metadata only; playback uses the app stream resolver
         duration = trackTimeMillis ?: 0L,
         genre = primaryGenreName,
         releaseDate = releaseDate,

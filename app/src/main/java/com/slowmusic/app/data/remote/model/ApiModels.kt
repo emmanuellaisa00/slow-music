@@ -58,7 +58,7 @@ data class AlbumDto(
     @SerializedName("wrapperType") val wrapperType: String?
 )
 
-// Genre constants from iTunes
+// Genre constants
 object GenreConstants {
     val GENRES = listOf(
         GenreDto("20", "Action", null),

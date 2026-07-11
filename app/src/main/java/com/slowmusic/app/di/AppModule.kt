@@ -9,7 +9,6 @@ import com.slowmusic.app.data.local.QueueStateDao
 import com.slowmusic.app.data.local.PlayHistoryDao
 import com.slowmusic.app.data.local.LyricsCacheDao
 import com.slowmusic.app.data.local.SearchCacheDao
-import com.slowmusic.app.data.remote.api.ITunesApiService
 import com.slowmusic.app.data.remote.api.LrcLibApiService
 import com.slowmusic.app.data.remote.api.LyricsApiService
 import com.slowmusic.app.data.repository.*
@@ -58,17 +57,6 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    @Named("itunes")
-    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl("https://itunes.apple.com/")
-            .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .build()
-    }
-
-    @Provides
-    @Singleton
     @Named("lyricsOvh")
     fun provideLyricsOvhRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
         return Retrofit.Builder()
@@ -87,12 +75,6 @@ object NetworkModule {
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
-    }
-
-    @Provides
-    @Singleton
-    fun provideITunesApiService(@Named("itunes") retrofit: Retrofit): ITunesApiService {
-        return retrofit.create(ITunesApiService::class.java)
     }
 
     @Provides
@@ -132,8 +114,10 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideMusicRepository(apiService: ITunesApiService): MusicRepository {
-        return MusicRepositoryImpl(apiService)
+    fun provideMusicRepository(
+        streamingFallbackResolver: com.slowmusic.app.streaming.StreamingFallbackResolver
+    ): MusicRepository {
+        return MusicRepositoryImpl(streamingFallbackResolver)
     }
 
     @Provides

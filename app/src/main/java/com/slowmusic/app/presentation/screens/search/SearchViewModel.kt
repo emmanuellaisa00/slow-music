@@ -100,10 +100,8 @@ class SearchViewModel @Inject constructor(
                 }
 
                 val onlineSongs = async { runCatching { musicRepository.searchSongs(query) }.getOrDefault(emptyList()) }
-                val fallbackSongs = async { runCatching { streamingFallbackResolver.searchSongs(query) }.getOrDefault(emptyList()) }
                 val artists = async { runCatching { musicRepository.searchArtists(query) }.getOrDefault(emptyList()) }
                 val albums = async { runCatching { musicRepository.searchAlbums(query) }.getOrDefault(emptyList()) }
-                val fallbackAlbums = async { runCatching { streamingFallbackResolver.searchAlbums(query) }.getOrDefault(emptyList()) }
                 val localSongs = async { runCatching { localMusicRepository.getLocalSongs().filter { it.matches(query) } }.getOrDefault(emptyList()) }
                 val downloads = async { runCatching { libraryRepository.getDownloadedSongs().first().filter { it.matches(query) } }.getOrDefault(emptyList()) }
                 val playlists = async { runCatching { libraryRepository.getPlaylists().first().filter { it.name.contains(query, true) || it.description?.contains(query, true) == true } }.getOrDefault(emptyList()) }
@@ -111,10 +109,10 @@ class SearchViewModel @Inject constructor(
 
                 val downloaded = downloads.await()
                 val locals = localSongs.await()
-                val online = onlineSongs.await() + fallbackSongs.await()
+                val online = onlineSongs.await()
                 val mergedSongs = mergePreferLocal(downloaded + locals, online)
                 val artistResults = artists.await()
-                val albumResults = (albums.await() + fallbackAlbums.await()).distinctBy { album -> album.id }
+                val albumResults = albums.await().distinctBy { album -> album.id }
                 val playlistResults = (playlists.await() + fallbackPlaylists.await()).distinctBy { playlist -> playlist.id }
 
                 val finalResults = SearchResult(

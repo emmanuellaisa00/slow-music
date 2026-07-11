@@ -4,13 +4,8 @@ import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
-import com.slowmusic.app.data.remote.api.ITunesApiService
 import com.slowmusic.app.data.remote.model.GenreConstants
-import com.slowmusic.app.data.remote.model.toAlbumDomainList
-import com.slowmusic.app.data.remote.model.toArtistDomainList
-import com.slowmusic.app.data.remote.model.toDomain
 import com.slowmusic.app.data.remote.model.toGenreDomainList
-import com.slowmusic.app.data.remote.model.toSongDomainList
 import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.domain.repository.LocalMusicRepository
 import com.slowmusic.app.domain.repository.MusicRepository
@@ -22,80 +17,51 @@ import javax.inject.Singleton
 
 @Singleton
 class MusicRepositoryImpl @Inject constructor(
-    private val apiService: ITunesApiService
+    private val streamingFallbackResolver: com.slowmusic.app.streaming.StreamingFallbackResolver
 ) : MusicRepository {
 
     override suspend fun search(query: String): SearchResult = withContext(Dispatchers.IO) {
-        try {
-            SearchResult(
-                songs = searchSongs(query),
-                artists = searchArtists(query),
-                albums = searchAlbums(query),
-                playlists = emptyList()
-            )
-        } catch (e: Exception) {
-            SearchResult(emptyList(), emptyList(), emptyList(), emptyList())
-        }
+        SearchResult(
+            songs = searchSongs(query),
+            artists = searchArtists(query),
+            albums = searchAlbums(query),
+            playlists = streamingFallbackResolver.searchPlaylists(query)
+        )
     }
 
     override suspend fun searchSongs(query: String): List<Song> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.search(term = query)
-            response.results
-                .filter { it.wrapperType == "track" || it.kind == "song" }
-                .toSongDomainList()
-        } catch (e: Exception) {
-            emptyList()
-        }
+        streamingFallbackResolver.searchSongs(query, 50)
     }
 
     override suspend fun searchArtists(query: String): List<Artist> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.searchArtist(query)
-            response.results.toArtistDomainList()
-        } catch (e: Exception) {
-            emptyList()
-        }
+        val songs = streamingFallbackResolver.searchSongs(query, 40)
+        songs.groupBy { it.artist.ifBlank { "Unknown Artist" } }
+            .map { (name, artistSongs) ->
+                Artist(
+                    id = name.replace("/", "_").replace(" ", "_"),
+                    name = name,
+                    imageUrl = artistSongs.firstOrNull { !it.albumArtUrl.isNullOrBlank() }?.albumArtUrl,
+                    genre = artistSongs.firstOrNull()?.genre,
+                    albumCount = artistSongs.map { it.album }.filter { it.isNotBlank() }.distinct().size,
+                    songCount = artistSongs.size
+                )
+            }
     }
 
     override suspend fun searchAlbums(query: String): List<Album> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.searchAlbum(query)
-            response.results.toAlbumDomainList()
-        } catch (e: Exception) {
-            emptyList()
-        }
+        streamingFallbackResolver.searchAlbums(query, 30)
     }
 
     override suspend fun getTrendingSongs(): List<Song> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.search(term = "trending music", limit = 50)
-            response.results
-                .filter { it.wrapperType == "track" || it.kind == "song" }
-                .toSongDomainList()
-        } catch (e: Exception) {
-            emptyList()
-        }
+        streamingFallbackResolver.searchSongs("trending music global", 50)
     }
 
     override suspend fun getTopSongs(): List<Song> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.search(term = "top hits 2024", limit = 50)
-            response.results
-                .filter { it.wrapperType == "track" || it.kind == "song" }
-                .toSongDomainList()
-        } catch (e: Exception) {
-            emptyList()
-        }
+        streamingFallbackResolver.searchSongs("top hits today", 50)
     }
 
     override suspend fun getNewReleases(): List<Album> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.searchAlbum(term = "new releases 2024", limit = 30)
-            response.results.toAlbumDomainList()
-        } catch (e: Exception) {
-            emptyList()
-        }
+        streamingFallbackResolver.searchAlbums("new music releases", 30)
     }
 
     override suspend fun getGenres(): List<Genre> {
@@ -103,93 +69,73 @@ class MusicRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getSongsByGenre(genreId: String): List<Song> = withContext(Dispatchers.IO) {
-        try {
-            val genreName = GenreConstants.GENRES.find { it.id == genreId }?.name ?: "pop"
-            val response = apiService.search(term = "$genreName music", limit = 50)
-            response.results
-                .filter { it.wrapperType == "track" || it.kind == "song" }
-                .toSongDomainList()
-        } catch (e: Exception) {
-            emptyList()
-        }
+        val genreName = GenreConstants.GENRES.find { it.id == genreId }?.name ?: genreId
+        streamingFallbackResolver.searchSongs("$genreName music", 50)
     }
 
     override suspend fun getRecommendations(): List<Song> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.search(term = "recommended music", limit = 30)
-            response.results
-                .filter { it.wrapperType == "track" || it.kind == "song" }
-                .toSongDomainList()
-        } catch (e: Exception) {
-            emptyList()
-        }
+        streamingFallbackResolver.searchSongs("recommended music mix", 40)
     }
 
     override suspend fun getSongById(id: String): Song? = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.getSongById(id)
-            response.results.firstOrNull()?.toDomain()
-        } catch (e: Exception) {
-            null
+        if (id.startsWith("yt_")) {
+            streamingFallbackResolver.searchSongs(id.removePrefix("yt_"), 1).firstOrNull()?.copy(id = id)
+        } else {
+            streamingFallbackResolver.searchSongs(id, 1).firstOrNull()
         }
     }
 
     override suspend fun getSongsByArtist(artistId: String): List<Song> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.getSongsByArtistId(artistId)
-            response.results
-                .filter { it.wrapperType == "track" || it.kind == "song" }
-                .toSongDomainList()
-        } catch (e: Exception) {
-            emptyList()
-        }
+        val artistName = artistId.replace("_", " ")
+        streamingFallbackResolver.searchSongs("$artistName songs", 50)
     }
 
     override suspend fun getSongsByAlbum(albumId: String): List<Song> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.getSongsByAlbumId(albumId)
-            response.results
-                .filter { it.wrapperType == "track" || it.kind == "song" }
-                .toSongDomainList()
-        } catch (e: Exception) {
-            emptyList()
+        if (albumId.startsWith("ytalbum_") || albumId.startsWith("ytpl_")) {
+            streamingFallbackResolver.playlistSongs(albumId)
+        } else {
+            streamingFallbackResolver.searchSongs(albumId, 40)
         }
     }
 
     override suspend fun getArtistById(id: String): Artist? = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.getArtistById(id)
-            response.results.firstOrNull()?.toDomain()
-        } catch (e: Exception) {
-            null
-        }
+        val artistName = id.replace("_", " ")
+        val songs = streamingFallbackResolver.searchSongs("$artistName songs", 30)
+        Artist(
+            id = id,
+            name = songs.firstOrNull()?.artist?.takeIf { it.isNotBlank() } ?: artistName,
+            imageUrl = songs.firstOrNull { !it.albumArtUrl.isNullOrBlank() }?.albumArtUrl,
+            genre = songs.firstOrNull()?.genre,
+            albumCount = songs.map { it.album }.filter { it.isNotBlank() }.distinct().size,
+            songCount = songs.size
+        )
     }
 
     override suspend fun getTopArtists(): List<Artist> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.searchArtist(term = "popular artists", limit = 20)
-            response.results.toArtistDomainList()
-        } catch (e: Exception) {
-            emptyList()
-        }
+        searchArtists("popular music artists")
     }
 
     override suspend fun getAlbumById(id: String): Album? = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.getAlbumById(id)
-            response.results.firstOrNull()?.toDomain()
-        } catch (e: Exception) {
-            null
+        if (id.startsWith("ytalbum_") || id.startsWith("ytpl_")) {
+            val songs = streamingFallbackResolver.playlistSongs(id)
+            val first = songs.firstOrNull()
+            Album(
+                id = id,
+                title = first?.album ?: "Album",
+                artist = first?.artist ?: "Music",
+                artistId = (first?.artist ?: id).hashCode().toString(),
+                artworkUrl = first?.albumArtUrl,
+                trackCount = songs.size,
+                releaseDate = null,
+                genre = first?.genre
+            )
+        } else {
+            streamingFallbackResolver.searchAlbums(id, 1).firstOrNull()
         }
     }
 
     override suspend fun getTopAlbums(): List<Album> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.searchAlbum(term = "top albums 2024", limit = 30)
-            response.results.toAlbumDomainList()
-        } catch (e: Exception) {
-            emptyList()
-        }
+        streamingFallbackResolver.searchAlbums("top albums", 30)
     }
 }
 
