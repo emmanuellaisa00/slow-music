@@ -41,7 +41,7 @@ class DownloadManager @Inject constructor(
             Logger.d("DownloadManager", "Starting download: ${song.title}")
             val prefs = preferencesRepository.getUserPreferences().first()
             if (prefs.downloadOnWifiOnly && !isOnWifi()) {
-                _downloads.update { it + (song.id to DownloadState.Failed("Wi-Fi only is enabled")) }
+                _downloads.update { it + (song.id to DownloadState.Failed("Wi-Fi only is enabled", song)) }
                 return@withContext Result.failure(Exception("Wi-Fi only is enabled"))
             }
             _downloads.update { it + (song.id to DownloadState.Downloading(0f)) }
@@ -69,7 +69,7 @@ class DownloadManager @Inject constructor(
             Result.success(file)
         } catch (e: Exception) {
             Logger.e("DownloadManager", "Download error: ${e.message}", e)
-            _downloads.update { it - song.id }
+            _downloads.update { it + (song.id to DownloadState.Failed(e.message ?: "Download failed", song)) }
             Result.failure(e)
         }
     }
@@ -152,6 +152,11 @@ class DownloadManager @Inject constructor(
         Logger.d("DownloadManager", "Cancelled download: $songId")
         _downloads.update { it - songId }
     }
+
+    fun retryDownload(songId: String) {
+        val failed = _downloads.value[songId] as? DownloadState.Failed ?: return
+        scope.launch { downloadSong(failed.song) }
+    }
     
     suspend fun deleteDownload(song: Song) = withContext(Dispatchers.IO) {
         song.localPath?.let { path ->
@@ -197,7 +202,7 @@ class DownloadManager @Inject constructor(
 sealed class DownloadState {
     data class Downloading(val progress: Float) : DownloadState()
     data class Completed(val file: File) : DownloadState()
-    data class Failed(val error: String) : DownloadState()
+    data class Failed(val error: String, val song: Song) : DownloadState()
 }
 
 /**

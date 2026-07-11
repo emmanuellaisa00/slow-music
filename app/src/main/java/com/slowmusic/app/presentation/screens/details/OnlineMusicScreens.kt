@@ -459,11 +459,18 @@ fun DownloadStorageManagerScreen(onNavigateBack: () -> Unit, viewModel: Download
             if (activeDownloads.isNotEmpty()) {
                 item { SectionTitle("Active downloads") }
                 items(activeDownloads.entries.toList()) { entry ->
-                    val progress = (entry.value as? DownloadState.Downloading)?.progress ?: 0f
+                    val state = entry.value
+                    val progress = (state as? DownloadState.Downloading)?.progress ?: 0f
                     ListItem(
-                        headlineContent = { Text(entry.key) },
-                        supportingContent = { LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth()) },
-                        trailingContent = { TextButton(onClick = { viewModel.cancel(entry.key) }) { Text("Cancel") } }
+                        headlineContent = { Text((state as? DownloadState.Failed)?.song?.title ?: entry.key) },
+                        supportingContent = {
+                            if (state is DownloadState.Failed) Text(state.error, color = MaterialTheme.colorScheme.error)
+                            else LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth())
+                        },
+                        trailingContent = {
+                            if (state is DownloadState.Failed) TextButton(onClick = { viewModel.retry(entry.key) }) { Text("Retry") }
+                            else TextButton(onClick = { viewModel.cancel(entry.key) }) { Text("Cancel") }
+                        }
                     )
                 }
             }
@@ -663,6 +670,7 @@ class DownloadStorageViewModel @Inject constructor(
     }
     fun delete(song: Song) = viewModelScope.launch { downloadManager.deleteDownload(song); refresh() }
     fun cancel(songId: String) = downloadManager.cancelDownload(songId)
+    fun retry(songId: String) = downloadManager.retryDownload(songId)
     fun clearAll() = viewModelScope.launch { _state.value.downloads.forEach { libraryRepository.deleteDownload(it.id) }; downloadManager.clearAllDownloads(); refresh() }
     fun clearMetadataCache() = viewModelScope.launch { contentCacheRepository.clearAll(); refresh() }
     fun clearRuntimeCaches() = viewModelScope.launch {
