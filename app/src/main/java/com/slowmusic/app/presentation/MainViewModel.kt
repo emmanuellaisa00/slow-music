@@ -289,6 +289,7 @@ class MainViewModel @Inject constructor(
             loadLyrics(resolvedSong)
             persistQueueState()
             updateWidget()
+            enrichQueueWithSmartRadio(resolvedSong, requestId)
 
             // Resolve the rest of the queue after playback starts. This keeps first
             // audio start fast while still preparing next/previous items.
@@ -570,6 +571,46 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             _lyrics.value = runCatching { lyricsRepository.getLyrics(song)?.text }.getOrNull()
         }
+    }
+
+    private fun enrichQueueWithSmartRadio(seed: Song, requestId: Long) {
+        if (!userPreferences.value.autoPlaySimilar) return
+        viewModelScope.launch {
+            val radio = buildSmartRadio(seed).take(10)
+            if (requestId != playRequestId || radio.isEmpty()) return@launch
+            val current = _queue.value.toMutableList()
+            val insertAt = (_currentIndex.value + 1).coerceIn(0, current.size)
+            val existingKeys = current.map { it.title.lowercase().trim() to it.artist.lowercase().trim() }.toMutableSet()
+            val newSongs = radio.filter { existingKeys.add(it.title.lowercase().trim() to it.artist.lowercase().trim()) }
+            if (newSongs.isEmpty()) return@launch
+            current.addAll(insertAt, newSongs)
+            _queue.value = current
+            for ((offset, candidate) in newSongs.withIndex()) {
+                if (requestId != playRequestId) return@launch
+                val resolved = resolveForPlayback(candidate)
+                val index = insertAt + offset
+                _queue.value = _queue.value.toMutableList().also { if (index in it.indices) it[index] = resolved }
+                toMediaItem(resolved)?.let { mediaController?.addMediaItem(index.coerceAtMost(mediaController?.mediaItemCount ?: 0), it) }
+            }
+            persistQueueState()
+        }
+    }
+
+    private suspend fun buildSmartRadio(seed: Song): List<Song> {
+        val seeds = buildList {
+            add("${seed.artist} radio")
+            add("${seed.artist} ${seed.genre ?: "songs"}")
+            add("${seed.title} ${seed.artist} similar")
+            seed.album.takeIf { it.isNotBlank() }?.let { add("$it ${seed.artist}") }
+            seed.genre?.takeIf { it.isNotBlank() }?.let { add("$it ${seed.artist} mix") }
+            _queue.value.takeLast(8).forEach { other ->
+                if (!other.artist.equals(seed.artist, true)) add("${seed.artist} ${other.artist} collaboration")
+            }
+        }.distinct()
+        return seeds
+            .flatMap { query -> streamingFallbackResolver.searchSongs(query, 8) }
+            .distinctBy { it.title.lowercase().trim() to it.artist.lowercase().trim() }
+            .filterNot { it.title.equals(seed.title, true) && it.artist.equals(seed.artist, true) }
     }
 
     private fun handleQueueEnded() {
