@@ -60,22 +60,6 @@ fun HomeScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                windowInsets = WindowInsets(top = 0.dp),
-                title = { 
-                    Text(
-                        text = "Slow Music",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                },
-                actions = {
-                    IconButton(onClick = onNavigateToSearch) {
-                        Icon(Icons.Filled.Search, contentDescription = "Search")
-                    }
-                }
-            )
-        }
     ) { paddingValues ->
         var pullDistance by remember { mutableFloatStateOf(0f) }
         Box(
@@ -108,6 +92,7 @@ fun HomeScreen(
                     onAlbumClick = onAlbumClick,
                     onGenreClick = onGenreClick,
                     onSeeAllClick = onNavigateToSeeAll,
+                    onNavigateToSearch = onNavigateToSearch,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -127,6 +112,7 @@ private fun HomeContent(
     onAlbumClick: (String) -> Unit,
     onGenreClick: (String) -> Unit,
     onSeeAllClick: (String) -> Unit,
+    onNavigateToSearch: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -148,7 +134,7 @@ private fun HomeContent(
                         .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.28f), Color.Transparent)))
                         .padding(18.dp)
                 ) {
-                    Column {
+                    Column(Modifier.padding(end = 56.dp)) {
                         Text("Slow Music", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(4.dp))
                         Text(
@@ -157,7 +143,11 @@ private fun HomeContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    if (uiState.loadedFromCache) AssistChip(onClick = {}, label = { Text("Cached") }, modifier = Modifier.align(Alignment.TopEnd))
+                    IconButton(
+                        onClick = onNavigateToSearch,
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    ) { Icon(Icons.Filled.Search, contentDescription = "Search") }
+                    if (uiState.loadedFromCache) AssistChip(onClick = {}, label = { Text("Cached") }, modifier = Modifier.align(Alignment.BottomEnd))
                 }
             }
         }

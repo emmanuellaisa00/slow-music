@@ -81,7 +81,14 @@ fun ArtistDetailsScreen(
             items(state.albums) { album ->
                 ListItem(
                     modifier = Modifier.clickable { onAlbumClick(album.id) },
-                    leadingContent = { Icon(Icons.Filled.Album, null, tint = MaterialTheme.colorScheme.primary) },
+                    leadingContent = {
+                        AsyncImage(
+                            model = album.artworkUrl,
+                            contentDescription = null,
+                            modifier = Modifier.size(54.dp).clip(RoundedCornerShape(10.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    },
                     headlineContent = { Text(album.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     supportingContent = { Text(album.releaseDate ?: album.artist) },
                     trailingContent = { Icon(Icons.Filled.KeyboardArrowRight, null) }
@@ -522,8 +529,25 @@ class ArtistDetailsViewModel @Inject constructor(
         val catalogSongs = runCatching { musicRepository.getSongsByArtist(id) }.getOrDefault(emptyList())
         val fallbackSongs = runCatching { streamingFallbackResolver.searchSongs(artistName, 20) }.getOrDefault(emptyList())
         val songs = (catalogSongs + fallbackSongs).distinctBy { it.title.lowercase() to it.artist.lowercase() }
-        val albums = (runCatching { musicRepository.searchAlbums(artistName) }.getOrDefault(emptyList()) +
+        val discoveredAlbums = (runCatching { musicRepository.searchAlbums(artistName) }.getOrDefault(emptyList()) +
             runCatching { streamingFallbackResolver.searchAlbums(artistName) }.getOrDefault(emptyList()))
+        val derivedAlbums = songs
+            .filter { it.album.isNotBlank() }
+            .groupBy { it.album.lowercase() to it.artist.lowercase() }
+            .map { (_, albumSongs) ->
+                val first = albumSongs.first()
+                Album(
+                    id = "artist_${artistName}_${first.album}".replace(" ", "_"),
+                    title = first.album,
+                    artist = first.artist,
+                    artistId = first.artist.hashCode().toString(),
+                    artworkUrl = first.albumArtUrl,
+                    trackCount = albumSongs.size,
+                    releaseDate = first.releaseDate,
+                    genre = first.genre
+                )
+            }
+        val albums = (discoveredAlbums + derivedAlbums)
             .distinctBy { it.title.lowercase() to it.artist.lowercase() }
         val artist = baseArtist ?: Artist(
             id = id,
