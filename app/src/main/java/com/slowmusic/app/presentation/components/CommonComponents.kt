@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -123,74 +124,55 @@ fun SongCard(
 ) {
     Card(
         modifier = modifier
-            .width(160.dp)
+            .width(168.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f), RoundedCornerShape(22.dp))
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.54f)
         ),
-        shape = RoundedCornerShape(8.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(22.dp)
     ) {
-        Column {
+        Column(modifier = Modifier.padding(10.dp)) {
             Box {
                 AsyncImage(
                     model = song.albumArtUrl,
                     contentDescription = song.title,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(1f),
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(18.dp)),
                     contentScale = ContentScale.Crop
                 )
-                
-                // Play button overlay
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.32f))))
+                )
                 Surface(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(8.dp),
                     shape = RoundedCornerShape(50),
-                    color = PrimaryGreen
+                    color = Color.White.copy(alpha = 0.90f)
                 ) {
-                    IconButton(
-                        onClick = onClick,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.PlayArrow,
-                            contentDescription = "Play",
-                            tint = Color.White
-                        )
+                    IconButton(onClick = onClick, modifier = Modifier.size(38.dp)) {
+                        Icon(Icons.Filled.PlayArrow, contentDescription = "Play", tint = Color.Black, modifier = Modifier.size(22.dp))
                     }
                 }
             }
-            
-            Column(
-                modifier = Modifier.padding(8.dp)
-            ) {
-                Text(
-                    text = song.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+            Spacer(Modifier.height(10.dp))
+            Text(song.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(2.dp))
+            Text(song.artist, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                AssistChip(
+                    onClick = {},
+                    label = { Text(if (song.isDownloaded) "Offline" else if (song.isLocal) "Local" else "Stream") },
+                    modifier = Modifier.height(28.dp)
                 )
-                Text(
-                    text = song.artist,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            
-            IconButton(
-                onClick = onMoreClick,
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(bottom = 4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.MoreVert,
-                    contentDescription = "More options",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                IconButton(onClick = onMoreClick, modifier = Modifier.size(34.dp)) { Icon(Icons.Filled.MoreHoriz, contentDescription = "More", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         }
     }
@@ -206,7 +188,11 @@ fun SongListItem(
     modifier: Modifier = Modifier
 ) {
     ListItem(
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = modifier
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.36f))
+            .clickable(onClick = onClick),
         headlineContent = {
             Text(
                 text = song.title,
@@ -232,8 +218,8 @@ fun SongListItem(
                 model = song.albumArtUrl,
                 contentDescription = "Album art",
                 modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(4.dp)),
+                    .size(54.dp)
+                    .clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop
             )
         },
@@ -356,7 +342,8 @@ fun SectionHeader(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleLarge
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
         )
         
         if (onSeeAllClick != null) {
@@ -374,7 +361,11 @@ fun GenreChip(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = modifier
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.36f))
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
