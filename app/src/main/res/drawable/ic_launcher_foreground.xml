@@ -4,16 +4,9 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Music Note Icon -->
-    <group
-        android:translateX="24"
-        android:translateY="24">
-        <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M45,3v35.5c-2.2,-1.2 -4.8,-2 -7.5,-2c-6.9,0 -12.5,5.6 -12.5,12.5s5.6,12.5 12.5,12.5s12.5,-5.6 12.5,-12.5V15h12.5v-12H45z"/>
-        <!-- Sound waves -->
-        <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M57.5,56.5c0,2.5 -2,4.5 -4.5,4.5s-4.5,-2 -4.5,-4.5s2,-4.5 4.5,-4.5S57.5,54 57.5,56.5zM62.5,63.5c0,2.5 -2,4.5 -4.5,4.5s-4.5,-2 -4.5,-4.5s2,-4.5 4.5,-4.5S62.5,61 62.5,63.5zM67.5,70.5c0,2.5 -2,4.5 -4.5,4.5s-4.5,-2 -4.5,-4.5s2,-4.5 4.5,-4.5S67.5,68 67.5,70.5z"/>
-    </group>
+    <path android:fillColor="#1ED760" android:pathData="M54,14a40,40 0,1 0,0.1 0"/>
+    <path android:fillColor="#08110B" android:pathData="M54,20a34,34 0,1 0,0.1 0"/>
+    <path android:fillColor="#1ED760" android:pathData="M48,30h24v9H57v22.8c-2,-1.2 -4.4,-1.9 -7,-1.9c-7,0 -12.6,5.1 -12.6,11.4c0,6.3 5.6,11.4 12.6,11.4c7,0 12.6,-5.1 12.6,-11.4V47h9.4v-17H48z"/>
+    <path android:fillColor="#FFFFFF" android:fillAlpha="0.92" android:pathData="M35,46c11,-8 27,-8 38,0l-4,6c-9,-6 -21,-6 -30,0z"/>
+    <path android:fillColor="#FFFFFF" android:fillAlpha="0.70" android:pathData="M40,56c8,-5 20,-5 28,0l-3.4,5.2c-6,-3.6 -15.2,-3.6 -21.2,0z"/>
 </vector>

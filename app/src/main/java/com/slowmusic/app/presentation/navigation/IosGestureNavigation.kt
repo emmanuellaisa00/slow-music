@@ -21,8 +21,7 @@ import kotlin.math.abs
 private enum class IosDragMode { BackPush, DismissModal }
 
 /**
- * Adds iPhone-like interactive gestures to the iOS styled shells without
- * changing the default Android navigation behaviour:
+ * Adds iPhone-like interactive gestures across the app shell:
  *
  * - Push/detail pages: swipe from the left edge to go back.
  * - Modal pages: pull down from the top area to dismiss.

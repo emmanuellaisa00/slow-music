@@ -1,24 +1,35 @@
 package com.slowmusic.app.presentation.screens.splash
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.*
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.dp
 import com.slowmusic.app.R
-import com.slowmusic.app.presentation.theme.apple.*
+import com.slowmusic.app.presentation.theme.apple.AppleTypography
 import kotlinx.coroutines.delay
 
 @Composable
@@ -27,132 +38,78 @@ fun SplashScreen(
     onNavigateToOnboarding: () -> Unit,
     showOnboarding: Boolean = false
 ) {
-    // Animation states
     val logoScale by animateFloatAsState(
         targetValue = 1f,
-        animationSpec = spring(
-            dampingRatio = 0.5f,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "logo_scale"
+        animationSpec = spring(dampingRatio = 0.72f, stiffness = 420f),
+        label = "premium_logo_scale"
     )
-    
-    val logoAlpha by animateFloatAsState(
+    val alpha by animateFloatAsState(
         targetValue = 1f,
-        animationSpec = tween(500),
-        label = "logo_alpha"
+        animationSpec = tween(260),
+        label = "premium_splash_alpha"
     )
-    
-    val textAlpha by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = tween(500, delayMillis = 300),
-        label = "text_alpha"
-    )
-    
+
     LaunchedEffect(Unit) {
-        delay(650)
-        if (showOnboarding) {
-            onNavigateToOnboarding()
-        } else {
-            onNavigateToHome()
-        }
+        delay(360)
+        onNavigateToHome()
     }
-    
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppleColors.background),
-        contentAlignment = Alignment.Center
-    ) {
-        // Animated gradient background
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer { alpha = 0.3f }
-        ) {
-            val infiniteTransition = rememberInfiniteTransition(label = "bg")
-            val offset by infiniteTransition.animateFloat(
-                initialValue = 0f,
-                targetValue = 1000f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(10000, easing = LinearEasing),
-                    repeatMode = RepeatMode.Reverse
-                ),
-                label = "bg_offset"
-            )
-            
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            AppleColors.primary.copy(alpha = 0.5f),
-                            Color.Transparent
-                        ),
-                        center = Offset(size.width * 0.3f, size.height * 0.3f),
-                        radius = 800f + offset
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFF07120C),
+                        Color(0xFF050706),
+                        Color.Black
                     )
                 )
-            }
-        }
-        
+            ),
+        contentAlignment = Alignment.Center
+    ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.graphicsLayer { this.alpha = alpha }
         ) {
-            // Logo with animation
             Box(
                 modifier = Modifier
-                    .size(120.dp)
+                    .size(126.dp)
                     .scale(logoScale)
-                    .graphicsLayer { alpha = logoAlpha }
-                    .clip(RoundedCornerShape(32.dp))
+                    .clip(RoundedCornerShape(34.dp))
                     .background(
-                        brush = Brush.linearGradient(AppleColors.gradientGreen)
+                        Brush.linearGradient(
+                            listOf(Color(0xFF1ED760), Color(0xFF0FA84B), Color(0xFF051F12))
+                        )
                     )
                     .border(
-                        width = 3.dp,
-                        brush = Brush.linearGradient(
-                            listOf(Color.White.copy(alpha = 0.5f), Color.Transparent)
-                        ),
-                        shape = RoundedCornerShape(32.dp)
+                        width = 1.dp,
+                        brush = Brush.linearGradient(listOf(Color.White.copy(alpha = 0.50f), Color.White.copy(alpha = 0.05f))),
+                        shape = RoundedCornerShape(34.dp)
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.splash_logo),
-                    contentDescription = "Slow Music logo",
-                    modifier = Modifier.size(86.dp)
+                    contentDescription = "Slow Music",
+                    modifier = Modifier.size(92.dp)
                 )
             }
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            // App name
+
+            Spacer(Modifier.height(26.dp))
             Text(
                 text = "Slow Music",
                 style = AppleTypography.largeTitle,
-                color = AppleColors.textPrimary,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.graphicsLayer { alpha = textAlpha }
+                color = Color.White,
+                fontWeight = FontWeight.ExtraBold
             )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Tagline
+            Spacer(Modifier.height(8.dp))
             Text(
-                text = "Online, local, and cached beautifully",
-                style = AppleTypography.body,
-                color = AppleColors.textSecondary,
-                modifier = Modifier.graphicsLayer { alpha = textAlpha }
-            )
-            
-            Spacer(modifier = Modifier.height(48.dp))
-            
-            // Loading indicator
-            CircularProgressIndicator(
-                modifier = Modifier.size(24.dp),
-                color = AppleColors.primary,
-                strokeWidth = 2.dp
+                text = "from LAISER ORG",
+                style = AppleTypography.caption1,
+                color = Color.White.copy(alpha = 0.58f),
+                fontWeight = FontWeight.SemiBold
             )
         }
     }

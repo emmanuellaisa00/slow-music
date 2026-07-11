@@ -30,6 +30,7 @@ fun HomeScreen(
     onGenreClick: (String) -> Unit,
     onNavigateToSearch: () -> Unit,
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
     onNavigateToSeeAll: (String) -> Unit,
     onAddToPlaylist: (Song) -> Unit = {},
     onPlayNext: (Song) -> Unit = {},
@@ -93,6 +94,7 @@ fun HomeScreen(
                     onGenreClick = onGenreClick,
                     onSeeAllClick = onNavigateToSeeAll,
                     onNavigateToSearch = onNavigateToSearch,
+                    onNavigateToNotifications = onNavigateToNotifications,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -113,6 +115,7 @@ private fun HomeContent(
     onGenreClick: (String) -> Unit,
     onSeeAllClick: (String) -> Unit,
     onNavigateToSearch: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -143,10 +146,25 @@ private fun HomeContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    IconButton(
-                        onClick = onNavigateToSearch,
-                        modifier = Modifier.align(Alignment.TopEnd)
-                    ) { Icon(Icons.Filled.Search, contentDescription = "Search") }
+                    Row(
+                        modifier = Modifier.align(Alignment.TopEnd),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        IconButton(
+                            onClick = onNavigateToNotifications,
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(21.dp))
+                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.42f))
+                        ) { Icon(Icons.Filled.Notifications, contentDescription = "Notifications") }
+                        IconButton(
+                            onClick = onNavigateToSearch,
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(21.dp))
+                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.42f))
+                        ) { Icon(Icons.Filled.Search, contentDescription = "Search") }
+                    }
                     if (uiState.loadedFromCache) AssistChip(onClick = {}, label = { Text("Cached") }, modifier = Modifier.align(Alignment.BottomEnd))
                 }
             }

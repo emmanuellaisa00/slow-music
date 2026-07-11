@@ -285,7 +285,7 @@ fun SlowMusicApp(
             }
         ) { paddingValues ->
             IosGestureNavigationLayer(
-                enabled = useAppleMusicUi,
+                enabled = true,
                 currentRoute = currentRoute,
                 canNavigateBack = navController.previousBackStackEntry != null,
                 onNavigateBack = { navController.popBackStack() }

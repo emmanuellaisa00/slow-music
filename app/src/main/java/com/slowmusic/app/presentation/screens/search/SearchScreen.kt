@@ -45,6 +45,7 @@ fun SearchScreen(
     onAddToQueue: (Song) -> Unit = {},
     onDownload: (Song) -> Unit = {},
     onShare: (Song) -> Unit = {},
+    onNotifications: () -> Unit = {},
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -85,39 +86,53 @@ fun SearchScreen(
             TopAppBar(
                 windowInsets = WindowInsets(top = 0.dp),
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.88f),
-                    scrolledContainerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.96f)
+                    containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.92f),
+                    scrolledContainerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.98f)
                 ),
                 title = {
-                    OutlinedTextField(
-                        value = uiState.query,
-                        onValueChange = viewModel::updateQuery,
-                        placeholder = { Text("Songs, artists, albums, playlists...") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(28.dp),
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.82f),
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f),
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
-                        ),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = { viewModel.search(uiState.query); focusManager.clearFocus() }),
-                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
-                        trailingIcon = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                if (uiState.query.isNotEmpty()) IconButton(onClick = { viewModel.updateQuery("") }) { Icon(Icons.Filled.Clear, "Clear") }
-                                IconButton(onClick = {
-                                    recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                                    }
-                                    runCatching { voiceSearchLauncher.launch(intent) }.onFailure { voiceMessage = "Voice search is not available on this device" }
-                                }) { Icon(Icons.Filled.Mic, "Voice search") }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        TextField(
+                            value = uiState.query,
+                            onValueChange = viewModel::updateQuery,
+                            placeholder = { Text("What do you want to play?") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(32.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 56.dp),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.86f),
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f),
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                disabledIndicatorColor = Color.Transparent
+                            ),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = { viewModel.search(uiState.query); focusManager.clearFocus() }),
+                            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.primary) },
+                            trailingIcon = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (uiState.query.isNotEmpty()) IconButton(onClick = { viewModel.updateQuery("") }) { Icon(Icons.Filled.Clear, "Clear") }
+                                    IconButton(onClick = {
+                                        recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                        }
+                                        runCatching { voiceSearchLauncher.launch(intent) }.onFailure { voiceMessage = "Voice search is not available on this device" }
+                                    }) { Icon(Icons.Filled.Mic, "Voice search") }
+                                }
                             }
-                        }
-                    )
+                        )
+                        IconButton(
+                            onClick = onNotifications,
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(RoundedCornerShape(23.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.74f))
+                        ) { Icon(Icons.Filled.Notifications, "Notifications", tint = MaterialTheme.colorScheme.onSurface) }
+                    }
                 }
             )
         }

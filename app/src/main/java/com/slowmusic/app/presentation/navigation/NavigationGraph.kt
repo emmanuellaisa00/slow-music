@@ -207,6 +207,7 @@ fun NavigationGraph(
                     onGenreClick = { genreId -> openPush(Screen.GenreDetails.createRoute(genreId)) },
                     onNavigateToSearch = { openRoot(Screen.Search.route) },
                     onNavigateToSettings = { openModal(Screen.Settings.route) },
+                    onNavigateToNotifications = { openModal(Screen.NotificationPermission.route) },
                     onNavigateToSeeAll = { openRoot(Screen.Search.route) },
                     onAddToPlaylist = { song -> openModal(Screen.AddToPlaylist.createRoute(song)) },
                     onPlayNext = { song -> onPlayNext(song) },
@@ -246,7 +247,8 @@ fun NavigationGraph(
                 onPlayNext = { song -> onPlayNext(song) },
                 onAddToQueue = { song -> onAddToQueue(song) },
                 onDownload = { song -> onDownload(song) },
-                onShare = { }
+                onShare = { },
+                onNotifications = { openModal(Screen.NotificationPermission.route) }
             )
             }
         }
