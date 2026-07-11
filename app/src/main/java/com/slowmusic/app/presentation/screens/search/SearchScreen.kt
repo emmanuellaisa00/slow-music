@@ -84,24 +84,27 @@ fun SearchScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                windowInsets = WindowInsets(top = 0.dp),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.92f),
                     scrolledContainerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.98f)
                 ),
                 title = {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 2.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         TextField(
                             value = uiState.query,
                             onValueChange = viewModel::updateQuery,
                             placeholder = { Text("What do you want to play?") },
                             singleLine = true,
-                            shape = RoundedCornerShape(32.dp),
-                            modifier = Modifier.weight(1f).heightIn(min = 56.dp),
+                            shape = RoundedCornerShape(30.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .heightIn(min = 54.dp),
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.86f),
                                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f),
@@ -128,8 +131,8 @@ fun SearchScreen(
                         IconButton(
                             onClick = onNotifications,
                             modifier = Modifier
-                                .size(46.dp)
-                                .clip(RoundedCornerShape(23.dp))
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(24.dp))
                                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.74f))
                         ) { Icon(Icons.Filled.Notifications, "Notifications", tint = MaterialTheme.colorScheme.onSurface) }
                     }
@@ -138,10 +141,15 @@ fun SearchScreen(
         }
     ) { paddingValues ->
         Column(Modifier.fillMaxSize().padding(paddingValues)) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(onClick = { viewModel.selectTab(SearchTab.ALL) }, label = { Text("All") })
-                if (uiState.downloadedSongs.isNotEmpty()) AssistChip(onClick = { viewModel.selectTab(SearchTab.DOWNLOADS) }, label = { Text("Downloaded") })
-                if (uiState.localSongs.isNotEmpty()) AssistChip(onClick = { viewModel.selectTab(SearchTab.LOCAL) }, label = { Text("Local") })
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                item { AssistChip(onClick = { viewModel.selectTab(SearchTab.ALL) }, label = { Text("All") }) }
+                if (uiState.downloadedSongs.isNotEmpty()) item { AssistChip(onClick = { viewModel.selectTab(SearchTab.DOWNLOADS) }, label = { Text("Downloaded") }) }
+                if (uiState.localSongs.isNotEmpty()) item { AssistChip(onClick = { viewModel.selectTab(SearchTab.LOCAL) }, label = { Text("Local") }) }
             }
             voiceMessage?.let { Text(it, modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.primary) }
             when {

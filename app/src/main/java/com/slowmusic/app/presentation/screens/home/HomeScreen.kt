@@ -128,17 +128,22 @@ private fun HomeContent(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f)),
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(28.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(min = 132.dp)
                         .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.28f), Color.Transparent)))
-                        .padding(18.dp)
+                        .padding(20.dp)
                 ) {
-                    Column(Modifier.padding(end = 56.dp)) {
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .padding(end = 108.dp)
+                    ) {
                         Text("Slow Music", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(4.dp))
                         Text(
@@ -149,20 +154,21 @@ private fun HomeContent(
                     }
                     Row(
                         modifier = Modifier.align(Alignment.TopEnd),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
                             onClick = onNavigateToNotifications,
                             modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(21.dp))
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(22.dp))
                                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.42f))
                         ) { Icon(Icons.Filled.Notifications, contentDescription = "Notifications") }
                         IconButton(
                             onClick = onNavigateToSearch,
                             modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(21.dp))
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(22.dp))
                                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.42f))
                         ) { Icon(Icons.Filled.Search, contentDescription = "Search") }
                     }

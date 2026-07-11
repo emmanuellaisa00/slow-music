@@ -134,7 +134,7 @@ fun AppleMusicPlayerScreen(
                 .padding(horizontal = 22.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 28.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 22.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -156,6 +156,7 @@ fun AppleMusicPlayerScreen(
                 contentDescription = song.title,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 2.dp)
                     .aspectRatio(1f)
                     .scale(artworkZoom * artworkLiftScale)
                     .transformable(artworkTransformState)
@@ -167,7 +168,7 @@ fun AppleMusicPlayerScreen(
                 contentScale = ContentScale.Crop
             )
 
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(24.dp))
 
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -184,7 +185,7 @@ fun AppleMusicPlayerScreen(
             IOSProgressBar(value = progress, onSeek = onSeek)
             Spacer(Modifier.height(26.dp))
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(34.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onPrevious, modifier = Modifier.size(58.dp)) { Icon(Icons.Filled.SkipPrevious, "Previous", tint = Color.White, modifier = Modifier.size(38.dp)) }
                 Box(
                     modifier = Modifier

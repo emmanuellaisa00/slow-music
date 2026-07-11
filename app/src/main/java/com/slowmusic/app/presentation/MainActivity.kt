@@ -226,13 +226,14 @@ fun SlowMusicApp(
                                 )
                             } else {
                                 NavigationBar(
-                                    containerColor = if (useAppleMusicUi) Color.White.copy(alpha = 0.08f) else NavigationBarDefaults.containerColor,
-                                    tonalElevation = if (useAppleMusicUi) 0.dp else NavigationBarDefaults.Elevation,
-                                    modifier = if (useAppleMusicUi) Modifier
+                                    containerColor = if (useAppleMusicUi) Color.White.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.96f),
+                                    tonalElevation = 0.dp,
+                                    modifier = Modifier
                                         .padding(horizontal = 12.dp, vertical = 8.dp)
                                         .clip(RoundedCornerShape(28.dp))
-                                        .border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(28.dp))
-                                    else Modifier
+                                        .then(
+                                            if (useAppleMusicUi) Modifier.border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(28.dp)) else Modifier
+                                        )
                                 ) {
                                     bottomNavItems.forEach { item ->
                                         NavigationBarItem(

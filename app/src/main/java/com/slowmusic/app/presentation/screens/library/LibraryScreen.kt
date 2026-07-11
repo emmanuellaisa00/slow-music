@@ -69,7 +69,6 @@ fun LibraryScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                windowInsets = WindowInsets(top = 0.dp),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.88f),
                     scrolledContainerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.96f)
