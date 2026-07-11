@@ -215,8 +215,13 @@ fun SongListItem(
             )
         },
         supportingContent = {
+            val badge = when {
+                song.isDownloaded -> " • Downloaded"
+                song.isLocal -> " • Local"
+                else -> ""
+            }
             Text(
-                text = "${song.artist} • ${song.album}",
+                text = "${song.artist} • ${song.album}$badge",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -469,6 +474,7 @@ fun SongOptionsBottomSheet(
     song: Song,
     onDismiss: () -> Unit,
     onAddToPlaylist: () -> Unit,
+    onPlayNext: () -> Unit = {},
     onAddToQueue: () -> Unit,
     onDownload: () -> Unit,
     onShare: () -> Unit,
@@ -491,6 +497,7 @@ fun SongOptionsBottomSheet(
             )
             Divider()
             SongOption(Icons.Filled.PlaylistAdd, "Add to playlist", onAddToPlaylist)
+            SongOption(Icons.Filled.SkipNext, "Play next", onPlayNext)
             SongOption(Icons.Filled.QueueMusic, "Add to queue", onAddToQueue)
             SongOption(Icons.Filled.Download, "Download", onDownload)
             SongOption(Icons.Filled.Share, "Share", onShare)

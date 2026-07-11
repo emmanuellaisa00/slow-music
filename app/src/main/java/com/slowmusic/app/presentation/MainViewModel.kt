@@ -361,6 +361,26 @@ class MainViewModel @Inject constructor(
         persistQueueState()
     }
 
+    fun playNextInQueue(song: Song) {
+        val insertAt = (_currentIndex.value + 1).coerceAtLeast(0)
+        val current = _queue.value.toMutableList()
+        val existing = current.indexOfFirst { it.id == song.id || (it.title.equals(song.title, true) && it.artist.equals(song.artist, true)) }
+        if (existing >= 0) current.removeAt(existing)
+        val target = insertAt.coerceAtMost(current.size)
+        current.add(target, song)
+        _queue.value = current
+        viewModelScope.launch {
+            val resolved = resolveForPlayback(song)
+            val mediaItem = toMediaItem(resolved)
+            if (mediaItem != null) {
+                val mediaIndex = target.coerceAtMost(mediaController?.mediaItemCount ?: 0)
+                mediaController?.addMediaItem(mediaIndex, mediaItem)
+            }
+            _queue.value = _queue.value.map { if (it.id == song.id) resolved else it }
+            persistQueueState()
+        }
+    }
+
     fun addToQueue(song: Song) {
         _queue.value = _queue.value + song
         viewModelScope.launch {

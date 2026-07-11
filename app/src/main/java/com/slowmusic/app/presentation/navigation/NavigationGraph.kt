@@ -51,6 +51,7 @@ fun NavigationGraph(
     onToggleRepeat: () -> Unit,
     onToggleFavorite: () -> Unit,
     onDownload: (Song) -> Unit,
+    onPlayNext: (Song) -> Unit,
     onAddToQueue: (Song) -> Unit,
     onRemoveFromQueue: (Int) -> Unit,
     onMoveQueueItem: (Int, Int) -> Unit,
@@ -161,6 +162,7 @@ fun NavigationGraph(
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onNavigateToSeeAll = { navController.navigate(Screen.Search.route) },
                     onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) },
+                    onPlayNext = { song -> onPlayNext(song) },
                     onAddToQueue = { song -> onAddToQueue(song) },
                     onDownload = { song -> onDownload(song) },
                     onShare = { }
@@ -194,6 +196,7 @@ fun NavigationGraph(
                     navController.navigate(Screen.GenreDetails.createRoute(genreId))
                 },
                 onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) },
+                onPlayNext = { song -> onPlayNext(song) },
                 onAddToQueue = { song -> onAddToQueue(song) },
                 onDownload = { song -> onDownload(song) },
                 onShare = { }
@@ -246,6 +249,7 @@ fun NavigationGraph(
                     navController.navigate(Screen.Settings.route)
                 },
                 onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) },
+                onPlayNext = { song -> onPlayNext(song) },
                 onAddToQueue = { song -> onAddToQueue(song) },
                 onDownload = { song -> onDownload(song) },
                 onShare = { }
