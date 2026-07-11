@@ -8,25 +8,21 @@ import androidx.lifecycle.lifecycleScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.slowmusic.app.presentation.components.MiniPlayer
+import com.slowmusic.app.presentation.components.PlaybackArtworkBackdrop
+import com.slowmusic.app.presentation.components.shouldShowPlaybackArtworkBackdrop
 import com.slowmusic.app.presentation.components.apple.AppleMiniPlayer
 import com.slowmusic.app.presentation.navigation.*
 import com.slowmusic.app.presentation.screens.ios.IosGlassBottomNav
@@ -164,17 +160,19 @@ fun SlowMusicApp(
         currentRoute != Screen.Player.route
     }
 
-    val routeAllowsPlayingBackdrop = currentRoute.allowsPlayingArtworkBackdrop()
-    val showPlayingBackdrop = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING &&
-        currentSong?.albumArtUrl?.isNotBlank() == true &&
-        routeAllowsPlayingBackdrop
+    val showPlayingBackdrop = shouldShowPlaybackArtworkBackdrop(
+        currentRoute = currentRoute,
+        playbackState = playbackState,
+        song = currentSong
+    )
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (useAppleMusicUi) AppleGlassAppBackground()
-        PlayingArtworkBackdrop(
-            visible = showPlayingBackdrop,
-            artworkUrl = currentSong?.albumArtUrl,
-            useAppleMusicUi = useAppleMusicUi
+        PlaybackArtworkBackdrop(
+            song = currentSong,
+            playbackState = playbackState,
+            currentRoute = currentRoute,
+            appleStyle = useAppleMusicUi
         )
         Scaffold(
             modifier = Modifier.fillMaxSize(),
@@ -320,52 +318,6 @@ fun SlowMusicApp(
                     onClearQueue = onClearQueue
                 )
             }
-        }
-    }
-}
-
-
-private fun String?.allowsPlayingArtworkBackdrop(): Boolean {
-    val route = this ?: return false
-    if (route == Screen.Home.route || route == Screen.Splash.route || route == Screen.Onboarding.route) return false
-    if (route.startsWith("settings") || route.startsWith("legal/") || route.startsWith("permissions/") || route.startsWith("cast/")) return false
-    return route != Screen.Player.route
-}
-
-@Composable
-private fun PlayingArtworkBackdrop(
-    visible: Boolean,
-    artworkUrl: String?,
-    useAppleMusicUi: Boolean
-) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(),
-        exit = fadeOut()
-    ) {
-        Box(Modifier.fillMaxSize()) {
-            AsyncImage(
-                model = artworkUrl,
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .scale(1.18f)
-                    .blur(if (useAppleMusicUi) 78.dp else 54.dp),
-                contentScale = ContentScale.Crop
-            )
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            if (useAppleMusicUi) {
-                                listOf(Color.Black.copy(alpha = 0.62f), Color.Black.copy(alpha = 0.78f), Color.Black.copy(alpha = 0.90f))
-                            } else {
-                                listOf(Color.Black.copy(alpha = 0.18f), Color.Black.copy(alpha = 0.26f), Color.Black.copy(alpha = 0.34f))
-                            }
-                        )
-                    )
-            )
         }
     }
 }
