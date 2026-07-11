@@ -13,7 +13,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.consume
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -86,14 +85,12 @@ fun IosGestureNavigationLayer(
                                 // Only claim rightward, mostly-horizontal drags.
                                 if (dragAmount.x > 0f && abs(dragAmount.x) >= abs(dragAmount.y) * 0.55f) {
                                     rawX = (rawX + dragAmount.x).coerceIn(0f, maxHorizontalPx)
-                                    change.consume()
                                 }
                             }
                             IosDragMode.DismissModal -> {
                                 // Only claim downward, mostly-vertical drags.
                                 if (dragAmount.y > 0f && abs(dragAmount.y) >= abs(dragAmount.x) * 0.55f) {
                                     rawY = (rawY + dragAmount.y).coerceIn(0f, maxVerticalPx)
-                                    change.consume()
                                 }
                             }
                             null -> Unit
