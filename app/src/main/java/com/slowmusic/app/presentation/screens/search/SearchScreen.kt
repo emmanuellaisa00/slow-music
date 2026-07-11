@@ -6,6 +6,8 @@ import android.content.Intent
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -20,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -77,9 +80,14 @@ fun SearchScreen(
     }
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 windowInsets = WindowInsets(top = 0.dp),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.88f),
+                    scrolledContainerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.96f)
+                ),
                 title = {
                     OutlinedTextField(
                         value = uiState.query,
@@ -149,6 +157,7 @@ fun SearchScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BrowseContent(
     genres: List<Genre>,
@@ -163,7 +172,7 @@ private fun BrowseContent(
 ) {
     LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
         if (suggestions.isNotEmpty()) {
-            item { SectionHeader("Suggestions") }
+            stickyHeader { LockedSectionHeader("Suggestions") }
             items(suggestions) { suggestion -> SearchTextRow(Icons.Filled.Lightbulb, suggestion) { onHistoryItemClick(suggestion) } }
         }
         if (recentSelections.isNotEmpty()) {
@@ -181,15 +190,26 @@ private fun BrowseContent(
                 )
             }
         } else if (searchHistory.isNotEmpty()) {
-            item { SectionHeader("Suggestions from history") }
+            stickyHeader { LockedSectionHeader("Suggestions from history") }
             items(searchHistory.take(4)) { query -> SearchTextRow(Icons.Filled.History, query) { onHistoryItemClick(query) } }
         }
-        item { SectionHeader("Browse All") }
+        stickyHeader { LockedSectionHeader("Browse All") }
         item {
             LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(genres) { genre -> GenreChip(name = genre.name, onClick = { onGenreClick(genre.id) }) }
             }
         }
+    }
+}
+
+@Composable
+private fun LockedSectionHeader(title: String) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.90f))
+    ) {
+        SectionHeader(title)
     }
 }
 
@@ -232,6 +252,7 @@ private fun TopResultCard(song: Song, onClick: () -> Unit, onMore: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SearchResults(
     state: SearchUiState,
@@ -265,11 +286,11 @@ private fun SearchResults(
             item { TopResultCard(song = songsForTab.first(), onClick = { onSongClick(songsForTab.first(), songsForTab) }, onMore = { onMore(songsForTab.first()) }) }
         }
         if (showSongs && songsForTab.isNotEmpty()) {
-            item { SectionHeader(if (state.selectedTab == SearchTab.LOCAL) "Local Songs" else if (state.selectedTab == SearchTab.DOWNLOADS) "Downloads" else "Songs") }
+            stickyHeader { LockedSectionHeader(if (state.selectedTab == SearchTab.LOCAL) "Local Songs" else if (state.selectedTab == SearchTab.DOWNLOADS) "Downloads" else "Songs") }
             items(songsForTab) { song -> SongListItem(song, { onSongClick(song, songsForTab) }, { onMore(song) }) }
         }
         if (showPlaylists && results.playlists.isNotEmpty()) {
-            item { SectionHeader("Playlists") }
+            stickyHeader { LockedSectionHeader("Playlists") }
             items(results.playlists) { playlist ->
                 ListItem(
                     modifier = Modifier.clickable { onPlaylistClick(playlist.id) },
@@ -281,11 +302,11 @@ private fun SearchResults(
             }
         }
         if (showArtists && results.artists.isNotEmpty()) {
-            item { SectionHeader("Artists") }
+            stickyHeader { LockedSectionHeader("Artists") }
             item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(results.artists) { artist -> ArtistCard(name = artist.name, imageUrl = artist.imageUrl, onClick = { onArtistClick(artist.id) }) } } }
         }
         if (showAlbums && results.albums.isNotEmpty()) {
-            item { SectionHeader("Albums") }
+            stickyHeader { LockedSectionHeader("Albums") }
             item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(results.albums) { album -> AlbumCard(title = album.title, artist = album.artist, artworkUrl = album.artworkUrl, onClick = { onAlbumClick(album.id) }) } } }
         }
         if ((showSongs && songsForTab.isEmpty()) && (!showArtists || results.artists.isEmpty()) && (!showAlbums || results.albums.isEmpty()) && (!showPlaylists || results.playlists.isEmpty())) {

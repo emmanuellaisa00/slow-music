@@ -34,6 +34,8 @@ import com.slowmusic.app.domain.model.RepeatMode
 import com.slowmusic.app.domain.model.Song
 import com.slowmusic.app.presentation.theme.apple.AppleColors
 import com.slowmusic.app.presentation.theme.apple.AppleTypography
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppleMusicPlayerScreen(
@@ -60,6 +62,28 @@ fun AppleMusicPlayerScreen(
 ) {
     var swipeDownDistance by remember { mutableFloatStateOf(0f) }
     var artworkZoom by remember { mutableFloatStateOf(1f) }
+    var lyricsOpening by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val artworkLiftScale by animateFloatAsState(
+        targetValue = if (lyricsOpening) 0.92f else 1f,
+        animationSpec = spring(dampingRatio = 0.78f, stiffness = Spring.StiffnessMediumLow),
+        label = "artwork_lifts_for_lyrics"
+    )
+    val sheetHeight by animateDpAsState(
+        targetValue = if (lyricsOpening) 210.dp else 96.dp,
+        animationSpec = spring(dampingRatio = 0.82f, stiffness = Spring.StiffnessMediumLow),
+        label = "lyrics_sheet_lift"
+    )
+    val sheetAlpha by animateFloatAsState(if (lyricsOpening) 0.18f else 0.08f, label = "lyrics_sheet_alpha")
+    fun openLyricsWithTransition() {
+        if (lyricsOpening) return
+        scope.launch {
+            lyricsOpening = true
+            delay(180)
+            onNavigateToLyrics()
+            lyricsOpening = false
+        }
+    }
     val artworkTransformState = rememberTransformableState { zoom, _, _ ->
         artworkZoom = (artworkZoom * zoom).coerceIn(1f, 2.2f)
     }
@@ -133,10 +157,10 @@ fun AppleMusicPlayerScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .scale(artworkZoom)
+                    .scale(artworkZoom * artworkLiftScale)
                     .transformable(artworkTransformState)
-                    .clip(RoundedCornerShape(10.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(26.dp))
+                    .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(26.dp))
                     .pointerInput(song.id) {
                         detectTapGestures(onDoubleTap = { onToggleFavorite() })
                     },
@@ -179,18 +203,18 @@ fun AppleMusicPlayerScreen(
             Spacer(Modifier.height(20.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onNavigateToQueue) { Icon(Icons.Filled.QueueMusic, "Queue", tint = Color.White.copy(alpha = 0.86f)) }
-                IconButton(onClick = onNavigateToLyrics) { Icon(Icons.Filled.Lyrics, "Lyrics", tint = Color.White.copy(alpha = 0.86f)) }
+                IconButton(onClick = { openLyricsWithTransition() }) { Icon(Icons.Filled.Lyrics, "Lyrics", tint = Color.White.copy(alpha = 0.86f)) }
             }
 
             Spacer(Modifier.weight(1f))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(96.dp)
-                    .clip(RoundedCornerShape(topStart = 34.dp, topEnd = 34.dp))
-                    .background(Color.White.copy(alpha = 0.08f))
-                    .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(topStart = 34.dp, topEnd = 34.dp))
-                    .clickable(onClick = onNavigateToLyrics),
+                    .height(sheetHeight)
+                    .clip(RoundedCornerShape(topStart = 38.dp, topEnd = 38.dp))
+                    .background(Color.White.copy(alpha = sheetAlpha))
+                    .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(topStart = 38.dp, topEnd = 38.dp))
+                    .clickable { openLyricsWithTransition() },
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {

@@ -256,7 +256,7 @@ fun ArtistCard(
         modifier = modifier
             .width(140.dp)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
@@ -267,7 +267,7 @@ fun ArtistCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
+                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
                 contentScale = ContentScale.Crop
             )
             
@@ -294,7 +294,7 @@ fun AlbumCard(
         modifier = modifier
             .width(160.dp)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column {
             AsyncImage(
@@ -481,7 +481,7 @@ fun SongOptionsBottomSheet(
                     AsyncImage(
                         model = song.albumArtUrl,
                         contentDescription = "Album art",
-                        modifier = Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)),
+                        modifier = Modifier.size(56.dp).clip(RoundedCornerShape(16.dp)),
                         contentScale = ContentScale.Crop
                     )
                 }

@@ -148,6 +148,28 @@ fun LyricsScreen(
                 onBackClick = onNavigateBack
             )
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .clip(RoundedCornerShape(26.dp))
+                    .background(Color.White.copy(alpha = 0.10f))
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AsyncImage(
+                    model = song.albumArtUrl,
+                    contentDescription = null,
+                    modifier = Modifier.size(58.dp).clip(RoundedCornerShape(18.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(song.title, color = AppleColors.textPrimary, style = AppleTypography.headline, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(song.artist, color = AppleColors.textSecondary, style = AppleTypography.subheadline, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+
             Box(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
                 if (lyrics != null) {
                     val parsed = remember(lyrics) { parseLrcLines(lyrics) }

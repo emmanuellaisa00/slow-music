@@ -85,7 +85,7 @@ fun ArtistDetailsScreen(
                         AsyncImage(
                             model = album.artworkUrl,
                             contentDescription = null,
-                            modifier = Modifier.size(54.dp).clip(RoundedCornerShape(10.dp)),
+                            modifier = Modifier.size(54.dp).clip(RoundedCornerShape(18.dp)),
                             contentScale = ContentScale.Crop
                         )
                     },
@@ -361,7 +361,7 @@ private fun SpotifyTrackRow(
                 AsyncImage(
                     model = song.albumArtUrl,
                     contentDescription = null,
-                    modifier = Modifier.size(46.dp).clip(RoundedCornerShape(8.dp)),
+                    modifier = Modifier.size(46.dp).clip(RoundedCornerShape(16.dp)),
                     contentScale = ContentScale.Crop
                 )
             }

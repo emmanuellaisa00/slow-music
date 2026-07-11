@@ -1,4 +1,4 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 
 package com.slowmusic.app.presentation.screens.library
 
@@ -66,9 +66,14 @@ fun LibraryScreen(
     }
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 windowInsets = WindowInsets(top = 0.dp),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.88f),
+                    scrolledContainerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.96f)
+                ),
                 title = { Text("Library") },
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
@@ -104,7 +109,7 @@ fun LibraryScreen(
                     }
                 }
             }
-            item { LibrarySection(title = "Library") }
+            stickyHeader { LockedLibrarySection(title = "Library") }
             
             item {
                 LibraryListItem(
@@ -154,7 +159,9 @@ fun LibraryScreen(
             // Playlists Section
             item {
                 Spacer(modifier = Modifier.height(16.dp))
-                LibrarySection(title = "Playlists")
+            }
+            stickyHeader {
+                LockedLibrarySection(title = "Playlists")
             }
             
             item {
@@ -187,7 +194,9 @@ fun LibraryScreen(
             // Artists Section
             item {
                 Spacer(modifier = Modifier.height(16.dp))
-                LibrarySection(title = "Artists")
+            }
+            stickyHeader {
+                LockedLibrarySection(title = "Artists")
             }
             
             item {
@@ -202,7 +211,9 @@ fun LibraryScreen(
             // Albums Section
             item {
                 Spacer(modifier = Modifier.height(16.dp))
-                LibrarySection(title = "Albums")
+            }
+            stickyHeader {
+                LockedLibrarySection(title = "Albums")
             }
             
             item {
@@ -214,6 +225,17 @@ fun LibraryScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun LockedLibrarySection(title: String) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.90f))
+    ) {
+        LibrarySection(title = title)
     }
 }
 
