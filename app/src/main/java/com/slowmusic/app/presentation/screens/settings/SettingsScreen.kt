@@ -224,18 +224,18 @@ fun SettingsScreen(
                 )
             }
 
-            // Subscription
+            // Local mode
             item {
                 Spacer(modifier = Modifier.height(16.dp))
-                SettingsSection(title = "Subscription")
+                SettingsSection(title = "Library Mode")
             }
 
             item {
                 SettingsItem(
-                    icon = Icons.Filled.CardMembership,
-                    title = "Subscription",
-                    subtitle = "Local database mode: plan management disabled",
-                    onClick = { message = "Subscriptions are disabled while using local database mode" }
+                    icon = Icons.Filled.Storage,
+                    title = "Local Library Mode",
+                    subtitle = "Play history, playlists and cache stay on this device",
+                    onClick = { message = "Local library mode is active" }
                 )
             }
 

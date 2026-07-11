@@ -18,10 +18,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.presentation.components.*
 
@@ -199,6 +202,35 @@ private fun SearchTextRow(icon: androidx.compose.ui.graphics.vector.ImageVector,
     )
 }
 
+
+@Composable
+private fun TopResultCard(song: Song, onClick: () -> Unit, onMore: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f))
+    ) {
+        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            AsyncImage(
+                model = song.albumArtUrl,
+                contentDescription = null,
+                modifier = Modifier.size(76.dp).clip(RoundedCornerShape(18.dp)),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text("Top result", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Text(song.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                Text(song.artist, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            }
+            IconButton(onClick = onMore) { Icon(Icons.Filled.MoreVert, null) }
+        }
+    }
+}
+
 @Composable
 private fun SearchResults(
     state: SearchUiState,
@@ -227,6 +259,9 @@ private fun SearchResults(
                     Tab(selected = state.selectedTab == tab, onClick = { onTabSelected(tab) }, text = { Text(tab.name.lowercase().replaceFirstChar { it.uppercase() }) })
                 }
             }
+        }
+        if (state.selectedTab == SearchTab.ALL && songsForTab.isNotEmpty()) {
+            item { TopResultCard(song = songsForTab.first(), onClick = { onSongClick(songsForTab.first(), songsForTab) }, onMore = { onMore(songsForTab.first()) }) }
         }
         if (showSongs && songsForTab.isNotEmpty()) {
             item { SectionHeader(if (state.selectedTab == SearchTab.LOCAL) "Local Songs" else if (state.selectedTab == SearchTab.DOWNLOADS) "Downloads" else "Songs") }
