@@ -145,14 +145,7 @@ fun LyricsScreen(
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             AppleNavigationBar(
                 title = "Lyrics",
-                onBackClick = onNavigateBack,
-                trailing = {
-                    Switch(
-                        checked = isSynced,
-                        onCheckedChange = onToggleSynced,
-                        colors = SwitchDefaults.colors(checkedThumbColor = AppleColors.primary, checkedTrackColor = AppleColors.primary.copy(alpha = 0.5f))
-                    )
-                }
+                onBackClick = onNavigateBack
             )
 
             Box(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {

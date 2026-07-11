@@ -27,6 +27,9 @@ import com.slowmusic.app.streaming.StreamingFallbackResolver
 import com.slowmusic.app.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -585,10 +588,25 @@ class MainViewModel @Inject constructor(
             if (newSongs.isEmpty()) return@launch
             current.addAll(insertAt, newSongs)
             _queue.value = current
-            for ((offset, candidate) in newSongs.withIndex()) {
+
+            // Resolve the first few upcoming songs first so rapid "Next" taps have
+            // playable items ready. Resolve the rest afterwards to avoid delaying UI.
+            val priority = newSongs.take(4)
+            val rest = newSongs.drop(4)
+            priority.mapIndexed { offset, candidate ->
+                async {
+                    val resolved = resolveForPlayback(candidate)
+                    insertAt + offset to resolved
+                }
+            }.awaitAll().forEach { (index, resolved) ->
+                if (requestId != playRequestId) return@launch
+                _queue.value = _queue.value.toMutableList().also { if (index in it.indices) it[index] = resolved }
+                toMediaItem(resolved)?.let { mediaController?.addMediaItem(index.coerceAtMost(mediaController?.mediaItemCount ?: 0), it) }
+            }
+            for ((offset, candidate) in rest.withIndex()) {
                 if (requestId != playRequestId) return@launch
                 val resolved = resolveForPlayback(candidate)
-                val index = insertAt + offset
+                val index = insertAt + priority.size + offset
                 _queue.value = _queue.value.toMutableList().also { if (index in it.indices) it[index] = resolved }
                 toMediaItem(resolved)?.let { mediaController?.addMediaItem(index.coerceAtMost(mediaController?.mediaItemCount ?: 0), it) }
             }
@@ -607,10 +625,23 @@ class MainViewModel @Inject constructor(
                 if (!other.artist.equals(seed.artist, true)) add("${seed.artist} ${other.artist} collaboration")
             }
         }.distinct()
-        return seeds
-            .flatMap { query -> streamingFallbackResolver.searchSongs(query, 8) }
-            .distinctBy { it.title.lowercase().trim() to it.artist.lowercase().trim() }
-            .filterNot { it.title.equals(seed.title, true) && it.artist.equals(seed.artist, true) }
+        return coroutineScope {
+            seeds.flatMap { base ->
+                listOf(
+                    base,
+                    "$base official audio",
+                    "$base topic",
+                    "$base similar artists",
+                    "$base radio mix"
+                )
+            }
+                .distinct()
+                .map { query -> async { streamingFallbackResolver.searchSongs(query, 6) } }
+                .awaitAll()
+                .flatten()
+                .distinctBy { it.title.lowercase().trim() to it.artist.lowercase().trim() }
+                .filterNot { it.title.equals(seed.title, true) && it.artist.equals(seed.artist, true) }
+        }
     }
 
     private fun handleQueueEnded() {
