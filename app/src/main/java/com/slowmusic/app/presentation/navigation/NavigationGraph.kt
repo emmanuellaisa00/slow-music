@@ -2,6 +2,14 @@ package com.slowmusic.app.presentation.navigation
 
 import android.Manifest
 import android.content.Context
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,6 +37,7 @@ import com.slowmusic.app.presentation.screens.player.QueueScreen
 import com.slowmusic.app.presentation.screens.player.LyricsScreen
 import com.slowmusic.app.presentation.screens.details.*
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun NavigationGraph(
     navController: NavHostController,
@@ -68,11 +77,15 @@ fun NavigationGraph(
 
     fun selectSong(song: Song, queue: List<Song>) {
         if (sameSong(currentSong, song)) {
-            navController.navigate(Screen.Player.route) { launchSingleTop = true }
+            navController.navigateModal(Screen.Player.route)
         } else {
             onPlaySong(song, queue.ifEmpty { listOf(song) })
         }
     }
+
+    fun openRoot(route: String) = navController.navigateRootTab(route)
+    fun openPush(route: String) = navController.navigatePush(route)
+    fun openModal(route: String) = navController.navigateModal(route)
 
     fun smartSearchQueue(seed: Song, candidates: List<Song>): List<Song> {
         val seedArtist = seed.artist.lowercase().trim()
@@ -109,7 +122,39 @@ fun NavigationGraph(
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route,
-        modifier = modifier
+        modifier = modifier,
+        enterTransition = {
+            val target = targetState.destination.route
+            val initial = initialState.destination.route
+            when {
+                target.isModalRoute() -> slideInVertically(animationSpec = tween(260)) { it } + fadeIn(tween(180))
+                initial.isRootTabRoute() && target.isRootTabRoute() -> fadeIn(tween(180))
+                else -> slideInHorizontally(animationSpec = tween(240)) { it / 3 } + fadeIn(tween(160))
+            }
+        },
+        exitTransition = {
+            val target = targetState.destination.route
+            val initial = initialState.destination.route
+            when {
+                target.isModalRoute() -> fadeOut(tween(120))
+                initial.isRootTabRoute() && target.isRootTabRoute() -> fadeOut(tween(120))
+                else -> slideOutHorizontally(animationSpec = tween(220)) { -it / 5 } + fadeOut(tween(120))
+            }
+        },
+        popEnterTransition = {
+            val initial = initialState.destination.route
+            when {
+                initial.isModalRoute() -> fadeIn(tween(160))
+                else -> slideInHorizontally(animationSpec = tween(220)) { -it / 3 } + fadeIn(tween(140))
+            }
+        },
+        popExitTransition = {
+            val initial = initialState.destination.route
+            when {
+                initial.isModalRoute() -> slideOutVertically(animationSpec = tween(240)) { it } + fadeOut(tween(140))
+                else -> slideOutHorizontally(animationSpec = tween(220)) { it / 3 } + fadeOut(tween(120))
+            }
+        }
     ) {
         composable(Screen.Splash.route) {
             val context = LocalContext.current
@@ -120,6 +165,7 @@ fun NavigationGraph(
                 onNavigateToHome = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
+                        launchSingleTop = true
                     }
                 },
                 onNavigateToOnboarding = {
@@ -138,6 +184,7 @@ fun NavigationGraph(
                         .edit().putBoolean("completed", true).apply()
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Onboarding.route) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )
@@ -148,20 +195,20 @@ fun NavigationGraph(
             if (useIosGlass) {
                 IosGlassHomeScreen(
                     onSongClick = { song, queue -> selectSong(song, queue) },
-                    onNavigateToSearch = { navController.navigate(Screen.Search.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                    onMore = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) }
+                    onNavigateToSearch = { openRoot(Screen.Search.route) },
+                    onNavigateToSettings = { openModal(Screen.Settings.route) },
+                    onMore = { song -> openModal(Screen.AddToPlaylist.createRoute(song)) }
                 )
             } else {
                 HomeScreen(
                     onSongClick = { song, queue -> selectSong(song, smartSearchQueue(song, queue)) },
-                    onArtistClick = { artistId -> navController.navigate(Screen.ArtistDetails.createRoute(artistId)) },
-                    onAlbumClick = { albumId -> navController.navigate(Screen.AlbumDetails.createRoute(albumId)) },
-                    onGenreClick = { genreId -> navController.navigate(Screen.GenreDetails.createRoute(genreId)) },
-                    onNavigateToSearch = { navController.navigate(Screen.Search.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                    onNavigateToSeeAll = { navController.navigate(Screen.Search.route) },
-                    onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) },
+                    onArtistClick = { artistId -> openPush(Screen.ArtistDetails.createRoute(artistId)) },
+                    onAlbumClick = { albumId -> openPush(Screen.AlbumDetails.createRoute(albumId)) },
+                    onGenreClick = { genreId -> openPush(Screen.GenreDetails.createRoute(genreId)) },
+                    onNavigateToSearch = { openRoot(Screen.Search.route) },
+                    onNavigateToSettings = { openModal(Screen.Settings.route) },
+                    onNavigateToSeeAll = { openRoot(Screen.Search.route) },
+                    onAddToPlaylist = { song -> openModal(Screen.AddToPlaylist.createRoute(song)) },
                     onPlayNext = { song -> onPlayNext(song) },
                     onAddToQueue = { song -> onAddToQueue(song) },
                     onDownload = { song -> onDownload(song) },
@@ -174,9 +221,9 @@ fun NavigationGraph(
             if (useIosGlass) {
                 IosGlassSearchScreen(
                     onSongClick = { song, queue -> selectSong(song, smartSearchQueue(song, queue)) },
-                    onArtistClick = { artistId -> navController.navigate(Screen.ArtistDetails.createRoute(artistId)) },
-                    onAlbumClick = { albumId -> navController.navigate(Screen.AlbumDetails.createRoute(albumId)) },
-                    onPlaylistClick = { playlistId -> navController.navigate(Screen.PlaylistDetails.createRoute(playlistId)) }
+                    onArtistClick = { artistId -> openPush(Screen.ArtistDetails.createRoute(artistId)) },
+                    onAlbumClick = { albumId -> openPush(Screen.AlbumDetails.createRoute(albumId)) },
+                    onPlaylistClick = { playlistId -> openPush(Screen.PlaylistDetails.createRoute(playlistId)) }
                 )
             } else {
             SearchScreen(
@@ -184,18 +231,18 @@ fun NavigationGraph(
                     selectSong(song, smartSearchQueue(song, queue))
                 },
                 onArtistClick = { artistId ->
-                    navController.navigate(Screen.ArtistDetails.createRoute(artistId))
+                    openPush(Screen.ArtistDetails.createRoute(artistId))
                 },
                 onAlbumClick = { albumId ->
-                    navController.navigate(Screen.AlbumDetails.createRoute(albumId))
+                    openPush(Screen.AlbumDetails.createRoute(albumId))
                 },
                 onPlaylistClick = { playlistId ->
-                    navController.navigate(Screen.PlaylistDetails.createRoute(playlistId))
+                    openPush(Screen.PlaylistDetails.createRoute(playlistId))
                 },
                 onGenreClick = { genreId ->
-                    navController.navigate(Screen.GenreDetails.createRoute(genreId))
+                    openPush(Screen.GenreDetails.createRoute(genreId))
                 },
-                onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) },
+                onAddToPlaylist = { song -> openModal(Screen.AddToPlaylist.createRoute(song)) },
                 onPlayNext = { song -> onPlayNext(song) },
                 onAddToQueue = { song -> onAddToQueue(song) },
                 onDownload = { song -> onDownload(song) },
@@ -207,11 +254,11 @@ fun NavigationGraph(
         composable(Screen.Library.route) {
             if (useIosGlass) {
                 IosGlassLibraryScreen(
-                    onFavorites = { navController.navigate(Screen.Favorites.route) },
-                    onDownloads = { navController.navigate(Screen.Downloads.route) },
-                    onLocal = { navController.navigate(Screen.LocalMusic.route) },
-                    onPlaylists = { navController.navigate(Screen.Playlists.route) },
-                    onSettings = { navController.navigate(Screen.Settings.route) }
+                    onFavorites = { openPush(Screen.Favorites.route) },
+                    onDownloads = { openPush(Screen.Downloads.route) },
+                    onLocal = { openPush(Screen.LocalMusic.route) },
+                    onPlaylists = { openPush(Screen.Playlists.route) },
+                    onSettings = { openModal(Screen.Settings.route) }
                 )
             } else {
             LibraryScreen(
@@ -219,36 +266,36 @@ fun NavigationGraph(
                     selectSong(song, queue)
                 },
                 onNavigateToFavorites = {
-                    navController.navigate(Screen.Favorites.route)
+                    openPush(Screen.Favorites.route)
                 },
                 onNavigateToRecent = {
-                    navController.navigate(Screen.RecentPlays.route)
+                    openPush(Screen.RecentPlays.route)
                 },
                 onNavigateToMostPlayed = {
-                    navController.navigate(Screen.MostPlayed.route)
+                    openPush(Screen.MostPlayed.route)
                 },
                 onNavigateToDownloads = {
-                    navController.navigate(Screen.Downloads.route)
+                    openPush(Screen.Downloads.route)
                 },
                 onNavigateToLocalMusic = {
-                    navController.navigate(Screen.LocalMusic.route)
+                    openPush(Screen.LocalMusic.route)
                 },
                 onNavigateToPlaylists = {
-                    navController.navigate(Screen.Playlists.route)
+                    openPush(Screen.Playlists.route)
                 },
                 onPlaylistClick = { playlistId ->
-                    navController.navigate(Screen.PlaylistDetails.createRoute(playlistId))
+                    openPush(Screen.PlaylistDetails.createRoute(playlistId))
                 },
                 onNavigateToArtists = {
-                    navController.navigate(Screen.Artists.route)
+                    openPush(Screen.Artists.route)
                 },
                 onNavigateToAlbums = {
-                    navController.navigate(Screen.Albums.route)
+                    openPush(Screen.Albums.route)
                 },
                 onNavigateToSettings = {
-                    navController.navigate(Screen.Settings.route)
+                    openModal(Screen.Settings.route)
                 },
-                onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) },
+                onAddToPlaylist = { song -> openModal(Screen.AddToPlaylist.createRoute(song)) },
                 onPlayNext = { song -> onPlayNext(song) },
                 onAddToQueue = { song -> onAddToQueue(song) },
                 onDownload = { song -> onDownload(song) },
@@ -259,7 +306,7 @@ fun NavigationGraph(
 
         composable(Screen.Profile.route) {
             if (useIosGlass) {
-                IosGlassProfileScreen(onSettings = { navController.navigate(Screen.Settings.route) })
+                IosGlassProfileScreen(onSettings = { openModal(Screen.Settings.route) })
             } else if (useAppleMusicUi) {
                 AppleProfileScreen(
                     subscription = com.slowmusic.app.domain.model.Subscription(
@@ -268,13 +315,13 @@ fun NavigationGraph(
                         expiresAt = null,
                         features = listOf("Local library", "Full-song streaming", "Cached discovery")
                     ),
-                    onNavigateToSubscription = { navController.navigate(Screen.Subscription.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    onNavigateToSubscription = { openModal(Screen.Subscription.route) },
+                    onNavigateToSettings = { openModal(Screen.Settings.route) }
                 )
             } else {
                 ProfileScreen(
-                    onNavigateToSubscription = { navController.navigate(Screen.Subscription.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    onNavigateToSubscription = { openModal(Screen.Subscription.route) },
+                    onNavigateToSettings = { openModal(Screen.Settings.route) }
                 )
             }
         }
@@ -309,11 +356,11 @@ fun NavigationGraph(
 
         composable(Screen.LocalMusic.route) { LocalMusicScreen(onSongClick = { song, queue -> selectSong(song, queue) }) }
 
-        composable(Screen.Playlists.route) { PlaylistsScreen(onPlaylistClick = { navController.navigate(Screen.PlaylistDetails.createRoute(it)) }) }
+        composable(Screen.Playlists.route) { PlaylistsScreen(onPlaylistClick = { openPush(Screen.PlaylistDetails.createRoute(it)) }) }
 
-        composable(Screen.Artists.route) { FollowedArtistsScreen(onArtistClick = { navController.navigate(Screen.ArtistDetails.createRoute(it)) }) }
+        composable(Screen.Artists.route) { FollowedArtistsScreen(onArtistClick = { openPush(Screen.ArtistDetails.createRoute(it)) }) }
 
-        composable(Screen.Albums.route) { SavedAlbumsScreen(onAlbumClick = { navController.navigate(Screen.AlbumDetails.createRoute(it)) }) }
+        composable(Screen.Albums.route) { SavedAlbumsScreen(onAlbumClick = { openPush(Screen.AlbumDetails.createRoute(it)) }) }
 
 
         composable(Screen.Player.route) {
@@ -340,10 +387,10 @@ fun NavigationGraph(
                     onToggleShuffle = onToggleShuffle,
                     onToggleRepeat = onToggleRepeat,
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToLyrics = { navController.navigate(Screen.Lyrics.route) },
-                    onNavigateToQueue = { navController.navigate(Screen.Queue.route) },
-                    onNavigateToCast = { navController.navigate(Screen.CastDevices.route) },
-                    onMoreOptions = { navController.navigate(Screen.AddToPlaylist.createRoute(song)) },
+                    onNavigateToLyrics = { openModal(Screen.Lyrics.route) },
+                    onNavigateToQueue = { openModal(Screen.Queue.route) },
+                    onNavigateToCast = { openModal(Screen.CastDevices.route) },
+                    onMoreOptions = { openModal(Screen.AddToPlaylist.createRoute(song)) },
                     onShare = { }
                 )
             }
@@ -355,27 +402,27 @@ fun NavigationGraph(
                 IosGlassSettingsSkin {
                     SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToLogs = { navController.navigate(Screen.Logs.route) },
-                onNavigateToStorage = { navController.navigate(Screen.DownloadStorage.route) },
-                onNavigateToPrivacy = { navController.navigate(Screen.PrivacyPolicy.route) },
-                onNavigateToTerms = { navController.navigate(Screen.Terms.route) },
-                onNavigateToNotifications = { navController.navigate(Screen.NotificationPermission.route) },
-                onNavigateToLocalFilesPermission = { navController.navigate(Screen.LocalFilesPermission.route) },
-                onNavigateToCastDevices = { navController.navigate(Screen.CastDevices.route) },
-                onNavigateToEqualizer = { navController.navigate(Screen.Equalizer.route) }
+                onNavigateToLogs = { openModal(Screen.Logs.route) },
+                onNavigateToStorage = { openModal(Screen.DownloadStorage.route) },
+                onNavigateToPrivacy = { openModal(Screen.PrivacyPolicy.route) },
+                onNavigateToTerms = { openModal(Screen.Terms.route) },
+                onNavigateToNotifications = { openModal(Screen.NotificationPermission.route) },
+                onNavigateToLocalFilesPermission = { openModal(Screen.LocalFilesPermission.route) },
+                onNavigateToCastDevices = { openModal(Screen.CastDevices.route) },
+                onNavigateToEqualizer = { openModal(Screen.Equalizer.route) }
                     )
                 }
             } else {
                 SettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToLogs = { navController.navigate(Screen.Logs.route) },
-                    onNavigateToStorage = { navController.navigate(Screen.DownloadStorage.route) },
-                    onNavigateToPrivacy = { navController.navigate(Screen.PrivacyPolicy.route) },
-                    onNavigateToTerms = { navController.navigate(Screen.Terms.route) },
-                    onNavigateToNotifications = { navController.navigate(Screen.NotificationPermission.route) },
-                    onNavigateToLocalFilesPermission = { navController.navigate(Screen.LocalFilesPermission.route) },
-                    onNavigateToCastDevices = { navController.navigate(Screen.CastDevices.route) },
-                    onNavigateToEqualizer = { navController.navigate(Screen.Equalizer.route) }
+                    onNavigateToLogs = { openModal(Screen.Logs.route) },
+                    onNavigateToStorage = { openModal(Screen.DownloadStorage.route) },
+                    onNavigateToPrivacy = { openModal(Screen.PrivacyPolicy.route) },
+                    onNavigateToTerms = { openModal(Screen.Terms.route) },
+                    onNavigateToNotifications = { openModal(Screen.NotificationPermission.route) },
+                    onNavigateToLocalFilesPermission = { openModal(Screen.LocalFilesPermission.route) },
+                    onNavigateToCastDevices = { openModal(Screen.CastDevices.route) },
+                    onNavigateToEqualizer = { openModal(Screen.Equalizer.route) }
                 )
             }
         }
@@ -458,14 +505,14 @@ fun NavigationGraph(
                 IosGlassArtistDetailScreen(
                     artistId = artistId,
                     onNavigateBack = { navController.popBackStack() },
-                    onAlbumClick = { navController.navigate(Screen.AlbumDetails.createRoute(it)) },
+                    onAlbumClick = { openPush(Screen.AlbumDetails.createRoute(it)) },
                     onSongClick = { song, queue -> selectSong(song, queue) }
                 )
             } else {
                 ArtistDetailsScreen(
                     artistId = artistId,
                     onNavigateBack = { navController.popBackStack() },
-                    onAlbumClick = { navController.navigate(Screen.AlbumDetails.createRoute(it)) },
+                    onAlbumClick = { openPush(Screen.AlbumDetails.createRoute(it)) },
                     onSongClick = { song, queue -> selectSong(song, queue) }
                 )
             }
@@ -481,14 +528,14 @@ fun NavigationGraph(
                     albumId = albumId,
                     onNavigateBack = { navController.popBackStack() },
                     onSongClick = { song, queue -> selectSong(song, queue) },
-                    onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) }
+                    onAddToPlaylist = { song -> openModal(Screen.AddToPlaylist.createRoute(song)) }
                 )
             } else {
                 AlbumDetailsScreen(
                     albumId = albumId,
                     onNavigateBack = { navController.popBackStack() },
                     onSongClick = { song, queue -> selectSong(song, queue) },
-                    onAddToPlaylist = { song -> navController.navigate(Screen.AddToPlaylist.createRoute(song)) }
+                    onAddToPlaylist = { song -> openModal(Screen.AddToPlaylist.createRoute(song)) }
                 )
             }
         }
@@ -502,14 +549,14 @@ fun NavigationGraph(
                 IosGlassPlaylistDetailScreen(
                     playlistId = playlistId,
                     onNavigateBack = { navController.popBackStack() },
-                    onAddSongs = { navController.navigate(Screen.Search.route) },
+                    onAddSongs = { openRoot(Screen.Search.route) },
                     onSongClick = { song, queue -> selectSong(song, queue) }
                 )
             } else {
                 PlaylistDetailsScreen(
                     playlistId = playlistId,
                     onNavigateBack = { navController.popBackStack() },
-                    onAddSongs = { navController.navigate(Screen.Search.route) },
+                    onAddSongs = { openRoot(Screen.Search.route) },
                     onSongClick = { song, queue -> selectSong(song, queue) }
                 )
             }
