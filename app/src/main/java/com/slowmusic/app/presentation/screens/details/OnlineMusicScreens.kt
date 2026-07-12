@@ -1,4 +1,4 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 
 package com.slowmusic.app.presentation.screens.details
 
@@ -7,11 +7,14 @@ import android.content.Context
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.stickyHeader
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -40,6 +43,7 @@ import com.slowmusic.app.data.repository.DownloadState
 import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.domain.repository.LibraryRepository
 import com.slowmusic.app.domain.repository.MusicRepository
+import com.slowmusic.app.presentation.components.PremiumLockedHeader
 import com.slowmusic.app.streaming.StreamingFallbackResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -60,7 +64,9 @@ fun ArtistDetailsScreen(
     LaunchedEffect(artistId) { viewModel.load(artistId) }
 
     Scaffold(topBar = { TopAppBar(title = { Text(state.artist?.name ?: "Artist") }, navigationIcon = { BackButton(onNavigateBack) }) }) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 120.dp)) {
+        val listState = rememberLazyListState()
+        val lockActive by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 8 } }
+        LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 120.dp)) {
             item {
                 HeroHeader(
                     title = state.artist?.name ?: "Artist",
@@ -75,9 +81,9 @@ fun ArtistDetailsScreen(
                     }
                 )
             }
-            item { SectionTitle("Top Songs") }
+            stickyHeader { PremiumLockedHeader("Top Songs", active = lockActive) }
             items(state.songs.take(10)) { song -> SongRow(song, { onSongClick(song, state.songs) }) }
-            item { SectionTitle("Albums & Singles") }
+            stickyHeader { PremiumLockedHeader("Albums & Singles", active = lockActive) }
             items(state.albums) { album ->
                 ListItem(
                     modifier = Modifier.clickable { onAlbumClick(album.id) },
@@ -94,7 +100,7 @@ fun ArtistDetailsScreen(
                     trailingContent = { Icon(Icons.Filled.KeyboardArrowRight, null) }
                 )
             }
-            item { SectionTitle("About") }
+            stickyHeader { PremiumLockedHeader("About", active = lockActive) }
             item { Text("Follow ${state.artist?.name ?: "this artist"} to keep their new releases and top songs in your library. Artist biographies and verified metadata can be enhanced as more music data is discovered.") }
         }
     }
@@ -127,8 +133,11 @@ fun AlbumDetailsScreen(
             )
         }
     ) { padding ->
+        val listState = rememberLazyListState()
+        val lockActive by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 8 } }
         LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
+            state = listState,
+            modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(bottom = 120.dp)
         ) {
             item {
@@ -144,7 +153,7 @@ fun AlbumDetailsScreen(
                 )
             }
 
-            item { SpotifySectionTitle("Tracks") }
+            stickyHeader { SpotifySectionTitle("Tracks", active = lockActive) }
             if (state.songs.isEmpty()) {
                 item { SpotifyEmptyRow("No tracks found", "Tracks from this album will appear here.") }
             }
@@ -208,8 +217,11 @@ fun PlaylistDetailsScreen(
             )
         }
     ) { padding ->
+        val listState = rememberLazyListState()
+        val lockActive by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 8 } }
         LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
+            state = listState,
+            modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(bottom = 120.dp)
         ) {
             item {
@@ -226,7 +238,7 @@ fun PlaylistDetailsScreen(
                 )
             }
 
-            item { SpotifySectionTitle("Songs") }
+            stickyHeader { SpotifySectionTitle("Songs", active = lockActive) }
             if (state.songs.isEmpty()) {
                 item { SpotifyEmptyRow("No songs yet", "Use Add songs from album/search menus to build this playlist.") }
             }
@@ -334,14 +346,8 @@ private fun SpotifyBlurHeader(
 }
 
 @Composable
-private fun SpotifySectionTitle(text: String) {
-    Text(
-        text = text,
-        color = Color.White,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
-    )
+private fun SpotifySectionTitle(text: String, active: Boolean = false) {
+    PremiumLockedHeader(title = text, active = active, dark = true)
 }
 
 @Composable

@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.stickyHeader
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -32,13 +34,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.slowmusic.app.domain.model.Song
+import com.slowmusic.app.presentation.components.PremiumLockedHeader
 import com.slowmusic.app.presentation.components.apple.AppleGlassCard
 import com.slowmusic.app.presentation.components.apple.AppleNavigationBar
 import com.slowmusic.app.presentation.components.apple.AppleSongCard
 import com.slowmusic.app.presentation.theme.apple.AppleColors
 import com.slowmusic.app.presentation.theme.apple.AppleTypography
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun QueueScreen(
     currentSong: Song?,
@@ -84,15 +87,13 @@ fun QueueScreen(
             }
         }
 
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("UP NEXT", style = AppleTypography.caption1, color = AppleColors.textSecondary, fontWeight = FontWeight.SemiBold)
-            Text("${queue.size} songs", style = AppleTypography.caption1, color = AppleColors.textTertiary)
-        }
-
         if (queue.isEmpty()) {
             EmptyApplePanel(Icons.Filled.QueueMusic, "Queue is Empty", "Add songs to your queue to see them here")
         } else {
-            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val listState = rememberLazyListState()
+            val lockActive by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 8 } }
+            LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                stickyHeader { PremiumLockedHeader("UP NEXT", active = lockActive, dark = true, trailing = { Text("${queue.size} songs", style = AppleTypography.caption1, color = AppleColors.textTertiary) }) }
                 itemsIndexed(queue) { index, song ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {

@@ -193,9 +193,11 @@ private fun BrowseContent(
     onHistoryItemClick: (String) -> Unit,
     onClearHistory: () -> Unit
 ) {
-    LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
+    val listState = rememberLazyListState()
+    val lockActive by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 8 } }
+    LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 100.dp)) {
         if (suggestions.isNotEmpty()) {
-            stickyHeader { LockedSectionHeader("Suggestions") }
+            stickyHeader { LockedSectionHeader("Suggestions", lockActive) }
             items(suggestions) { suggestion -> SearchTextRow(Icons.Filled.Lightbulb, suggestion) { onHistoryItemClick(suggestion) } }
         }
         if (recentSelections.isNotEmpty()) {
@@ -213,10 +215,10 @@ private fun BrowseContent(
                 )
             }
         } else if (searchHistory.isNotEmpty()) {
-            stickyHeader { LockedSectionHeader("Suggestions from history") }
+            stickyHeader { LockedSectionHeader("Suggestions from history", lockActive) }
             items(searchHistory.take(4)) { query -> SearchTextRow(Icons.Filled.History, query) { onHistoryItemClick(query) } }
         }
-        stickyHeader { LockedSectionHeader("Browse All") }
+        stickyHeader { LockedSectionHeader("Browse All", lockActive) }
         item {
             LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(genres) { genre -> GenreChip(name = genre.name, onClick = { onGenreClick(genre.id) }) }
@@ -226,14 +228,8 @@ private fun BrowseContent(
 }
 
 @Composable
-private fun LockedSectionHeader(title: String) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.90f))
-    ) {
-        SectionHeader(title)
-    }
+private fun LockedSectionHeader(title: String, active: Boolean) {
+    PremiumLockedHeader(title = title, active = active)
 }
 
 @Composable
@@ -297,7 +293,9 @@ private fun SearchResults(
     val showArtists = state.selectedTab in listOf(SearchTab.ALL, SearchTab.ARTISTS)
     val showPlaylists = state.selectedTab in listOf(SearchTab.ALL, SearchTab.PLAYLISTS)
 
-    LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
+    val listState = rememberLazyListState()
+    val lockActive by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 8 } }
+    LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 100.dp)) {
         item {
             ScrollableTabRow(selectedTabIndex = state.selectedTab.ordinal, edgePadding = 8.dp) {
                 SearchTab.values().forEach { tab ->
@@ -309,11 +307,11 @@ private fun SearchResults(
             item { TopResultCard(song = songsForTab.first(), onClick = { onSongClick(songsForTab.first(), songsForTab) }, onMore = { onMore(songsForTab.first()) }) }
         }
         if (showSongs && songsForTab.isNotEmpty()) {
-            stickyHeader { LockedSectionHeader(if (state.selectedTab == SearchTab.LOCAL) "Local Songs" else if (state.selectedTab == SearchTab.DOWNLOADS) "Downloads" else "Songs") }
+            stickyHeader { LockedSectionHeader(if (state.selectedTab == SearchTab.LOCAL) "Local Songs" else if (state.selectedTab == SearchTab.DOWNLOADS) "Downloads" else "Songs", lockActive) }
             items(songsForTab) { song -> SongListItem(song, { onSongClick(song, songsForTab) }, { onMore(song) }) }
         }
         if (showPlaylists && results.playlists.isNotEmpty()) {
-            stickyHeader { LockedSectionHeader("Playlists") }
+            stickyHeader { LockedSectionHeader("Playlists", lockActive) }
             items(results.playlists) { playlist ->
                 ListItem(
                     modifier = Modifier.clickable { onPlaylistClick(playlist.id) },
@@ -325,11 +323,11 @@ private fun SearchResults(
             }
         }
         if (showArtists && results.artists.isNotEmpty()) {
-            stickyHeader { LockedSectionHeader("Artists") }
+            stickyHeader { LockedSectionHeader("Artists", lockActive) }
             item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(results.artists) { artist -> ArtistCard(name = artist.name, imageUrl = artist.imageUrl, onClick = { onArtistClick(artist.id) }) } } }
         }
         if (showAlbums && results.albums.isNotEmpty()) {
-            stickyHeader { LockedSectionHeader("Albums") }
+            stickyHeader { LockedSectionHeader("Albums", lockActive) }
             item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(results.albums) { album -> AlbumCard(title = album.title, artist = album.artist, artworkUrl = album.artworkUrl, onClick = { onAlbumClick(album.id) }) } } }
         }
         if ((showSongs && songsForTab.isEmpty()) && (!showArtists || results.artists.isEmpty()) && (!showAlbums || results.albums.isEmpty()) && (!showPlaylists || results.playlists.isEmpty())) {

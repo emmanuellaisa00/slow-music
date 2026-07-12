@@ -82,7 +82,10 @@ fun LibraryScreen(
             )
         }
     ) { paddingValues ->
+        val listState = rememberLazyListState()
+        val lockActive by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 8 } }
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
@@ -108,7 +111,7 @@ fun LibraryScreen(
                     }
                 }
             }
-            stickyHeader { LockedLibrarySection(title = "Library") }
+            stickyHeader { LockedLibrarySection(title = "Library", active = lockActive) }
             
             item {
                 LibraryListItem(
@@ -160,7 +163,7 @@ fun LibraryScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
             stickyHeader {
-                LockedLibrarySection(title = "Playlists")
+                LockedLibrarySection(title = "Playlists", active = lockActive)
             }
             
             item {
@@ -195,7 +198,7 @@ fun LibraryScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
             stickyHeader {
-                LockedLibrarySection(title = "Artists")
+                LockedLibrarySection(title = "Artists", active = lockActive)
             }
             
             item {
@@ -212,7 +215,7 @@ fun LibraryScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
             stickyHeader {
-                LockedLibrarySection(title = "Albums")
+                LockedLibrarySection(title = "Albums", active = lockActive)
             }
             
             item {
@@ -228,14 +231,8 @@ fun LibraryScreen(
 }
 
 @Composable
-private fun LockedLibrarySection(title: String) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.90f))
-    ) {
-        LibrarySection(title = title)
-    }
+private fun LockedLibrarySection(title: String, active: Boolean) {
+    PremiumLockedHeader(title = title, active = active)
 }
 
 @Composable

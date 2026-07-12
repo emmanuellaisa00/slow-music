@@ -1,5 +1,6 @@
 package com.slowmusic.app.presentation.screens.home
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -106,6 +107,7 @@ fun HomeScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HomeContent(
     uiState: HomeUiState,
@@ -119,7 +121,10 @@ private fun HomeContent(
     onNavigateToNotifications: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val listState = rememberLazyListState()
+    val lockActive by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 8 } }
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 100.dp)
     ) {
@@ -190,10 +195,8 @@ private fun HomeContent(
         
         // Genres
         if (uiState.genres.isNotEmpty()) {
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                SectionHeader(title = "Browse by Genre")
-            }
+            item { Spacer(modifier = Modifier.height(18.dp)) }
+            stickyHeader { PremiumLockedHeader("Browse by Genre", active = lockActive) }
             
             item {
                 GenreRow(
@@ -205,13 +208,8 @@ private fun HomeContent(
         
         // Trending Songs
         if (uiState.trendingSongs.isNotEmpty()) {
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                SectionHeader(
-                    title = "Trending Now",
-                    onSeeAllClick = { onSeeAllClick("trending") }
-                )
-            }
+            item { Spacer(modifier = Modifier.height(18.dp)) }
+            stickyHeader { PremiumLockedHeader("Trending Now", active = lockActive, trailing = { TextButton(onClick = { onSeeAllClick("trending") }) { Text("See all") } }) }
             
             item {
                 SongRow(
@@ -224,13 +222,8 @@ private fun HomeContent(
         
         // Top Songs
         if (uiState.topSongs.isNotEmpty()) {
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                SectionHeader(
-                    title = "Top Hits",
-                    onSeeAllClick = { onSeeAllClick("top") }
-                )
-            }
+            item { Spacer(modifier = Modifier.height(18.dp)) }
+            stickyHeader { PremiumLockedHeader("Top Hits", active = lockActive, trailing = { TextButton(onClick = { onSeeAllClick("top") }) { Text("See all") } }) }
             
             item {
                 SongRow(
@@ -243,13 +236,8 @@ private fun HomeContent(
         
         // New Releases
         if (uiState.newReleases.isNotEmpty()) {
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                SectionHeader(
-                    title = "New Releases",
-                    onSeeAllClick = { onSeeAllClick("new") }
-                )
-            }
+            item { Spacer(modifier = Modifier.height(18.dp)) }
+            stickyHeader { PremiumLockedHeader("New Releases", active = lockActive, trailing = { TextButton(onClick = { onSeeAllClick("new") }) { Text("See all") } }) }
             
             item {
                 AlbumRow(
@@ -261,13 +249,8 @@ private fun HomeContent(
         
         // Recommended
         if (uiState.recommendations.isNotEmpty()) {
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                SectionHeader(
-                    title = "Recommended For You",
-                    onSeeAllClick = { onSeeAllClick("recommended") }
-                )
-            }
+            item { Spacer(modifier = Modifier.height(18.dp)) }
+            stickyHeader { PremiumLockedHeader("Recommended For You", active = lockActive, trailing = { TextButton(onClick = { onSeeAllClick("recommended") }) { Text("See all") } }) }
             
             item {
                 SongRow(

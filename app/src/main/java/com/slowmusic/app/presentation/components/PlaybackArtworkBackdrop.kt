@@ -1,7 +1,9 @@
 package com.slowmusic.app.presentation.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -63,8 +65,18 @@ fun PlaybackArtworkBackdrop(
     val visible = shouldShowPlaybackArtworkBackdrop(currentRoute, playbackState, song)
     val alpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 260),
+        animationSpec = spring(dampingRatio = 0.86f, stiffness = Spring.StiffnessMediumLow),
         label = "playback_artwork_backdrop_alpha"
+    )
+    val imageScale by animateFloatAsState(
+        targetValue = if (visible) 1.28f else 1.12f,
+        animationSpec = spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessLow),
+        label = "playback_artwork_backdrop_bloom"
+    )
+    val blurRadius by animateDpAsState(
+        targetValue = if (visible) if (appleStyle) 82.dp else 58.dp else 24.dp,
+        animationSpec = spring(dampingRatio = 0.86f, stiffness = Spring.StiffnessMediumLow),
+        label = "playback_artwork_blur_radius"
     )
     val dark = isSystemInDarkTheme() || appleStyle
     val base = if (appleStyle) Color.Transparent else MaterialTheme.colorScheme.background
@@ -77,8 +89,8 @@ fun PlaybackArtworkBackdrop(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer { this.alpha = alpha }
-                    .scale(1.26f)
-                    .blur(if (appleStyle) 82.dp else 58.dp),
+                    .scale(imageScale)
+                    .blur(blurRadius),
                 contentScale = ContentScale.Crop
             )
 
