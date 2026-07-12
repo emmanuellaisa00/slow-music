@@ -14,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -136,6 +138,7 @@ fun SlowMusicApp(
     onMiniPlayerClick: () -> Unit
 ) {
     val navController = rememberNavController()
+    val haptics = LocalHapticFeedback.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     var selectedIosRootRoute by remember { mutableStateOf(Screen.Home.route) }
@@ -158,6 +161,16 @@ fun SlowMusicApp(
         currentRoute.showsIosGlassMiniPlayer()
     } else {
         currentRoute != Screen.Player.route
+    }
+
+    fun navigateRootWithTap(route: String) {
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        navController.navigateRootTab(route)
+    }
+
+    fun openPlayerWithTap() {
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        navController.navigateModal(Screen.Player.route)
     }
 
     val showPlayingBackdrop = shouldShowPlaybackArtworkBackdrop(
@@ -191,7 +204,7 @@ fun SlowMusicApp(
                                         progress = progress,
                                         onPlayPause = onPlayPause,
                                         onNext = onNext,
-                                        onClick = { navController.navigateModal(Screen.Player.route) }
+                                        onClick = { openPlayerWithTap() }
                                     )
                                 } else if (useAppleMusicUi) {
                                     AppleMiniPlayer(
@@ -200,7 +213,7 @@ fun SlowMusicApp(
                                         progress = progress,
                                         onPlayPause = onPlayPause,
                                         onNext = onNext,
-                                        onClick = { navController.navigateModal(Screen.Player.route) },
+                                        onClick = { openPlayerWithTap() },
                                         onDismiss = { }
                                     )
                                 } else {
@@ -209,7 +222,7 @@ fun SlowMusicApp(
                                         isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
                                         onPlayPause = onPlayPause,
                                         onNext = onNext,
-                                        onClick = { navController.navigateModal(Screen.Player.route) },
+                                        onClick = { openPlayerWithTap() },
                                         progress = progress
                                     )
                                 }
@@ -219,7 +232,7 @@ fun SlowMusicApp(
                                     items = bottomNavItems,
                                     currentRoute = selectedIosRootRoute,
                                     onNavigate = { route ->
-                                        navController.navigateRootTab(route)
+                                        navigateRootWithTap(route)
                                     }
                                 )
                             } else {
@@ -239,7 +252,7 @@ fun SlowMusicApp(
                                             label = { Text(item.title) },
                                             selected = currentRoute == item.screen.route,
                                             onClick = {
-                                                navController.navigateRootTab(item.screen.route)
+                                                navigateRootWithTap(item.screen.route)
                                             }
                                         )
                                     }
@@ -256,7 +269,7 @@ fun SlowMusicApp(
                                     progress = progress,
                                     onPlayPause = onPlayPause,
                                     onNext = onNext,
-                                    onClick = { navController.navigateModal(Screen.Player.route) }
+                                    onClick = { openPlayerWithTap() }
                                 )
                             } else if (useAppleMusicUi) {
                                 AppleMiniPlayer(
@@ -265,7 +278,7 @@ fun SlowMusicApp(
                                     progress = progress,
                                     onPlayPause = onPlayPause,
                                     onNext = onNext,
-                                    onClick = { navController.navigateModal(Screen.Player.route) },
+                                    onClick = { openPlayerWithTap() },
                                     onDismiss = { }
                                 )
                             } else {
@@ -274,7 +287,7 @@ fun SlowMusicApp(
                                     isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
                                     onPlayPause = onPlayPause,
                                     onNext = onNext,
-                                    onClick = { navController.navigateModal(Screen.Player.route) }
+                                    onClick = { openPlayerWithTap() }
                                 )
                             }
                         }

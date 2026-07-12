@@ -15,6 +15,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.unit.dp
 import kotlin.math.abs
 
@@ -37,6 +39,7 @@ fun IosGestureNavigationLayer(
     content: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
+    val haptics = LocalHapticFeedback.current
     val edgeWidthPx = with(density) { 34.dp.toPx() }
     val topGrabPx = with(density) { 132.dp.toPx() }
     val thresholdPx = with(density) { 92.dp.toPx() }
@@ -44,6 +47,7 @@ fun IosGestureNavigationLayer(
     val maxVerticalPx = with(density) { 260.dp.toPx() }
 
     var dragMode by remember(currentRoute) { mutableStateOf<IosDragMode?>(null) }
+    var thresholdHapticFired by remember(currentRoute) { mutableStateOf(false) }
     var rawX by remember(currentRoute) { mutableStateOf(0f) }
     var rawY by remember(currentRoute) { mutableStateOf(0f) }
     val shownX by animateFloatAsState(
@@ -72,6 +76,7 @@ fun IosGestureNavigationLayer(
                     onDragStart = { start: Offset ->
                         rawX = 0f
                         rawY = 0f
+                        thresholdHapticFired = false
                         dragMode = when {
                             allowsPushSwipe && start.x <= edgeWidthPx -> IosDragMode.BackPush
                             allowsModalDismiss && start.y <= topGrabPx -> IosDragMode.DismissModal
@@ -84,12 +89,20 @@ fun IosGestureNavigationLayer(
                                 // Only claim rightward, mostly-horizontal drags.
                                 if (dragAmount.x > 0f && abs(dragAmount.x) >= abs(dragAmount.y) * 0.55f) {
                                     rawX = (rawX + dragAmount.x).coerceIn(0f, maxHorizontalPx)
+                                    if (!thresholdHapticFired && rawX >= thresholdPx) {
+                                        thresholdHapticFired = true
+                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    }
                                 }
                             }
                             IosDragMode.DismissModal -> {
                                 // Only claim downward, mostly-vertical drags.
                                 if (dragAmount.y > 0f && abs(dragAmount.y) >= abs(dragAmount.x) * 0.55f) {
                                     rawY = (rawY + dragAmount.y).coerceIn(0f, maxVerticalPx)
+                                    if (!thresholdHapticFired && rawY >= thresholdPx) {
+                                        thresholdHapticFired = true
+                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    }
                                 }
                             }
                             null -> Unit
@@ -97,6 +110,7 @@ fun IosGestureNavigationLayer(
                     },
                     onDragCancel = {
                         dragMode = null
+                        thresholdHapticFired = false
                         rawX = 0f
                         rawY = 0f
                     },
@@ -107,6 +121,7 @@ fun IosGestureNavigationLayer(
                             null -> false
                         }
                         dragMode = null
+                        thresholdHapticFired = false
                         rawX = 0f
                         rawY = 0f
                         if (shouldNavigateBack) onNavigateBack()

@@ -9,10 +9,14 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -67,6 +71,11 @@ fun NavigationGraph(
     onSaveQueueAsPlaylist: () -> Unit,
     onClearQueue: () -> Unit
 ) {
+    val haptics = LocalHapticFeedback.current
+    val iosPushSpring = spring<androidx.compose.ui.unit.IntOffset>(
+        dampingRatio = 0.86f,
+        stiffness = Spring.StiffnessMediumLow
+    )
 
     fun sameSong(a: Song?, b: Song): Boolean {
         if (a == null) return false
@@ -76,6 +85,7 @@ fun NavigationGraph(
     }
 
     fun selectSong(song: Song, queue: List<Song>) {
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         if (sameSong(currentSong, song)) {
             navController.navigateModal(Screen.Player.route)
         } else {
@@ -83,9 +93,18 @@ fun NavigationGraph(
         }
     }
 
-    fun openRoot(route: String) = navController.navigateRootTab(route)
-    fun openPush(route: String) = navController.navigatePush(route)
-    fun openModal(route: String) = navController.navigateModal(route)
+    fun openRoot(route: String) {
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        navController.navigateRootTab(route)
+    }
+    fun openPush(route: String) {
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        navController.navigatePush(route)
+    }
+    fun openModal(route: String) {
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        navController.navigateModal(route)
+    }
 
     fun smartSearchQueue(seed: Song, candidates: List<Song>): List<Song> {
         val seedArtist = seed.artist.lowercase().trim()
@@ -127,9 +146,9 @@ fun NavigationGraph(
             val target = targetState.destination.route
             val initial = initialState.destination.route
             when {
-                target.isModalRoute() -> slideInVertically(animationSpec = tween(260)) { it } + fadeIn(tween(180))
+                target.isModalRoute() -> slideInVertically(animationSpec = iosPushSpring) { it } + fadeIn(tween(180))
                 initial.isRootTabRoute() && target.isRootTabRoute() -> fadeIn(tween(180))
-                else -> slideInHorizontally(animationSpec = tween(240)) { it / 3 } + fadeIn(tween(160))
+                else -> slideInHorizontally(animationSpec = iosPushSpring) { it / 3 } + fadeIn(tween(160))
             }
         },
         exitTransition = {
@@ -138,21 +157,21 @@ fun NavigationGraph(
             when {
                 target.isModalRoute() -> fadeOut(tween(120))
                 initial.isRootTabRoute() && target.isRootTabRoute() -> fadeOut(tween(120))
-                else -> slideOutHorizontally(animationSpec = tween(220)) { -it / 5 } + fadeOut(tween(120))
+                else -> slideOutHorizontally(animationSpec = iosPushSpring) { -it / 5 } + fadeOut(tween(120))
             }
         },
         popEnterTransition = {
             val initial = initialState.destination.route
             when {
                 initial.isModalRoute() -> fadeIn(tween(160))
-                else -> slideInHorizontally(animationSpec = tween(220)) { -it / 3 } + fadeIn(tween(140))
+                else -> slideInHorizontally(animationSpec = iosPushSpring) { -it / 3 } + fadeIn(tween(140))
             }
         },
         popExitTransition = {
             val initial = initialState.destination.route
             when {
-                initial.isModalRoute() -> slideOutVertically(animationSpec = tween(240)) { it } + fadeOut(tween(140))
-                else -> slideOutHorizontally(animationSpec = tween(220)) { it / 3 } + fadeOut(tween(120))
+                initial.isModalRoute() -> slideOutVertically(animationSpec = iosPushSpring) { it } + fadeOut(tween(140))
+                else -> slideOutHorizontally(animationSpec = iosPushSpring) { it / 3 } + fadeOut(tween(120))
             }
         }
     ) {
