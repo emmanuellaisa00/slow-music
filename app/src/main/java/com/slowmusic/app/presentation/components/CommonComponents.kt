@@ -39,7 +39,7 @@ fun MiniPlayer(
             .clip(RoundedCornerShape(18.dp))
             .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(18.dp))
             .clickable(onClick = onClick),
-        color = PlayerBackground.copy(alpha = 0.90f),
+        color = PlayerBackground.copy(alpha = 0.96f),
         tonalElevation = 2.dp,
         shape = RoundedCornerShape(18.dp)
     ) {
@@ -129,7 +129,7 @@ fun SongCard(
             .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f), RoundedCornerShape(22.dp))
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.54f)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         shape = RoundedCornerShape(22.dp)
@@ -191,7 +191,7 @@ fun SongListItem(
         modifier = modifier
             .padding(horizontal = 12.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.36f))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f))
             .clickable(onClick = onClick),
         headlineContent = {
             Text(
@@ -364,7 +364,7 @@ fun GenreChip(
         modifier = modifier
             .padding(horizontal = 12.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.36f))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f))
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceVariant

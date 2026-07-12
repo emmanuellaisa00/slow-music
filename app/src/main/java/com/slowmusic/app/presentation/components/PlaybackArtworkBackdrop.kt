@@ -69,12 +69,12 @@ fun PlaybackArtworkBackdrop(
         label = "playback_artwork_backdrop_alpha"
     )
     val imageScale by animateFloatAsState(
-        targetValue = if (visible) 1.28f else 1.12f,
+        targetValue = if (visible) 1.34f else 1.14f,
         animationSpec = spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessLow),
         label = "playback_artwork_backdrop_bloom"
     )
     val blurRadius by animateDpAsState(
-        targetValue = if (visible) if (appleStyle) 82.dp else 58.dp else 24.dp,
+        targetValue = if (visible) if (appleStyle) 96.dp else 76.dp else 30.dp,
         animationSpec = spring(dampingRatio = 0.86f, stiffness = Spring.StiffnessMediumLow),
         label = "playback_artwork_blur_radius"
     )
@@ -104,16 +104,33 @@ fun PlaybackArtworkBackdrop(
                         Brush.verticalGradient(
                             colors = if (dark) {
                                 listOf(
-                                    Color.Black.copy(alpha = 0.50f),
                                     Color.Black.copy(alpha = 0.66f),
-                                    Color.Black.copy(alpha = 0.82f)
+                                    Color.Black.copy(alpha = 0.78f),
+                                    Color.Black.copy(alpha = 0.90f)
                                 )
                             } else {
                                 listOf(
-                                    Color.White.copy(alpha = 0.46f),
-                                    Color.White.copy(alpha = 0.58f),
-                                    Color.White.copy(alpha = 0.72f)
+                                    Color.White.copy(alpha = 0.72f),
+                                    Color.White.copy(alpha = 0.82f),
+                                    Color.White.copy(alpha = 0.92f)
                                 )
+                            }
+                        )
+                    )
+            )
+
+            // Content veil: keeps text, rows, and headers readable so the artwork
+            // feels like atmosphere rather than noisy wallpaper.
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { this.alpha = alpha }
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = if (dark) {
+                                listOf(Color.Black.copy(alpha = 0.22f), Color.Transparent, Color.Black.copy(alpha = 0.22f))
+                            } else {
+                                listOf(Color.White.copy(alpha = 0.20f), Color.Transparent, Color.White.copy(alpha = 0.20f))
                             }
                         )
                     )
@@ -129,9 +146,9 @@ fun PlaybackArtworkBackdrop(
                         Brush.radialGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                if (dark) Color.Black.copy(alpha = 0.30f) else Color.White.copy(alpha = 0.24f)
+                                if (dark) Color.Black.copy(alpha = 0.44f) else Color.White.copy(alpha = 0.34f)
                             ),
-                            radius = 980f
+                            radius = 860f
                         )
                     )
             )

@@ -29,7 +29,7 @@ fun PremiumLockedHeader(
     trailing: (@Composable () -> Unit)? = null
 ) {
     val containerAlpha by animateFloatAsState(
-        targetValue = if (active) 0.92f else 0.0f,
+        targetValue = if (active) 0.98f else 0.0f,
         animationSpec = spring(dampingRatio = 0.82f, stiffness = 520f),
         label = "locked_header_container_alpha"
     )
@@ -38,9 +38,9 @@ fun PremiumLockedHeader(
         animationSpec = spring(dampingRatio = 0.86f, stiffness = 600f),
         label = "locked_header_elevation"
     )
-    val bg = if (dark) Color(0xFF101010) else MaterialTheme.colorScheme.background
+    val bg = if (dark) Color(0xFF101010) else MaterialTheme.colorScheme.surface
     val fg = if (dark) Color.White else MaterialTheme.colorScheme.onBackground
-    val border = if (dark) Color.White.copy(alpha = 0.10f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.14f)
+    val border = if (dark) Color.White.copy(alpha = 0.10f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.20f)
 
     Box(
         modifier = modifier
