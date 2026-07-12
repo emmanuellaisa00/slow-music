@@ -13,6 +13,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -393,27 +394,29 @@ fun NavigationGraph(
                     onNavigateBack = { navController.popBackStack() }
                 )
             } else {
-                AppleMusicPlayerScreen(
-                    song = song,
-                    isPlaying = playbackState == PlaybackState.PLAYING,
-                    progress = progress,
-                    repeatMode = repeatMode,
-                    isShuffled = isShuffled,
-                    isFavorite = false,
-                    onPlayPause = onPlayPause,
-                    onNext = onNext,
-                    onPrevious = onPrevious,
-                    onSeek = onSeek,
-                    onToggleFavorite = onToggleFavorite,
-                    onToggleShuffle = onToggleShuffle,
-                    onToggleRepeat = onToggleRepeat,
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToLyrics = { openModal(Screen.Lyrics.route) },
-                    onNavigateToQueue = { openModal(Screen.Queue.route) },
-                    onNavigateToCast = { openModal(Screen.CastDevices.route) },
-                    onMoreOptions = { openModal(Screen.AddToPlaylist.createRoute(song)) },
-                    onShare = { }
-                )
+                key(song.id) {
+                    AppleMusicPlayerScreen(
+                        song = song,
+                        isPlaying = playbackState == PlaybackState.PLAYING,
+                        progress = progress,
+                        repeatMode = repeatMode,
+                        isShuffled = isShuffled,
+                        isFavorite = false,
+                        onPlayPause = onPlayPause,
+                        onNext = onNext,
+                        onPrevious = onPrevious,
+                        onSeek = onSeek,
+                        onToggleFavorite = onToggleFavorite,
+                        onToggleShuffle = onToggleShuffle,
+                        onToggleRepeat = onToggleRepeat,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToLyrics = { openModal(Screen.Lyrics.route) },
+                        onNavigateToQueue = { openModal(Screen.Queue.route) },
+                        onNavigateToCast = { openModal(Screen.CastDevices.route) },
+                        onMoreOptions = { openModal(Screen.AddToPlaylist.createRoute(song)) },
+                        onShare = { }
+                    )
+                }
             }
         }
 
@@ -491,23 +494,27 @@ fun NavigationGraph(
         composable(Screen.Lyrics.route) {
             currentSong?.let { song ->
                 if (useIosGlass) {
-                    IosGlassLyricsScreen(
-                        song = song,
-                        lyrics = lyrics,
-                        progress = progress,
-                        onSeekToProgress = onSeek,
-                        onNavigateBack = { navController.popBackStack() }
-                    )
+                    key(song.id) {
+                        IosGlassLyricsScreen(
+                            song = song,
+                            lyrics = lyrics,
+                            progress = progress,
+                            onSeekToProgress = onSeek,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
                 } else {
-                    LyricsScreen(
-                        song = song,
-                        lyrics = lyrics,
-                        progress = progress,
-                        isSynced = lyrics?.contains("[") == true,
-                        onNavigateBack = { navController.popBackStack() },
-                        onToggleSynced = { },
-                        onSeekToProgress = onSeek
-                    )
+                    key(song.id) {
+                        LyricsScreen(
+                            song = song,
+                            lyrics = lyrics,
+                            progress = progress,
+                            isSynced = lyrics?.contains("[") == true,
+                            onNavigateBack = { navController.popBackStack() },
+                            onToggleSynced = { },
+                            onSeekToProgress = onSeek
+                        )
+                    }
                 }
             } ?: LegalTextScreen(
                 title = "Lyrics",

@@ -86,6 +86,7 @@ class MainViewModel @Inject constructor(
     private var mediaController: MediaController? = null
     private var progressJob: Job? = null
     private var playRequestId: Long = 0L
+    private var lyricsRequestId: Long = 0L
 
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -571,8 +572,13 @@ class MainViewModel @Inject constructor(
     }
 
     private fun loadLyrics(song: Song) {
+        val requestId = ++lyricsRequestId
+        _lyrics.value = null
         viewModelScope.launch {
-            _lyrics.value = runCatching { lyricsRepository.getLyrics(song)?.text }.getOrNull()
+            val text = runCatching { lyricsRepository.getLyrics(song)?.text }.getOrNull()
+            if (requestId == lyricsRequestId && _currentSong.value?.id == song.id) {
+                _lyrics.value = text
+            }
         }
     }
 

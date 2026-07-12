@@ -7,6 +7,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,6 +26,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -128,7 +130,8 @@ fun LyricsScreen(
     onSeekToProgress: (Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var manualLine by remember { mutableStateOf<Int?>(null) }
+    var manualLine by remember(song.id) { mutableStateOf<Int?>(null) }
+    LaunchedEffect(song.id) { manualLine = null }
 
     Box(modifier = modifier.fillMaxSize().background(AppleColors.background)) {
         AsyncImage(
@@ -148,35 +151,39 @@ fun LyricsScreen(
                 onBackClick = onNavigateBack
             )
 
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 8.dp)
                     .clip(RoundedCornerShape(26.dp))
                     .background(Color.White.copy(alpha = 0.10f))
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(12.dp)
             ) {
-                AsyncImage(
-                    model = song.albumArtUrl,
-                    contentDescription = null,
-                    modifier = Modifier.size(58.dp).clip(RoundedCornerShape(18.dp)),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(song.title, color = AppleColors.textPrimary, style = AppleTypography.headline, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(song.artist, color = AppleColors.textSecondary, style = AppleTypography.subheadline, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AsyncImage(
+                        model = song.albumArtUrl,
+                        contentDescription = null,
+                        modifier = Modifier.size(58.dp).clip(RoundedCornerShape(18.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(song.title, color = AppleColors.textPrimary, style = AppleTypography.headline, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(song.artist, color = AppleColors.textSecondary, style = AppleTypography.subheadline, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
                 }
+                Spacer(Modifier.height(12.dp))
+                LyricsProgressBar(value = progress, onSeek = onSeekToProgress)
             }
 
             Box(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
                 if (lyrics != null) {
-                    val parsed = remember(lyrics) { parseLrcLines(lyrics) }
+                    val parsed = remember(song.id, lyrics) { parseLrcLines(lyrics) }
                     val lines = parsed.map { it.second }
                     val currentLine = manualLine ?: currentLyricIndex(parsed, lines.size, song.duration, progress)
                     val listState = rememberLazyListState()
-                    LaunchedEffect(currentLine) {
+                    LaunchedEffect(song.id) { listState.scrollToItem(0) }
+                    LaunchedEffect(song.id, currentLine) {
                         if (currentLine >= 0) listState.animateScrollToItem(currentLine)
                     }
                     LazyColumn(
@@ -217,6 +224,37 @@ fun LyricsScreen(
                 }
             }
         }
+    }
+}
+
+
+@Composable
+private fun LyricsProgressBar(value: Float, onSeek: (Float) -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(18.dp)
+            .pointerInput(Unit) {
+                detectTapGestures { offset ->
+                    onSeek((offset.x / size.width.toFloat()).coerceIn(0f, 1f))
+                }
+            },
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(5.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Color.White.copy(alpha = 0.18f))
+        )
+        Box(
+            Modifier
+                .fillMaxWidth(value.coerceIn(0f, 1f))
+                .height(5.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Brush.horizontalGradient(listOf(AppleColors.primary, Color.White.copy(alpha = 0.88f))))
+        )
     }
 }
 

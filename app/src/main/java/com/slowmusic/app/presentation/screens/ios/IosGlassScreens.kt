@@ -3,6 +3,7 @@ package com.slowmusic.app.presentation.screens.ios
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -21,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -385,9 +387,13 @@ fun IosGlassLyricsScreen(
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = .22f), Void.copy(alpha = .88f), Void))))
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 20.dp, start = 28.dp, end = 28.dp, bottom = 100.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Column { Text("LYRICS", color = Muted, style = MaterialTheme.typography.labelSmall); Text(song.title, color = Text, fontWeight = FontWeight.Bold) }
-                    GlassIcon(Icons.Filled.Close, onNavigateBack)
+                Column(Modifier.fillMaxWidth()) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column { Text("LYRICS", color = Muted, style = MaterialTheme.typography.labelSmall); Text(song.title, color = Text, fontWeight = FontWeight.Bold) }
+                        GlassIcon(Icons.Filled.Close, onNavigateBack)
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    IosGlassLyricsProgress(value = progress, onSeek = onSeekToProgress)
                 }
             }
             val rawLines = lyrics?.lines()?.filter { it.isNotBlank() }.orEmpty().ifEmpty { listOf("Lyrics are not available yet", "When lyrics are found they will appear here") }
@@ -403,6 +409,23 @@ fun IosGlassLyricsScreen(
                 )
             }
         }
+    }
+}
+
+
+@Composable
+private fun IosGlassLyricsProgress(value: Float, onSeek: (Float) -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(18.dp)
+            .pointerInput(Unit) {
+                detectTapGestures { offset -> onSeek((offset.x / size.width.toFloat()).coerceIn(0f, 1f)) }
+            },
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = .14f)))
+        Box(Modifier.fillMaxWidth(value.coerceIn(0f, 1f)).height(4.dp).clip(RoundedCornerShape(50)).background(Brush.horizontalGradient(listOf(Violet, Ember))))
     }
 }
 

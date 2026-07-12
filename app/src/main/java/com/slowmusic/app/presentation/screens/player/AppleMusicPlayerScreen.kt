@@ -60,9 +60,14 @@ fun AppleMusicPlayerScreen(
     onShare: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var swipeDownDistance by remember { mutableFloatStateOf(0f) }
-    var artworkZoom by remember { mutableFloatStateOf(1f) }
-    var lyricsOpening by remember { mutableStateOf(false) }
+    var swipeDownDistance by remember(song.id) { mutableFloatStateOf(0f) }
+    var artworkZoom by remember(song.id) { mutableFloatStateOf(1f) }
+    var lyricsOpening by remember(song.id) { mutableStateOf(false) }
+    LaunchedEffect(song.id) {
+        swipeDownDistance = 0f
+        artworkZoom = 1f
+        lyricsOpening = false
+    }
     val scope = rememberCoroutineScope()
     val artworkLiftScale by animateFloatAsState(
         targetValue = if (lyricsOpening) 0.92f else 1f,
