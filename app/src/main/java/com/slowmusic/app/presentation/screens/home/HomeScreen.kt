@@ -133,21 +133,21 @@ private fun HomeContent(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f)),
                 shape = RoundedCornerShape(28.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 132.dp)
+                        .heightIn(min = 104.dp)
                         .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.28f), Color.Transparent)))
-                        .padding(20.dp)
+                        .padding(16.dp)
                 ) {
                     Column(
                         modifier = Modifier
                             .align(Alignment.CenterStart)
-                            .padding(end = 108.dp)
+                            .padding(end = 104.dp)
                     ) {
                         Text("Slow Music", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(4.dp))
@@ -195,7 +195,7 @@ private fun HomeContent(
         
         // Genres
         if (uiState.genres.isNotEmpty()) {
-            item { Spacer(modifier = Modifier.height(18.dp)) }
+            item { Spacer(modifier = Modifier.height(12.dp)) }
             stickyHeader { PremiumLockedHeader("Browse by Genre", active = lockActive) }
             
             item {
@@ -208,7 +208,7 @@ private fun HomeContent(
         
         // Trending Songs
         if (uiState.trendingSongs.isNotEmpty()) {
-            item { Spacer(modifier = Modifier.height(18.dp)) }
+            item { Spacer(modifier = Modifier.height(12.dp)) }
             stickyHeader { PremiumLockedHeader("Trending Now", active = lockActive, trailing = { TextButton(onClick = { onSeeAllClick("trending") }) { Text("See all") } }) }
             
             item {
@@ -222,7 +222,7 @@ private fun HomeContent(
         
         // Top Songs
         if (uiState.topSongs.isNotEmpty()) {
-            item { Spacer(modifier = Modifier.height(18.dp)) }
+            item { Spacer(modifier = Modifier.height(12.dp)) }
             stickyHeader { PremiumLockedHeader("Top Hits", active = lockActive, trailing = { TextButton(onClick = { onSeeAllClick("top") }) { Text("See all") } }) }
             
             item {
@@ -236,7 +236,7 @@ private fun HomeContent(
         
         // New Releases
         if (uiState.newReleases.isNotEmpty()) {
-            item { Spacer(modifier = Modifier.height(18.dp)) }
+            item { Spacer(modifier = Modifier.height(12.dp)) }
             stickyHeader { PremiumLockedHeader("New Releases", active = lockActive, trailing = { TextButton(onClick = { onSeeAllClick("new") }) { Text("See all") } }) }
             
             item {
@@ -249,7 +249,7 @@ private fun HomeContent(
         
         // Recommended
         if (uiState.recommendations.isNotEmpty()) {
-            item { Spacer(modifier = Modifier.height(18.dp)) }
+            item { Spacer(modifier = Modifier.height(12.dp)) }
             stickyHeader { PremiumLockedHeader("Recommended For You", active = lockActive, trailing = { TextButton(onClick = { onSeeAllClick("recommended") }) { Text("See all") } }) }
             
             item {

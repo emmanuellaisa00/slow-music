@@ -146,37 +146,25 @@ fun LyricsScreen(
                 .background(Brush.verticalGradient(listOf(Color.Black.copy(0.25f), AppleColors.background.copy(0.86f), AppleColors.background)))
         )
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            AppleNavigationBar(
-                title = "Lyrics",
-                onBackClick = onNavigateBack
-            )
-
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
-                    .clip(RoundedCornerShape(26.dp))
-                    .background(Color.White.copy(alpha = 0.10f))
-                    .padding(12.dp)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    AsyncImage(
-                        model = song.albumArtUrl,
-                        contentDescription = null,
-                        modifier = Modifier.size(58.dp).clip(RoundedCornerShape(18.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(song.title, color = AppleColors.textPrimary, style = AppleTypography.headline, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(song.artist, color = AppleColors.textSecondary, style = AppleTypography.subheadline, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
+                IconButton(onClick = onNavigateBack, modifier = Modifier.size(44.dp)) {
+                    Icon(Icons.Filled.ArrowBack, "Back", tint = AppleColors.textPrimary)
                 }
-                Spacer(Modifier.height(12.dp))
-                LyricsProgressBar(value = progress, onSeek = onSeekToProgress)
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(song.title, color = AppleColors.textPrimary, style = AppleTypography.headline, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(song.artist, color = AppleColors.textSecondary, style = AppleTypography.subheadline, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Spacer(Modifier.height(8.dp))
+                    LyricsProgressBar(value = progress, onSeek = onSeekToProgress)
+                }
             }
 
-            Box(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
+            Box(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
                 if (lyrics != null) {
                     val parsed = remember(song.id, lyrics) { parseLrcLines(lyrics) }
                     val lines = parsed.map { it.second }
@@ -189,8 +177,8 @@ fun LyricsScreen(
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(vertical = 32.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(top = 12.dp, bottom = 96.dp)
                     ) {
                         itemsIndexed(lines) { index, line ->
                             val active = index == currentLine

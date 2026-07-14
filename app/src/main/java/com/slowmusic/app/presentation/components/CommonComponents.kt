@@ -126,17 +126,17 @@ fun SongCard(
 ) {
     Card(
         modifier = modifier
-            .width(172.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f), RoundedCornerShape(22.dp))
+            .width(160.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f), RoundedCornerShape(18.dp))
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = RoundedCornerShape(22.dp)
+        shape = RoundedCornerShape(18.dp)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(10.dp)) {
             Box {
                 AsyncImage(
                     model = song.albumArtUrl,
@@ -144,7 +144,7 @@ fun SongCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f)
-                        .clip(RoundedCornerShape(18.dp)),
+                        .clip(RoundedCornerShape(14.dp)),
                     contentScale = ContentScale.Crop
                 )
                 Box(
@@ -164,7 +164,7 @@ fun SongCard(
                     }
                 }
             }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
             Text(song.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(2.dp))
             Text(song.artist, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -172,7 +172,7 @@ fun SongCard(
                 AssistChip(
                     onClick = {},
                     label = { Text(if (song.isDownloaded) "Offline" else if (song.isLocal) "Local" else "Stream") },
-                    modifier = Modifier.height(30.dp)
+                    modifier = Modifier.height(28.dp)
                 )
                 IconButton(onClick = onMoreClick, modifier = Modifier.size(36.dp)) { Icon(Icons.Filled.MoreHoriz, contentDescription = "More", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
@@ -191,8 +191,8 @@ fun SongListItem(
 ) {
     ListItem(
         modifier = modifier
-            .padding(horizontal = 16.dp, vertical = 5.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f))
             .clickable(onClick = onClick),
         headlineContent = {
@@ -220,8 +220,8 @@ fun SongListItem(
                 model = song.albumArtUrl,
                 contentDescription = "Album art",
                 modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(16.dp)),
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(14.dp)),
                 contentScale = ContentScale.Crop
             )
         },
@@ -364,8 +364,8 @@ fun GenreChip(
 ) {
     Surface(
         modifier = modifier
-            .padding(horizontal = 16.dp, vertical = 5.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f))
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),

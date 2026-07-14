@@ -96,7 +96,7 @@ fun AppleMusicPlayerScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF082737))
+            .background(Color.Black)
             .pointerInput(song.id) {
                 detectVerticalDragGestures(
                     onVerticalDrag = { _, dragAmount -> if (dragAmount > 0) swipeDownDistance += dragAmount },
@@ -123,9 +123,9 @@ fun AppleMusicPlayerScreen(
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color(0xCC082737),
-                            Color(0xEE062231),
-                            Color(0xFF061D2A)
+                            Color.Black.copy(alpha = 0.52f),
+                            Color.Black.copy(alpha = 0.70f),
+                            Color.Black.copy(alpha = 0.92f)
                         )
                     )
                 )
@@ -173,7 +173,7 @@ fun AppleMusicPlayerScreen(
                 contentScale = ContentScale.Crop
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(18.dp))
 
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -186,9 +186,9 @@ fun AppleMusicPlayerScreen(
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(16.dp))
             IOSProgressBar(value = progress, onSeek = onSeek)
-            Spacer(Modifier.height(26.dp))
+            Spacer(Modifier.height(22.dp))
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(34.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onPrevious, modifier = Modifier.size(58.dp)) { Icon(Icons.Filled.SkipPrevious, "Previous", tint = Color.White, modifier = Modifier.size(38.dp)) }
@@ -206,7 +206,7 @@ fun AppleMusicPlayerScreen(
                 IconButton(onClick = onNext, modifier = Modifier.size(58.dp)) { Icon(Icons.Filled.SkipNext, "Next", tint = Color.White, modifier = Modifier.size(38.dp)) }
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(16.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onNavigateToQueue) { Icon(Icons.Filled.QueueMusic, "Queue", tint = Color.White.copy(alpha = 0.86f)) }
                 IconButton(onClick = { openLyricsWithTransition() }) { Icon(Icons.Filled.Lyrics, "Lyrics", tint = Color.White.copy(alpha = 0.86f)) }

@@ -93,18 +93,18 @@ fun LibraryScreen(
         ) {
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.68f))
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.22f), Color.Transparent)))
-                            .padding(18.dp)
+                            .padding(14.dp)
                     ) {
                         Column {
-                            Text("Your Library", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            Text("Your Library", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.height(4.dp))
                             Text("${favorites.size} favorites • ${downloadedSongs.size} downloads • ${playlists.size} playlists", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
@@ -160,7 +160,7 @@ fun LibraryScreen(
             
             // Playlists Section
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
             }
             stickyHeader {
                 LockedLibrarySection(title = "Playlists", active = lockActive)
@@ -195,7 +195,7 @@ fun LibraryScreen(
             
             // Artists Section
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
             }
             stickyHeader {
                 LockedLibrarySection(title = "Artists", active = lockActive)
@@ -212,7 +212,7 @@ fun LibraryScreen(
             
             // Albums Section
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
             }
             stickyHeader {
                 LockedLibrarySection(title = "Albums", active = lockActive)

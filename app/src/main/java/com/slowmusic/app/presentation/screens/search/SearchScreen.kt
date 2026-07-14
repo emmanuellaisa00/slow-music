@@ -143,8 +143,8 @@ fun SearchScreen(
         Column(Modifier.fillMaxSize().padding(paddingValues)) {
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 item { AssistChip(onClick = { viewModel.selectTab(SearchTab.ALL) }, label = { Text("All") }) }
@@ -195,7 +195,7 @@ private fun BrowseContent(
 ) {
     val listState = rememberLazyListState()
     val lockActive by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 8 } }
-    LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 100.dp)) {
+    LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 92.dp)) {
         if (suggestions.isNotEmpty()) {
             stickyHeader { LockedSectionHeader("Suggestions", lockActive) }
             items(suggestions) { suggestion -> SearchTextRow(Icons.Filled.Lightbulb, suggestion) { onHistoryItemClick(suggestion) } }
@@ -220,7 +220,7 @@ private fun BrowseContent(
         }
         stickyHeader { LockedSectionHeader("Browse All", lockActive) }
         item {
-            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 items(genres) { genre -> GenreChip(name = genre.name, onClick = { onGenreClick(genre.id) }) }
             }
         }
@@ -295,7 +295,7 @@ private fun SearchResults(
 
     val listState = rememberLazyListState()
     val lockActive by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 8 } }
-    LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 100.dp)) {
+    LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 92.dp)) {
         item {
             ScrollableTabRow(selectedTabIndex = state.selectedTab.ordinal, edgePadding = 8.dp) {
                 SearchTab.values().forEach { tab ->
