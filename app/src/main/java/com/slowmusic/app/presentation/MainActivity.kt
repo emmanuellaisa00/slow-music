@@ -72,6 +72,7 @@ class MainActivity : ComponentActivity() {
                     navigationStyle = navigationStyle,
                     useAppleMusicUi = useAppleMusicUi,
                     useIosGlass = useIosGlass,
+                    enableCoverArtBlur = userPreferences.enableCoverArtBlur,
                     playbackState = playbackState,
                     currentSong = currentSong,
                     queue = queue,
@@ -113,6 +114,7 @@ fun SlowMusicApp(
     navigationStyle: com.slowmusic.app.domain.model.NavigationStyle,
     useAppleMusicUi: Boolean,
     useIosGlass: Boolean,
+    enableCoverArtBlur: Boolean,
     playbackState: com.slowmusic.app.domain.model.PlaybackState,
     currentSong: com.slowmusic.app.domain.model.Song?,
     queue: List<com.slowmusic.app.domain.model.Song>,
@@ -177,7 +179,7 @@ fun SlowMusicApp(
         currentRoute = currentRoute,
         playbackState = playbackState,
         song = currentSong,
-        enabled = userPreferences.enableCoverArtBlur
+        enabled = enableCoverArtBlur
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -187,7 +189,7 @@ fun SlowMusicApp(
             playbackState = playbackState,
             currentRoute = currentRoute,
             appleStyle = useAppleMusicUi,
-            enabled = userPreferences.enableCoverArtBlur
+            enabled = enableCoverArtBlur
         )
         Scaffold(
             modifier = Modifier.fillMaxSize(),
