@@ -129,6 +129,20 @@ fun SettingsScreen(
                 )
             }
 
+            item {
+                SettingsItem(
+                    icon = Icons.Filled.BlurOn,
+                    title = "Cover Art Background",
+                    subtitle = if (preferences.enableCoverArtBlur) "Blurred artwork behind screens" else "Use the normal app background",
+                    trailing = {
+                        Switch(
+                            checked = preferences.enableCoverArtBlur,
+                            onCheckedChange = { viewModel.updateCoverArtBlur(it) }
+                        )
+                    }
+                )
+            }
+
             // Playback
             item {
                 Spacer(modifier = Modifier.height(16.dp))

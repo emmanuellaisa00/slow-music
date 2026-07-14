@@ -176,7 +176,8 @@ fun SlowMusicApp(
     val showPlayingBackdrop = shouldShowPlaybackArtworkBackdrop(
         currentRoute = currentRoute,
         playbackState = playbackState,
-        song = currentSong
+        song = currentSong,
+        enabled = userPreferences.enableCoverArtBlur
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -185,7 +186,8 @@ fun SlowMusicApp(
             song = currentSong,
             playbackState = playbackState,
             currentRoute = currentRoute,
-            appleStyle = useAppleMusicUi
+            appleStyle = useAppleMusicUi,
+            enabled = userPreferences.enableCoverArtBlur
         )
         Scaffold(
             modifier = Modifier.fillMaxSize(),

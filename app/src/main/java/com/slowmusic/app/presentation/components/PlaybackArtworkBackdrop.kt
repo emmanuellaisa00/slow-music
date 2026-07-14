@@ -38,9 +38,11 @@ import com.slowmusic.app.presentation.navigation.Screen
 fun shouldShowPlaybackArtworkBackdrop(
     currentRoute: String?,
     playbackState: PlaybackState,
-    song: Song?
+    song: Song?,
+    enabled: Boolean = true
 ): Boolean {
-    return playbackState != PlaybackState.IDLE &&
+    return enabled &&
+        playbackState != PlaybackState.IDLE &&
         playbackState != PlaybackState.ERROR &&
         song?.albumArtUrl?.isNotBlank() == true &&
         currentRoute.allowsPlaybackArtworkBackdrop()
@@ -59,9 +61,10 @@ fun PlaybackArtworkBackdrop(
     playbackState: PlaybackState,
     currentRoute: String?,
     appleStyle: Boolean,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    val visible = shouldShowPlaybackArtworkBackdrop(currentRoute, playbackState, song)
+    val visible = shouldShowPlaybackArtworkBackdrop(currentRoute, playbackState, song, enabled)
     val alpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
         animationSpec = tween(durationMillis = 450),

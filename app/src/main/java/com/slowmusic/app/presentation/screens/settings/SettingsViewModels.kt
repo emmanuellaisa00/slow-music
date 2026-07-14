@@ -58,6 +58,15 @@ class SettingsViewModel @Inject constructor(
             )
         }
     }
+
+    fun updateCoverArtBlur(enabled: Boolean) {
+        viewModelScope.launch {
+            val current = preferences.value
+            preferencesRepository.updateUserPreferences(
+                current.copy(enableCoverArtBlur = enabled)
+            )
+        }
+    }
     
     fun updateCrossfadeEnabled(enabled: Boolean) {
         viewModelScope.launch {
