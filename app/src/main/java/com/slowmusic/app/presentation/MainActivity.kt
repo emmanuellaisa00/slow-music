@@ -249,8 +249,15 @@ fun SlowMusicApp(
                                     bottomNavItems.forEach { item ->
                                         NavigationBarItem(
                                             icon = { Icon(if (currentRoute == item.screen.route) item.selectedIcon else item.unselectedIcon, contentDescription = item.title) },
-                                            label = { Text(item.title) },
+                                            label = { Text(item.title, style = MaterialTheme.typography.labelSmall) },
                                             selected = currentRoute == item.screen.route,
+                                            colors = NavigationBarItemDefaults.colors(
+                                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                            ),
                                             onClick = {
                                                 navigateRootWithTap(item.screen.route)
                                             }

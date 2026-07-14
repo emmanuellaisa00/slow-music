@@ -85,8 +85,8 @@ fun SearchScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.92f),
-                    scrolledContainerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.98f)
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
                 ),
                 title = {
                     Row(
@@ -94,20 +94,20 @@ fun SearchScreen(
                             .fillMaxWidth()
                             .padding(end = 2.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         TextField(
                             value = uiState.query,
                             onValueChange = viewModel::updateQuery,
                             placeholder = { Text("What do you want to play?") },
                             singleLine = true,
-                            shape = RoundedCornerShape(30.dp),
+                            shape = RoundedCornerShape(26.dp),
                             modifier = Modifier
                                 .weight(1f)
-                                .heightIn(min = 54.dp),
+                                .heightIn(min = 52.dp),
                             colors = TextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.86f),
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f),
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.90f),
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.84f),
                                 focusedIndicatorColor = Color.Transparent,
                                 unfocusedIndicatorColor = Color.Transparent,
                                 disabledIndicatorColor = Color.Transparent
@@ -131,9 +131,9 @@ fun SearchScreen(
                         IconButton(
                             onClick = onNotifications,
                             modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(24.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.74f))
+                                .size(52.dp)
+                                .clip(RoundedCornerShape(26.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.86f))
                         ) { Icon(Icons.Filled.Notifications, "Notifications", tint = MaterialTheme.colorScheme.onSurface) }
                     }
                 }
@@ -147,9 +147,15 @@ fun SearchScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                item { AssistChip(onClick = { viewModel.selectTab(SearchTab.ALL) }, label = { Text("All") }) }
-                if (uiState.downloadedSongs.isNotEmpty()) item { AssistChip(onClick = { viewModel.selectTab(SearchTab.DOWNLOADS) }, label = { Text("Downloaded") }) }
-                if (uiState.localSongs.isNotEmpty()) item { AssistChip(onClick = { viewModel.selectTab(SearchTab.LOCAL) }, label = { Text("Local") }) }
+                item {
+                    SearchFilterChip("All", uiState.selectedTab == SearchTab.ALL) { viewModel.selectTab(SearchTab.ALL) }
+                }
+                if (uiState.downloadedSongs.isNotEmpty()) item {
+                    SearchFilterChip("Downloaded", uiState.selectedTab == SearchTab.DOWNLOADS) { viewModel.selectTab(SearchTab.DOWNLOADS) }
+                }
+                if (uiState.localSongs.isNotEmpty()) item {
+                    SearchFilterChip("Local", uiState.selectedTab == SearchTab.LOCAL) { viewModel.selectTab(SearchTab.LOCAL) }
+                }
             }
             voiceMessage?.let { Text(it, modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.primary) }
             when {
@@ -178,6 +184,24 @@ fun SearchScreen(
             }
         }
     }
+}
+
+
+@Composable
+private fun SearchFilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium) },
+        shape = RoundedCornerShape(50),
+        colors = FilterChipDefaults.filterChipColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.58f),
+            selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.20f),
+            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            selectedLabelColor = MaterialTheme.colorScheme.primary
+        ),
+        modifier = Modifier.height(34.dp)
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)

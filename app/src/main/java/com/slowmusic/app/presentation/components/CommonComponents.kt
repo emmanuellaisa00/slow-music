@@ -1,5 +1,11 @@
 package com.slowmusic.app.presentation.components
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -94,7 +100,8 @@ fun MiniPlayer(
                     )
                 }
                 
-                // Controls
+                MiniEqualizerBars(isPlaying = isPlaying)
+                Spacer(Modifier.width(6.dp))
                 IconButton(onClick = onPlayPause, modifier = Modifier.size(42.dp)) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
@@ -103,7 +110,6 @@ fun MiniPlayer(
                         modifier = Modifier.size(24.dp)
                     )
                 }
-                
                 IconButton(onClick = onNext, modifier = Modifier.size(40.dp)) {
                     Icon(
                         imageVector = Icons.Filled.SkipNext,
@@ -113,6 +119,40 @@ fun MiniPlayer(
                     )
                 }
             }
+        }
+    }
+}
+
+
+@Composable
+private fun MiniEqualizerBars(isPlaying: Boolean) {
+    val transition = rememberInfiniteTransition(label = "mini_equalizer")
+    val bars = listOf(0, 1, 2).map { index ->
+        transition.animateFloat(
+            initialValue = 0.35f,
+            targetValue = if (isPlaying) listOf(0.95f, 0.62f, 0.82f)[index] else 0.35f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 420 + index * 90, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "mini_eq_$index"
+        )
+    }
+    Row(
+        modifier = Modifier
+            .height(22.dp)
+            .width(18.dp),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        verticalAlignment = Alignment.Bottom
+    ) {
+        bars.forEach { animated ->
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight(animated.value.coerceIn(0.28f, 1f))
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(PrimaryGreen.copy(alpha = if (isPlaying) 0.95f else 0.42f))
+            )
         }
     }
 }
