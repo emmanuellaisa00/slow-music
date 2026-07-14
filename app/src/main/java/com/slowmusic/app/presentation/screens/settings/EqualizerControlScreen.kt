@@ -31,11 +31,12 @@ fun EqualizerControlScreen(
     val settings by viewModel.settings.collectAsState()
     val presets = viewModel.presets
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
-                windowInsets = WindowInsets(top = 0.dp),
                 title = { Text("Equalizer") },
-                navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.Filled.ArrowBack, "Back") } }
+                navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.Filled.ArrowBack, "Back") } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
             )
         }
     ) { padding ->

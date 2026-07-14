@@ -2,6 +2,10 @@ package com.slowmusic.app.presentation.navigation
 
 import android.Manifest
 import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -15,6 +19,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -105,6 +111,28 @@ fun NavigationGraph(
     fun openModal(route: String) {
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         navController.navigateModal(route)
+    }
+
+
+    @Composable
+    fun StyledUtilityRoute(content: @Composable () -> Unit) {
+        when {
+            useIosGlass -> IosGlassSettingsSkin { content() }
+            useAppleMusicUi -> Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.background.copy(alpha = 0.18f),
+                                MaterialTheme.colorScheme.background.copy(alpha = 0.42f)
+                            )
+                        )
+                    )
+            ) { content() }
+            else -> content()
+        }
     }
 
     fun smartSearchQueue(seed: Song, candidates: List<Song>): List<Song> {
@@ -350,49 +378,57 @@ fun NavigationGraph(
 
         // Library Sub-screens
         composable(Screen.Favorites.route) {
-            FavoritesScreen(
-                onSongClick = { song, queue ->
-                    selectSong(song, queue)
-                }
-            )
+            StyledUtilityRoute {
+                FavoritesScreen(
+                    onSongClick = { song, queue ->
+                        selectSong(song, queue)
+                    }
+                )
+            }
         }
 
         composable(Screen.RecentPlays.route) {
-            RecentPlaysScreen(
-                onSongClick = { song, queue ->
-                    selectSong(song, queue)
-                }
-            )
+            StyledUtilityRoute {
+                RecentPlaysScreen(
+                    onSongClick = { song, queue ->
+                        selectSong(song, queue)
+                    }
+                )
+            }
         }
 
         composable(Screen.Downloads.route) {
-            DownloadsScreen(
-                onSongClick = { song, queue ->
-                    selectSong(song, queue)
-                }
-            )
+            StyledUtilityRoute {
+                DownloadsScreen(
+                    onSongClick = { song, queue ->
+                        selectSong(song, queue)
+                    }
+                )
+            }
         }
 
 
-        composable(Screen.MostPlayed.route) { MostPlayedScreen(onSongClick = { song, queue -> selectSong(song, queue) }) }
+        composable(Screen.MostPlayed.route) { StyledUtilityRoute { MostPlayedScreen(onSongClick = { song, queue -> selectSong(song, queue) }) } }
 
-        composable(Screen.LocalMusic.route) { LocalMusicScreen(onSongClick = { song, queue -> selectSong(song, queue) }) }
+        composable(Screen.LocalMusic.route) { StyledUtilityRoute { LocalMusicScreen(onSongClick = { song, queue -> selectSong(song, queue) }) } }
 
-        composable(Screen.Playlists.route) { PlaylistsScreen(onPlaylistClick = { openPush(Screen.PlaylistDetails.createRoute(it)) }) }
+        composable(Screen.Playlists.route) { StyledUtilityRoute { PlaylistsScreen(onPlaylistClick = { openPush(Screen.PlaylistDetails.createRoute(it)) }) } }
 
-        composable(Screen.Artists.route) { FollowedArtistsScreen(onArtistClick = { openPush(Screen.ArtistDetails.createRoute(it)) }) }
+        composable(Screen.Artists.route) { StyledUtilityRoute { FollowedArtistsScreen(onArtistClick = { openPush(Screen.ArtistDetails.createRoute(it)) }) } }
 
-        composable(Screen.Albums.route) { SavedAlbumsScreen(onAlbumClick = { openPush(Screen.AlbumDetails.createRoute(it)) }) }
+        composable(Screen.Albums.route) { StyledUtilityRoute { SavedAlbumsScreen(onAlbumClick = { openPush(Screen.AlbumDetails.createRoute(it)) }) } }
 
 
         composable(Screen.Player.route) {
             val song = currentSong
             if (song == null) {
-                LegalTextScreen(
-                    title = "Now Playing",
-                    body = "Choose a song from Home, Search, Library, Artist, or Album to start playback.",
-                    onNavigateBack = { navController.popBackStack() }
-                )
+                StyledUtilityRoute {
+                    LegalTextScreen(
+                        title = "Now Playing",
+                        body = "Choose a song from Home, Search, Library, Artist, or Album to start playback.",
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
             } else {
                 key(song.id) {
                     AppleMusicPlayerScreen(
@@ -422,21 +458,7 @@ fun NavigationGraph(
 
         // Settings
         composable(Screen.Settings.route) {
-            if (useIosGlass) {
-                IosGlassSettingsSkin {
-                    SettingsScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToLogs = { openModal(Screen.Logs.route) },
-                onNavigateToStorage = { openModal(Screen.DownloadStorage.route) },
-                onNavigateToPrivacy = { openModal(Screen.PrivacyPolicy.route) },
-                onNavigateToTerms = { openModal(Screen.Terms.route) },
-                onNavigateToNotifications = { openModal(Screen.NotificationPermission.route) },
-                onNavigateToLocalFilesPermission = { openModal(Screen.LocalFilesPermission.route) },
-                onNavigateToCastDevices = { openModal(Screen.CastDevices.route) },
-                onNavigateToEqualizer = { openModal(Screen.Equalizer.route) }
-                    )
-                }
-            } else {
+            StyledUtilityRoute {
                 SettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToLogs = { openModal(Screen.Logs.route) },
@@ -453,15 +475,17 @@ fun NavigationGraph(
 
 
         composable(Screen.Equalizer.route) {
-            EqualizerControlScreen(onNavigateBack = { navController.popBackStack() })
+            StyledUtilityRoute { EqualizerControlScreen(onNavigateBack = { navController.popBackStack() }) }
         }
 
         composable(Screen.Logs.route) {
-            LogsScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
-            )
+            StyledUtilityRoute {
+                LogsScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
 
 
@@ -516,11 +540,13 @@ fun NavigationGraph(
                         )
                     }
                 }
-            } ?: LegalTextScreen(
-                title = "Lyrics",
-                body = "Start a song to view lyrics.",
-                onNavigateBack = { navController.popBackStack() }
-            )
+            } ?: StyledUtilityRoute {
+                LegalTextScreen(
+                    title = "Lyrics",
+                    body = "Start a song to view lyrics.",
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
 
         // Detail and utility screens
@@ -595,11 +621,13 @@ fun NavigationGraph(
             arguments = listOf(navArgument("genreId") { type = NavType.StringType })
         ) { backStackEntry ->
             val genreId = backStackEntry.arguments?.getString("genreId") ?: ""
-            LegalTextScreen(
-                title = "Genre",
-                body = "Browse playlists, new releases, and top artists for genre $genreId. This screen is ready to use your saved cache and music discovery sources.",
-                onNavigateBack = { navController.popBackStack() }
-            )
+            StyledUtilityRoute {
+                LegalTextScreen(
+                    title = "Genre",
+                    body = "Browse playlists, new releases, and top artists for genre $genreId. This screen is ready to use your saved cache and music discovery sources.",
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(
@@ -611,34 +639,40 @@ fun NavigationGraph(
                 navArgument("album") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            AddToPlaylistScreen(
-                songId = backStackEntry.arguments?.getString("songId") ?: "",
-                title = backStackEntry.arguments?.getString("title") ?: "Saved song",
-                artist = backStackEntry.arguments?.getString("artist") ?: "Unknown Artist",
-                album = backStackEntry.arguments?.getString("album") ?: "Unknown Album",
-                onNavigateBack = { navController.popBackStack() }
-            )
+            StyledUtilityRoute {
+                AddToPlaylistScreen(
+                    songId = backStackEntry.arguments?.getString("songId") ?: "",
+                    title = backStackEntry.arguments?.getString("title") ?: "Saved song",
+                    artist = backStackEntry.arguments?.getString("artist") ?: "Unknown Artist",
+                    album = backStackEntry.arguments?.getString("album") ?: "Unknown Album",
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
 
-        composable(Screen.CastDevices.route) { CastDevicePickerScreen(onNavigateBack = { navController.popBackStack() }) }
-        composable(Screen.DownloadStorage.route) { DownloadStorageManagerScreen(onNavigateBack = { navController.popBackStack() }) }
-        composable(Screen.PrivacyPolicy.route) { LegalTextScreen("Privacy Policy", PrivacyPolicyBody, onNavigateBack = { navController.popBackStack() }) }
-        composable(Screen.Terms.route) { LegalTextScreen("Terms of Service", TermsBody, onNavigateBack = { navController.popBackStack() }) }
+        composable(Screen.CastDevices.route) { StyledUtilityRoute { CastDevicePickerScreen(onNavigateBack = { navController.popBackStack() }) } }
+        composable(Screen.DownloadStorage.route) { StyledUtilityRoute { DownloadStorageManagerScreen(onNavigateBack = { navController.popBackStack() }) } }
+        composable(Screen.PrivacyPolicy.route) { StyledUtilityRoute { LegalTextScreen("Privacy Policy", PrivacyPolicyBody, onNavigateBack = { navController.popBackStack() }) } }
+        composable(Screen.Terms.route) { StyledUtilityRoute { LegalTextScreen("Terms of Service", TermsBody, onNavigateBack = { navController.popBackStack() }) } }
         composable(Screen.NotificationPermission.route) {
-            PermissionExplainerScreen(
-                title = "Notifications",
-                description = "Slow Music uses notifications for playback controls, download progress, and playback recovery.",
-                permission = notificationPermissionName(),
-                onNavigateBack = { navController.popBackStack() }
-            )
+            StyledUtilityRoute {
+                PermissionExplainerScreen(
+                    title = "Notifications",
+                    description = "Slow Music uses notifications for playback controls, download progress, and playback recovery.",
+                    permission = notificationPermissionName(),
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
         composable(Screen.LocalFilesPermission.route) {
-            PermissionExplainerScreen(
-                title = "Local music access",
-                description = "Allow Slow Music to scan audio files stored on this device and add them to your local library database.",
-                permission = Manifest.permission.READ_MEDIA_AUDIO,
-                onNavigateBack = { navController.popBackStack() }
-            )
+            StyledUtilityRoute {
+                PermissionExplainerScreen(
+                    title = "Local music access",
+                    description = "Allow Slow Music to scan audio files stored on this device and add them to your local library database.",
+                    permission = Manifest.permission.READ_MEDIA_AUDIO,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

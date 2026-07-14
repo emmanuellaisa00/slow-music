@@ -429,7 +429,7 @@ fun CastDevicePickerScreen(onNavigateBack: () -> Unit) {
     val castContext = remember { runCatching { com.google.android.gms.cast.framework.CastContext.getSharedInstance(context) }.getOrNull() }
     val session = castContext?.sessionManager?.currentCastSession
     val connectedName = session?.castDevice?.friendlyName
-    Scaffold(topBar = { TopAppBar(title = { Text("Connect to device") }, navigationIcon = { BackButton(onNavigateBack) }) }) { padding ->
+    Scaffold(containerColor = Color.Transparent, topBar = { TopAppBar(title = { Text("Connect to device") }, navigationIcon = { BackButton(onNavigateBack) }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 120.dp)) {
             item { Text("Cast", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
             item {
@@ -451,7 +451,7 @@ fun DownloadStorageManagerScreen(onNavigateBack: () -> Unit, viewModel: Download
     val state by viewModel.state.collectAsState()
     val activeDownloads by viewModel.activeDownloads.collectAsState()
     LaunchedEffect(Unit) { viewModel.refresh() }
-    Scaffold(topBar = { TopAppBar(title = { Text("Download storage") }, navigationIcon = { BackButton(onNavigateBack) }, actions = { IconButton(onClick = viewModel::refresh) { Icon(Icons.Filled.Refresh, "Refresh") } }) }) { padding ->
+    Scaffold(containerColor = Color.Transparent, topBar = { TopAppBar(title = { Text("Download storage") }, navigationIcon = { BackButton(onNavigateBack) }, actions = { IconButton(onClick = viewModel::refresh) { Icon(Icons.Filled.Refresh, "Refresh") } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 120.dp)) {
             item { StorageCard(state.storageUsed, state.downloads.size) }
             item {
@@ -492,7 +492,7 @@ fun DownloadStorageManagerScreen(onNavigateBack: () -> Unit, viewModel: Download
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LegalTextScreen(title: String, body: String, onNavigateBack: () -> Unit) {
-    Scaffold(topBar = { TopAppBar(title = { Text(title) }, navigationIcon = { BackButton(onNavigateBack) }) }) { padding ->
+    Scaffold(containerColor = Color.Transparent, topBar = { TopAppBar(title = { Text(title) }, navigationIcon = { BackButton(onNavigateBack) }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 120.dp)) {
             item { Text(body, style = MaterialTheme.typography.bodyMedium) }
         }
@@ -506,7 +506,7 @@ fun PermissionExplainerScreen(title: String, description: String, permission: St
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         resultText = if (granted) "Permission granted" else "Permission denied. You can enable it later in Android Settings."
     }
-    Scaffold(topBar = { TopAppBar(title = { Text(title) }, navigationIcon = { BackButton(onNavigateBack) }) }) { padding ->
+    Scaffold(containerColor = Color.Transparent, topBar = { TopAppBar(title = { Text(title) }, navigationIcon = { BackButton(onNavigateBack) }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Icon(Icons.Filled.Security, null, modifier = Modifier.size(72.dp), tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(16.dp))

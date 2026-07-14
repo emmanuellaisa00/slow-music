@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.slowmusic.app.domain.model.*
@@ -32,6 +33,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val preferences by viewModel.preferences.collectAsState()
+    val useStyledUi = preferences.uiStyle != UIStyle.DEFAULT
     var dialog by remember { mutableStateOf<String?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
     var resolverText by remember(preferences.resolverBackendUrl) { mutableStateOf(preferences.resolverBackendUrl) }
@@ -62,9 +64,13 @@ fun SettingsScreen(
     }
 
     Scaffold(
+        containerColor = if (useStyledUi) Color.Transparent else MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                windowInsets = WindowInsets(top = 0.dp),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = if (useStyledUi) Color.Transparent else MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = if (useStyledUi) MaterialTheme.colorScheme.surface.copy(alpha = 0.88f) else MaterialTheme.colorScheme.surface
+                ),
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -99,7 +105,11 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Filled.LibraryMusic,
                     title = "UI Style",
-                    subtitle = if (preferences.uiStyle == UIStyle.APPLE_MUSIC) "Apple Music" else "Default",
+                    subtitle = when (preferences.uiStyle) {
+                        UIStyle.DEFAULT -> "Default Android"
+                        UIStyle.APPLE_MUSIC -> "Apple Music"
+                        UIStyle.IOS_GLASS -> "iOS Glass"
+                    },
                     onClick = { dialog = "ui" }
                 )
             }
@@ -402,7 +412,7 @@ private fun SettingsItem(
         modifier = (if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 12.dp, vertical = 3.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.30f)),
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)),
         headlineContent = {
             Text(
                 text = title,
@@ -432,9 +442,10 @@ fun LogsScreen(
     val logs by viewModel.logs.collectAsState()
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                windowInsets = WindowInsets(top = 0.dp),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 title = { Text("App Logs") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
