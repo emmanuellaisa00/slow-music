@@ -12,7 +12,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.slowmusic.app.domain.model.*
@@ -39,18 +42,18 @@ fun SettingsScreen(
     var resolverText by remember(preferences.resolverBackendUrl) { mutableStateOf(preferences.resolverBackendUrl) }
 
     when (dialog) {
-        "theme" -> ChoiceSheet("Theme", ThemeMode.values().map { it.name }, preferences.theme.name, { viewModel.updateTheme(ThemeMode.valueOf(it)); dialog = null }, { dialog = null })
-        "nav" -> ChoiceSheet("Navigation", NavigationStyle.values().map { it.name }, preferences.navigationStyle.name, { viewModel.updateNavigationStyle(NavigationStyle.valueOf(it)); dialog = null }, { dialog = null })
-        "ui" -> ChoiceSheet("UI Style", UIStyle.values().map { it.name }, preferences.uiStyle.name, { viewModel.updateUiStyle(UIStyle.valueOf(it)); dialog = null }, { dialog = null })
-        "quality" -> ChoiceSheet("Audio Quality", AudioQuality.values().map { it.name }, preferences.audioQuality.name, { viewModel.updateAudioQuality(AudioQuality.valueOf(it)); dialog = null }, { dialog = null })
-        "crossfade" -> ChoiceSheet("Crossfade", listOf("Off", "On"), if (preferences.crossfadeEnabled) "On" else "Off", { viewModel.updateCrossfadeEnabled(it == "On"); dialog = null }, { dialog = null })
-        "speed" -> ChoiceSheet("Playback Speed", listOf("0.75x", "Normal", "1.25x", "1.5x"), when (preferences.playbackSpeed) { 0.75f -> "0.75x"; 1.25f -> "1.25x"; 1.5f -> "1.5x"; else -> "Normal" }, {
+        "theme" -> ChoiceSheet("Theme", themeOptions(), preferences.theme.name, { viewModel.updateTheme(ThemeMode.valueOf(it)); dialog = null }, { dialog = null })
+        "nav" -> ChoiceSheet("Navigation", navigationOptions(), preferences.navigationStyle.name, { viewModel.updateNavigationStyle(NavigationStyle.valueOf(it)); dialog = null }, { dialog = null })
+        "ui" -> ChoiceSheet("UI Style", uiStyleOptions(), preferences.uiStyle.name, { viewModel.updateUiStyle(UIStyle.valueOf(it)); dialog = null }, { dialog = null })
+        "quality" -> ChoiceSheet("Audio Quality", audioQualityOptions(), preferences.audioQuality.name, { viewModel.updateAudioQuality(AudioQuality.valueOf(it)); dialog = null }, { dialog = null })
+        "crossfade" -> ChoiceSheet("Crossfade", crossfadeOptions(), if (preferences.crossfadeEnabled) "On" else "Off", { viewModel.updateCrossfadeEnabled(it == "On"); dialog = null }, { dialog = null })
+        "speed" -> ChoiceSheet("Playback Speed", playbackSpeedOptions(), when (preferences.playbackSpeed) { 0.75f -> "0.75x"; 1.25f -> "1.25x"; 1.5f -> "1.5x"; else -> "Normal" }, {
             val speed = when (it) { "0.75x" -> 0.75f; "1.25x" -> 1.25f; "1.5x" -> 1.5f; else -> 1f }
             viewModel.updatePlaybackSpeed(speed)
             message = "Playback speed set to $it"
             dialog = null
         }, { dialog = null })
-        "network" -> ChoiceSheet("Network Mode", NetworkMode.values().map { it.name }, preferences.networkMode.name, { viewModel.updateNetworkMode(NetworkMode.valueOf(it)); dialog = null }, { dialog = null })
+        "network" -> ChoiceSheet("Network Mode", networkModeOptions(), preferences.networkMode.name, { viewModel.updateNetworkMode(NetworkMode.valueOf(it)); dialog = null }, { dialog = null })
         "resolver" -> AlertDialog(
             onDismissRequest = { dialog = null },
             title = { Text("Streaming backend") },
@@ -357,61 +360,155 @@ fun SettingsScreen(
     }
 }
 
+private data class SettingsChoiceOption(
+    val value: String,
+    val title: String,
+    val subtitle: String? = null
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ChoiceSheet(
     title: String,
-    choices: List<String>,
+    options: List<SettingsChoiceOption>,
     selectedChoice: String,
     onChoose: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val haptics = LocalHapticFeedback.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        tonalElevation = 8.dp,
-        dragHandle = { BottomSheetDefaults.DragHandle() }
+        tonalElevation = 10.dp,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 20.dp)
+                .padding(bottom = 24.dp)
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(bottom = 12.dp)
+                modifier = Modifier.padding(bottom = 6.dp)
             )
-            choices.forEach { choice ->
-                val selected = choice == selectedChoice
+            Text(
+                text = "Choose how this setting should behave.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            options.forEach { option ->
+                val selected = option.value == selectedChoice
                 ListItem(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(18.dp))
-                        .clickable { onChoose(choice) }
-                        .padding(vertical = 2.dp),
+                        .heightIn(min = 64.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .clickable {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onChoose(option.value)
+                        }
+                        .padding(vertical = 3.dp),
                     headlineContent = {
                         Text(
-                            text = choice.lowercase().replaceFirstChar { it.uppercase() },
-                            fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                            text = option.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     },
+                    supportingContent = option.subtitle?.let { subtitle ->
+                        {
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
                     leadingContent = {
-                        RadioButton(selected = selected, onClick = { onChoose(choice) })
+                        RadioButton(
+                            selected = selected,
+                            onClick = {
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onChoose(option.value)
+                            }
+                        )
                     },
                     trailingContent = {
-                        if (selected) Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        if (selected) {
+                            Icon(
+                                Icons.Filled.CheckCircle,
+                                contentDescription = "Selected",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     },
                     colors = ListItemDefaults.colors(
-                        containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.50f) else Color.Transparent
+                        containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.46f) else Color.Transparent,
+                        headlineColor = MaterialTheme.colorScheme.onSurface,
+                        supportingColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             }
         }
     }
+}
+
+private fun themeOptions() = listOf(
+    SettingsChoiceOption(ThemeMode.LIGHT.name, "Light", "Bright interface for daytime listening."),
+    SettingsChoiceOption(ThemeMode.DARK.name, "Dark", "Deep dark theme for music-first focus."),
+    SettingsChoiceOption(ThemeMode.SYSTEM.name, "System", "Follow your device appearance setting.")
+)
+
+private fun uiStyleOptions() = listOf(
+    SettingsChoiceOption(UIStyle.DEFAULT.name, "Default", "Clean Material Design."),
+    SettingsChoiceOption(UIStyle.APPLE_MUSIC.name, "Apple Music", "Artwork-inspired premium interface."),
+    SettingsChoiceOption(UIStyle.IOS_GLASS.name, "iOS Glass", "Frosted glass appearance with iPhone-style polish.")
+)
+
+private fun navigationOptions() = listOf(
+    SettingsChoiceOption(NavigationStyle.TABS.name, "Tabs", "Fast primary navigation with saved tab state."),
+    SettingsChoiceOption(NavigationStyle.BOTTOM_NAV.name, "Bottom Navigation", "Classic bottom bar layout."),
+    SettingsChoiceOption(NavigationStyle.DRAWER.name, "Drawer", "Compact navigation for larger libraries.")
+)
+
+private fun audioQualityOptions() = AudioQuality.values().map { quality ->
+    SettingsChoiceOption(quality.name, quality.name.lowercase().replaceFirstChar { it.uppercase() }, when (quality.name) {
+        "LOW" -> "Uses less data while streaming."
+        "MEDIUM" -> "Balanced quality and data usage."
+        "HIGH" -> "Better detail for headphones and speakers."
+        "LOSSLESS" -> "Best available quality when supported."
+        else -> "Audio quality preference."
+    })
+}
+
+private fun crossfadeOptions() = listOf(
+    SettingsChoiceOption("Off", "Off", "Songs change immediately with no overlap."),
+    SettingsChoiceOption("On", "On", "Smoothly blend the end of one song into the next.")
+)
+
+private fun playbackSpeedOptions() = listOf(
+    SettingsChoiceOption("0.75x", "0.75x", "Slower playback for relaxed listening."),
+    SettingsChoiceOption("Normal", "Normal", "Original song speed."),
+    SettingsChoiceOption("1.25x", "1.25x", "Slightly faster playback."),
+    SettingsChoiceOption("1.5x", "1.5x", "Fast playback for spoken or long-form audio.")
+)
+
+private fun networkModeOptions() = NetworkMode.values().map { mode ->
+    SettingsChoiceOption(mode.name, mode.name.lowercase().replace('_', ' ').replaceFirstChar { it.uppercase() }, when (mode.name) {
+        "ONLINE_ONLY" -> "Always stream when a connection is available."
+        "SMART_CACHING" -> "Balance streaming with cached metadata and content."
+        "DOWNLOAD_MODE" -> "Prefer downloaded and cached music for offline use."
+        else -> "Network behavior preference."
+    })
 }
 
 @Composable
