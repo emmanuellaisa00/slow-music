@@ -39,18 +39,18 @@ fun SettingsScreen(
     var resolverText by remember(preferences.resolverBackendUrl) { mutableStateOf(preferences.resolverBackendUrl) }
 
     when (dialog) {
-        "theme" -> ChoiceDialog("Theme", ThemeMode.values().map { it.name }, { viewModel.updateTheme(ThemeMode.valueOf(it)); dialog = null }, { dialog = null })
-        "nav" -> ChoiceDialog("Navigation", NavigationStyle.values().map { it.name }, { viewModel.updateNavigationStyle(NavigationStyle.valueOf(it)); dialog = null }, { dialog = null })
-        "ui" -> ChoiceDialog("UI Style", UIStyle.values().map { it.name }, { viewModel.updateUiStyle(UIStyle.valueOf(it)); dialog = null }, { dialog = null })
-        "quality" -> ChoiceDialog("Audio Quality", AudioQuality.values().map { it.name }, { viewModel.updateAudioQuality(AudioQuality.valueOf(it)); dialog = null }, { dialog = null })
-        "crossfade" -> ChoiceDialog("Crossfade", listOf("Off", "On"), { viewModel.updateCrossfadeEnabled(it == "On"); dialog = null }, { dialog = null })
-        "speed" -> ChoiceDialog("Playback Speed", listOf("0.75x", "Normal", "1.25x", "1.5x"), {
+        "theme" -> ChoiceSheet("Theme", ThemeMode.values().map { it.name }, preferences.theme.name, { viewModel.updateTheme(ThemeMode.valueOf(it)); dialog = null }, { dialog = null })
+        "nav" -> ChoiceSheet("Navigation", NavigationStyle.values().map { it.name }, preferences.navigationStyle.name, { viewModel.updateNavigationStyle(NavigationStyle.valueOf(it)); dialog = null }, { dialog = null })
+        "ui" -> ChoiceSheet("UI Style", UIStyle.values().map { it.name }, preferences.uiStyle.name, { viewModel.updateUiStyle(UIStyle.valueOf(it)); dialog = null }, { dialog = null })
+        "quality" -> ChoiceSheet("Audio Quality", AudioQuality.values().map { it.name }, preferences.audioQuality.name, { viewModel.updateAudioQuality(AudioQuality.valueOf(it)); dialog = null }, { dialog = null })
+        "crossfade" -> ChoiceSheet("Crossfade", listOf("Off", "On"), if (preferences.crossfadeEnabled) "On" else "Off", { viewModel.updateCrossfadeEnabled(it == "On"); dialog = null }, { dialog = null })
+        "speed" -> ChoiceSheet("Playback Speed", listOf("0.75x", "Normal", "1.25x", "1.5x"), when (preferences.playbackSpeed) { 0.75f -> "0.75x"; 1.25f -> "1.25x"; 1.5f -> "1.5x"; else -> "Normal" }, {
             val speed = when (it) { "0.75x" -> 0.75f; "1.25x" -> 1.25f; "1.5x" -> 1.5f; else -> 1f }
             viewModel.updatePlaybackSpeed(speed)
             message = "Playback speed set to $it"
             dialog = null
         }, { dialog = null })
-        "network" -> ChoiceDialog("Network Mode", NetworkMode.values().map { it.name }, { viewModel.updateNetworkMode(NetworkMode.valueOf(it)); dialog = null }, { dialog = null })
+        "network" -> ChoiceSheet("Network Mode", NetworkMode.values().map { it.name }, preferences.networkMode.name, { viewModel.updateNetworkMode(NetworkMode.valueOf(it)); dialog = null }, { dialog = null })
         "resolver" -> AlertDialog(
             onDismissRequest = { dialog = null },
             title = { Text("Streaming backend") },
@@ -357,28 +357,61 @@ fun SettingsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ChoiceDialog(
+private fun ChoiceSheet(
     title: String,
     choices: List<String>,
+    selectedChoice: String,
     onChoose: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column {
-                choices.forEach { choice ->
-                    ListItem(
-                        modifier = Modifier.clickable { onChoose(choice) },
-                        headlineContent = { Text(choice.lowercase().replaceFirstChar { it.uppercase() }) }
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        tonalElevation = 8.dp,
+        dragHandle = { BottomSheetDefaults.DragHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+            choices.forEach { choice ->
+                val selected = choice == selectedChoice
+                ListItem(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(18.dp))
+                        .clickable { onChoose(choice) }
+                        .padding(vertical = 2.dp),
+                    headlineContent = {
+                        Text(
+                            text = choice.lowercase().replaceFirstChar { it.uppercase() },
+                            fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                        )
+                    },
+                    leadingContent = {
+                        RadioButton(selected = selected, onClick = { onChoose(choice) })
+                    },
+                    trailingContent = {
+                        if (selected) Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    },
+                    colors = ListItemDefaults.colors(
+                        containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.50f) else Color.Transparent
                     )
-                }
+                )
             }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }
-    )
+        }
+    }
 }
 
 @Composable
