@@ -188,13 +188,13 @@ fun AppleMusicPlayerScreen(
             }
 
             Spacer(Modifier.height(14.dp))
-            AudioLayerSelector(
+            IOSProgressBar(value = progress, onSeek = onSeek)
+            Spacer(Modifier.height(14.dp))
+            AudioLayerTabs(
                 selected = audioLayerMode,
                 onSelect = onSetAudioLayerMode
             )
-            Spacer(Modifier.height(14.dp))
-            IOSProgressBar(value = progress, onSeek = onSeek)
-            Spacer(Modifier.height(22.dp))
+            Spacer(Modifier.height(20.dp))
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(34.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onPrevious, modifier = Modifier.size(58.dp)) { Icon(Icons.Filled.SkipPrevious, "Previous", tint = Color.White, modifier = Modifier.size(38.dp)) }
@@ -240,22 +240,30 @@ fun AppleMusicPlayerScreen(
 
 
 @Composable
-private fun AudioLayerSelector(
+private fun AudioLayerTabs(
     selected: AudioLayerMode,
     onSelect: (AudioLayerMode) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .background(Color.White.copy(alpha = 0.08f))
-            .border(1.dp, Color.White.copy(alpha = 0.11f), RoundedCornerShape(22.dp))
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        AudioLayerMode.values().forEach { mode ->
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = "Audio",
+            color = Color.White.copy(alpha = 0.58f),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(22.dp))
+                .background(Color.White.copy(alpha = 0.08f))
+                .border(1.dp, Color.White.copy(alpha = 0.11f), RoundedCornerShape(22.dp))
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AudioLayerMode.values().forEach { mode ->
             val active = selected == mode
             val label = when (mode) {
                 AudioLayerMode.VOCALS -> "Vocals"

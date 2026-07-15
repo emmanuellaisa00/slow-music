@@ -299,6 +299,7 @@ class MainViewModel @Inject constructor(
             persistQueueState()
             updateWidget()
             enrichQueueWithSmartRadio(layeredSong, requestId)
+            prefetchAudioLayers(layeredSong, requestId)
 
             // Resolve the rest of the queue after playback starts. This keeps first
             // audio start fast while still preparing next/previous items.
@@ -490,6 +491,30 @@ class MainViewModel @Inject constructor(
             instrumentalStreamUrl = song.instrumentalStreamUrl
         )
     }
+
+
+    private fun prefetchAudioLayers(song: Song, requestId: Long) {
+        if (!song.localPath.isNullOrBlank()) return
+        viewModelScope.launch {
+            var enriched = song
+            val withVocals = resolveLayerForPlayback(enriched, AudioLayerMode.VOCALS)
+            if (requestId != playRequestId || _currentSong.value?.id != song.id) return@launch
+            enriched = mergeLayerStreams(enriched, withVocals)
+            _currentSong.value = mergeLayerStreams(_currentSong.value ?: enriched, enriched)
+            _queue.value = _queue.value.map { if (it.id == song.id) mergeLayerStreams(it, enriched) else it }
+
+            val withInstrumental = resolveLayerForPlayback(enriched, AudioLayerMode.INSTRUMENTAL)
+            if (requestId != playRequestId || _currentSong.value?.id != song.id) return@launch
+            enriched = mergeLayerStreams(enriched, withInstrumental)
+            _currentSong.value = mergeLayerStreams(_currentSong.value ?: enriched, enriched)
+            _queue.value = _queue.value.map { if (it.id == song.id) mergeLayerStreams(it, enriched) else it }
+        }
+    }
+
+    private fun mergeLayerStreams(base: Song, update: Song): Song = base.copy(
+        vocalsStreamUrl = update.vocalsStreamUrl ?: base.vocalsStreamUrl,
+        instrumentalStreamUrl = update.instrumentalStreamUrl ?: base.instrumentalStreamUrl
+    )
 
     private suspend fun resolveLayerForPlayback(song: Song, mode: AudioLayerMode): Song {
         if (mode == AudioLayerMode.BOTH || !song.localPath.isNullOrBlank()) return song
