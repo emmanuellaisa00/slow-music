@@ -293,6 +293,7 @@ private fun AudioLayerTabs(
         }
     }
 }
+}
 
 @Composable
 private fun IOSProgressBar(value: Float, onSeek: (Float) -> Unit, modifier: Modifier = Modifier) {
