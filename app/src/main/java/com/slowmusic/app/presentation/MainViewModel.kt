@@ -76,6 +76,9 @@ class MainViewModel @Inject constructor(
     private val _repeatMode = MutableStateFlow(RepeatMode.OFF)
     val repeatMode: StateFlow<RepeatMode> = _repeatMode.asStateFlow()
 
+    private val _audioLayerMode = MutableStateFlow(AudioLayerMode.BOTH)
+    val audioLayerMode: StateFlow<AudioLayerMode> = _audioLayerMode.asStateFlow()
+
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> = _progress.asStateFlow()
 
@@ -364,6 +367,14 @@ class MainViewModel @Inject constructor(
         }
         mediaController?.repeatMode = media3RepeatMode(_repeatMode.value)
         persistQueueState()
+    }
+
+    fun setAudioLayerMode(mode: AudioLayerMode) {
+        _audioLayerMode.value = mode
+        // Real vocal/instrumental isolation needs separated stem streams from the resolver.
+        // Keep this state wired now so playback can switch stems immediately when a
+        // resolver provides vocal/instrumental URLs without disrupting current playback.
+        updateWidget()
     }
 
     fun playNextInQueue(song: Song) {

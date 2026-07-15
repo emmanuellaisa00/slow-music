@@ -13,9 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.slowmusic.app.domain.model.AudioLayerMode
 import com.slowmusic.app.domain.model.RepeatMode
 import com.slowmusic.app.domain.model.Song
 import com.slowmusic.app.presentation.theme.apple.AppleColors
@@ -43,6 +42,7 @@ fun AppleMusicPlayerScreen(
     isPlaying: Boolean,
     progress: Float,
     repeatMode: RepeatMode,
+    audioLayerMode: AudioLayerMode,
     isShuffled: Boolean,
     isFavorite: Boolean,
     onPlayPause: () -> Unit,
@@ -52,6 +52,7 @@ fun AppleMusicPlayerScreen(
     onToggleFavorite: () -> Unit,
     onToggleShuffle: () -> Unit,
     onToggleRepeat: () -> Unit,
+    onSetAudioLayerMode: (AudioLayerMode) -> Unit,
     onNavigateBack: () -> Unit,
     onNavigateToLyrics: () -> Unit,
     onNavigateToQueue: () -> Unit,
@@ -186,7 +187,12 @@ fun AppleMusicPlayerScreen(
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(14.dp))
+            AudioLayerSelector(
+                selected = audioLayerMode,
+                onSelect = onSetAudioLayerMode
+            )
+            Spacer(Modifier.height(14.dp))
             IOSProgressBar(value = progress, onSeek = onSeek)
             Spacer(Modifier.height(22.dp))
 
@@ -226,6 +232,54 @@ fun AppleMusicPlayerScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Filled.KeyboardArrowUp, null, tint = Color.White.copy(alpha = 0.22f))
                     Text("Lyrics", color = Color.White, style = AppleTypography.headline, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun AudioLayerSelector(
+    selected: AudioLayerMode,
+    onSelect: (AudioLayerMode) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(22.dp))
+            .background(Color.White.copy(alpha = 0.08f))
+            .border(1.dp, Color.White.copy(alpha = 0.11f), RoundedCornerShape(22.dp))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AudioLayerMode.values().forEach { mode ->
+            val active = selected == mode
+            val label = when (mode) {
+                AudioLayerMode.VOCALS -> "Vocals"
+                AudioLayerMode.INSTRUMENTAL -> "Instrumental"
+                AudioLayerMode.BOTH -> "Both"
+            }
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(40.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .clickable { onSelect(mode) },
+                shape = RoundedCornerShape(18.dp),
+                color = if (active) Color.White.copy(alpha = 0.92f) else Color.Transparent,
+                contentColor = if (active) Color.Black else Color.White.copy(alpha = 0.78f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (active) FontWeight.Bold else FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }

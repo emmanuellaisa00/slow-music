@@ -74,6 +74,12 @@ enum class RepeatMode {
     OFF, ONE, ALL
 }
 
+enum class AudioLayerMode {
+    BOTH,
+    VOCALS,
+    INSTRUMENTAL
+}
+
 data class QueueItem(
     val song: Song,
     val position: Int

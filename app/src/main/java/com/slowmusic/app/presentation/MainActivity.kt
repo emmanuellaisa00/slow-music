@@ -65,6 +65,7 @@ class MainActivity : ComponentActivity() {
             val lyrics by mainViewModel.lyrics.collectAsState()
             val progress by mainViewModel.progress.collectAsState()
             val repeatMode by mainViewModel.repeatMode.collectAsState()
+            val audioLayerMode by mainViewModel.audioLayerMode.collectAsState()
             val isShuffled by mainViewModel.isShuffled.collectAsState()
 
             SlowMusicTheme(themeMode = themeMode, useAppleMusicUi = useAppleMusicUi) {
@@ -83,10 +84,12 @@ class MainActivity : ComponentActivity() {
                     onPlaySong = { song, queue -> mainViewModel.playSong(song, queue) },
                     progress = progress,
                     repeatMode = repeatMode,
+                    audioLayerMode = audioLayerMode,
                     isShuffled = isShuffled,
                     onSeek = { mainViewModel.seekTo(it) },
                     onToggleShuffle = { mainViewModel.toggleShuffle() },
                     onToggleRepeat = { mainViewModel.toggleRepeat() },
+                    onSetAudioLayerMode = { mode -> mainViewModel.setAudioLayerMode(mode) },
                     onToggleFavorite = { mainViewModel.toggleFavorite() },
                     onDownload = { song -> mainViewModel.downloadSong(song) },
                     onPlayNext = { song -> mainViewModel.playNextInQueue(song) },
@@ -125,10 +128,12 @@ fun SlowMusicApp(
     onPlaySong: (com.slowmusic.app.domain.model.Song, List<com.slowmusic.app.domain.model.Song>) -> Unit,
     progress: Float,
     repeatMode: com.slowmusic.app.domain.model.RepeatMode,
+    audioLayerMode: com.slowmusic.app.domain.model.AudioLayerMode,
     isShuffled: Boolean,
     onSeek: (Float) -> Unit,
     onToggleShuffle: () -> Unit,
     onToggleRepeat: () -> Unit,
+    onSetAudioLayerMode: (com.slowmusic.app.domain.model.AudioLayerMode) -> Unit,
     onToggleFavorite: () -> Unit,
     onDownload: (com.slowmusic.app.domain.model.Song) -> Unit,
     onPlayNext: (com.slowmusic.app.domain.model.Song) -> Unit,
@@ -328,10 +333,12 @@ fun SlowMusicApp(
                     onPlaySong = onPlaySong,
                     progress = progress,
                     repeatMode = repeatMode,
+                    audioLayerMode = audioLayerMode,
                     isShuffled = isShuffled,
                     onSeek = onSeek,
                     onToggleShuffle = onToggleShuffle,
                     onToggleRepeat = onToggleRepeat,
+                    onSetAudioLayerMode = onSetAudioLayerMode,
                     onToggleFavorite = onToggleFavorite,
                     onDownload = onDownload,
                     onPlayNext = onPlayNext,
