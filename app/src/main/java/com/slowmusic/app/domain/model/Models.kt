@@ -18,7 +18,9 @@ data class Song(
     val isLocal: Boolean = false,
     val localPath: String? = null,
     val isDownloaded: Boolean = false,
-    val downloadProgress: Int = 0
+    val downloadProgress: Int = 0,
+    val vocalsStreamUrl: String? = null,
+    val instrumentalStreamUrl: String? = null
 ) : Parcelable
 
 data class Artist(

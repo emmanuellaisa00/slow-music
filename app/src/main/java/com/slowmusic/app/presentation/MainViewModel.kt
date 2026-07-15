@@ -272,11 +272,13 @@ class MainViewModel @Inject constructor(
 
         viewModelScope.launch {
             val resolvedSong = resolveForPlayback(song)
+            val layeredSong = resolveLayerForPlayback(resolvedSong, _audioLayerMode.value)
             if (requestId != playRequestId) return@launch
 
-            _currentSong.value = resolvedSong
+            _currentSong.value = layeredSong
+            _queue.value = _queue.value.map { if (it.id == song.id) layeredSong else it }
             val controller = mediaController
-            val firstItem = toMediaItem(resolvedSong)
+            val firstItem = toMediaItem(layeredSong, _audioLayerMode.value)
 
             if (controller != null && firstItem != null) {
                 controller.setMediaItem(firstItem, 0L)
@@ -287,22 +289,22 @@ class MainViewModel @Inject constructor(
                 controller.playbackParameters = PlaybackParameters(userPreferences.value.playbackSpeed.coerceIn(0.5f, 2f))
             } else {
                 Logger.w("Player", "No playable URL for ${song.title}; using local UI playback state")
-                fallbackStartPlayback(resolvedSong, playableQueue)
+                fallbackStartPlayback(layeredSong, playableQueue)
             }
 
-            libraryRepository.addToRecentlyPlayed(resolvedSong)
-            libraryRepository.incrementPlayCount(resolvedSong.id)
-            queueStateRepository.recordPlay(resolvedSong)
-            loadLyrics(resolvedSong)
+            libraryRepository.addToRecentlyPlayed(layeredSong)
+            libraryRepository.incrementPlayCount(layeredSong.id)
+            queueStateRepository.recordPlay(layeredSong)
+            loadLyrics(layeredSong)
             persistQueueState()
             updateWidget()
-            enrichQueueWithSmartRadio(resolvedSong, requestId)
+            enrichQueueWithSmartRadio(layeredSong, requestId)
 
             // Resolve the rest of the queue after playback starts. This keeps first
             // audio start fast while still preparing next/previous items.
             viewModelScope.launch {
                 val resolvedQueue = playableQueue.toMutableList()
-                resolvedQueue[clickedIndex.coerceAtMost(resolvedQueue.lastIndex)] = resolvedSong
+                resolvedQueue[clickedIndex.coerceAtMost(resolvedQueue.lastIndex)] = layeredSong
                 for ((index, candidate) in playableQueue.withIndex()) {
                     if (requestId != playRequestId) return@launch
                     if (index == clickedIndex) continue
@@ -370,10 +372,9 @@ class MainViewModel @Inject constructor(
     }
 
     fun setAudioLayerMode(mode: AudioLayerMode) {
+        if (_audioLayerMode.value == mode) return
         _audioLayerMode.value = mode
-        // Real vocal/instrumental isolation needs separated stem streams from the resolver.
-        // Keep this state wired now so playback can switch stems immediately when a
-        // resolver provides vocal/instrumental URLs without disrupting current playback.
+        viewModelScope.launch { switchCurrentAudioLayer(mode) }
         updateWidget()
     }
 
@@ -484,13 +485,74 @@ class MainViewModel @Inject constructor(
             streamUrl = streamingFallbackResolver.encodeStreamUrl(resolved.stream),
             previewUrl = null,
             isDownloaded = song.isDownloaded,
-            localPath = song.localPath
+            localPath = song.localPath,
+            vocalsStreamUrl = song.vocalsStreamUrl,
+            instrumentalStreamUrl = song.instrumentalStreamUrl
         )
     }
 
-    private fun toMediaItem(song: Song): MediaItem? {
+    private suspend fun resolveLayerForPlayback(song: Song, mode: AudioLayerMode): Song {
+        if (mode == AudioLayerMode.BOTH || !song.localPath.isNullOrBlank()) return song
+        val existing = streamUrlForLayer(song, mode)
+        if (!existing.isNullOrBlank() && existing != song.streamUrl) return song
+
+        val layerQuery = when (mode) {
+            AudioLayerMode.VOCALS -> "${song.title} ${song.artist} acapella vocals"
+            AudioLayerMode.INSTRUMENTAL -> "${song.title} ${song.artist} instrumental"
+            AudioLayerMode.BOTH -> "${song.title} ${song.artist} official audio"
+        }
+        val candidate = runCatching { streamingFallbackResolver.searchSongs(layerQuery, 5) }
+            .getOrDefault(emptyList())
+            .firstOrNull()
+            ?: return song
+        val resolved = streamingFallbackResolver.resolveSongWithMetadata(candidate) ?: return song
+        val encoded = streamingFallbackResolver.encodeStreamUrl(resolved.stream)
+        return when (mode) {
+            AudioLayerMode.VOCALS -> song.copy(vocalsStreamUrl = encoded)
+            AudioLayerMode.INSTRUMENTAL -> song.copy(instrumentalStreamUrl = encoded)
+            AudioLayerMode.BOTH -> song
+        }
+    }
+
+    private suspend fun switchCurrentAudioLayer(mode: AudioLayerMode) {
+        val current = _currentSong.value ?: return
+        val controller = mediaController
+        val position = controller?.currentPosition ?: ((_currentSong.value?.duration ?: 0L) * _progress.value).toLong()
+        val wasPlaying = controller?.isPlaying == true || _playbackState.value == PlaybackState.PLAYING
+        _playbackState.value = PlaybackState.BUFFERING
+        val layered = resolveLayerForPlayback(current, mode)
+        _currentSong.value = layered
+        _queue.value = _queue.value.map { if (it.id == current.id) layered else it }
+        val mediaItem = toMediaItem(layered, mode) ?: run {
+            _playbackState.value = if (wasPlaying) PlaybackState.PLAYING else PlaybackState.PAUSED
+            return
+        }
+        if (controller != null) {
+            val index = _currentIndex.value.coerceAtLeast(0)
+            if (index < controller.mediaItemCount) {
+                controller.replaceMediaItem(index, mediaItem)
+                controller.seekTo(index, position)
+            } else {
+                controller.setMediaItem(mediaItem, position)
+            }
+            controller.prepare()
+            if (wasPlaying) controller.play()
+        } else {
+            _playbackState.value = if (wasPlaying) PlaybackState.PLAYING else PlaybackState.PAUSED
+        }
+        persistQueueState()
+        updateWidget()
+    }
+
+    private fun streamUrlForLayer(song: Song, mode: AudioLayerMode): String? = when (mode) {
+        AudioLayerMode.VOCALS -> song.vocalsStreamUrl?.takeIf { it.isNotBlank() } ?: song.streamUrl
+        AudioLayerMode.INSTRUMENTAL -> song.instrumentalStreamUrl?.takeIf { it.isNotBlank() } ?: song.streamUrl
+        AudioLayerMode.BOTH -> song.streamUrl
+    }
+
+    private fun toMediaItem(song: Song, mode: AudioLayerMode = AudioLayerMode.BOTH): MediaItem? {
         val uri = song.localPath?.takeIf { it.isNotBlank() }
-            ?: song.streamUrl?.takeIf { it.isNotBlank() }
+            ?: streamUrlForLayer(song, mode)?.takeIf { it.isNotBlank() }
             ?: song.previewUrl?.takeIf { it.isNotBlank() }
             ?: return null
 
