@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,14 +43,14 @@ fun MiniPlayer(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-            .shadow(8.dp, RoundedCornerShape(24.dp), clip = false)
-            .clip(RoundedCornerShape(24.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(24.dp))
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .shadow(10.dp, RoundedCornerShape(26.dp), clip = false)
+            .clip(RoundedCornerShape(26.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(26.dp))
             .clickable(onClick = onClick),
         color = PlayerBackground.copy(alpha = 0.96f),
         tonalElevation = 2.dp,
-        shape = RoundedCornerShape(24.dp)
+        shape = RoundedCornerShape(26.dp)
     ) {
         Column {
             LinearProgressIndicator(
@@ -64,8 +65,8 @@ fun MiniPlayer(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(58.dp)
-                    .padding(horizontal = 12.dp, vertical = 7.dp),
+                    .height(62.dp)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Album art
@@ -73,8 +74,8 @@ fun MiniPlayer(
                     model = song.albumArtUrl,
                     contentDescription = "Album art",
                     modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(14.dp)),
+                        .size(46.dp)
+                        .clip(RoundedCornerShape(15.dp)),
                     contentScale = ContentScale.Crop
                 )
                 
@@ -86,14 +87,16 @@ fun MiniPlayer(
                 ) {
                     Text(
                         text = song.title,
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
                         color = TextPrimaryDark,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = song.artist,
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
                         color = TextSecondaryDark,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -167,13 +170,14 @@ fun SongCard(
     Card(
         modifier = modifier
             .width(160.dp)
+            .animateContentSize()
             .clip(RoundedCornerShape(18.dp))
             .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f), RoundedCornerShape(18.dp))
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.82f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp, pressedElevation = 3.dp),
         shape = RoundedCornerShape(18.dp)
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
@@ -205,9 +209,9 @@ fun SongCard(
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Text(song.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(song.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(2.dp))
-            Text(song.artist, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(song.artist, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f), maxLines = 1, overflow = TextOverflow.Ellipsis)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 AssistChip(
                     onClick = {},
@@ -233,11 +237,13 @@ fun SongListItem(
         modifier = modifier
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.82f))
             .clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         headlineContent = {
             Text(
                 text = song.title,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -252,7 +258,8 @@ fun SongListItem(
                 text = "${song.artist} • ${song.album}$badge",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f),
+                style = MaterialTheme.typography.bodySmall
             )
         },
         leadingContent = {
