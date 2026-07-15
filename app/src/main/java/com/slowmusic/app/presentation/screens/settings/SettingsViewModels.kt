@@ -128,6 +128,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun updateStemSeparationBackend(url: String) {
+        viewModelScope.launch {
+            val current = preferences.value
+            preferencesRepository.updateUserPreferences(current.copy(stemSeparationBackendUrl = url.trim()))
+        }
+    }
+
     fun clearCache(onDone: (String) -> Unit = {}) {
         viewModelScope.launch {
             contentCacheRepository.clearAll()

@@ -40,6 +40,7 @@ fun SettingsScreen(
     var dialog by remember { mutableStateOf<String?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
     var resolverText by remember(preferences.resolverBackendUrl) { mutableStateOf(preferences.resolverBackendUrl) }
+    var stemBackendText by remember(preferences.stemSeparationBackendUrl) { mutableStateOf(preferences.stemSeparationBackendUrl) }
 
     when (dialog) {
         "theme" -> ChoiceSheet("Theme", themeOptions(), preferences.theme.name, { viewModel.updateTheme(ThemeMode.valueOf(it)); dialog = null }, { dialog = null })
@@ -60,6 +61,19 @@ fun SettingsScreen(
             text = { OutlinedTextField(value = resolverText, onValueChange = { resolverText = it }, label = { Text("Backend URL") }, placeholder = { Text("https://your-worker.example.com") }) },
             confirmButton = { TextButton(onClick = { viewModel.updateResolverBackend(resolverText); message = "Streaming backend saved"; dialog = null }) { Text("Save") } },
             dismissButton = { TextButton(onClick = { resolverText = ""; viewModel.updateResolverBackend(""); message = "Streaming backend disabled"; dialog = null }) { Text("Disable") } }
+        )
+        "stems" -> AlertDialog(
+            onDismissRequest = { dialog = null },
+            title = { Text("Stem separation backend") },
+            text = {
+                Column {
+                    Text("Required for true Vocals and Instrumental isolation. Endpoint must support POST /stems/resolve and return vocalsUrl/instrumentalUrl.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(value = stemBackendText, onValueChange = { stemBackendText = it }, label = { Text("Backend URL") }, placeholder = { Text("https://your-stems.example.com") })
+                }
+            },
+            confirmButton = { TextButton(onClick = { viewModel.updateStemSeparationBackend(stemBackendText); message = "Stem backend saved"; dialog = null }) { Text("Save") } },
+            dismissButton = { TextButton(onClick = { stemBackendText = ""; viewModel.updateStemSeparationBackend(""); message = "Stem backend disabled"; dialog = null }) { Text("Disable") } }
         )
         "about" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Slow Music") }, text = { Text("Version 1.0.0\nLocal library mode enabled\nCached discovery and full-song playback") }, confirmButton = { TextButton(onClick = { dialog = null }) { Text("OK") } })
         "clear" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Clear cache?") }, text = { Text("This clears cached Home/Search metadata so the next refresh fetches fresh content.") }, confirmButton = { TextButton(onClick = { viewModel.clearCache { message = it }; dialog = null }) { Text("Clear") } }, dismissButton = { TextButton(onClick = { dialog = null }) { Text("Cancel") } })
@@ -248,6 +262,15 @@ fun SettingsScreen(
                     title = "Streaming Backend",
                     subtitle = preferences.resolverBackendUrl.ifBlank { "Disabled" },
                     onClick = { resolverText = preferences.resolverBackendUrl; dialog = "resolver" }
+                )
+            }
+
+            item {
+                SettingsItem(
+                    icon = Icons.Filled.GraphicEq,
+                    title = "Stem Separation Backend",
+                    subtitle = preferences.stemSeparationBackendUrl.ifBlank { "Required for real vocals/instrumental" },
+                    onClick = { stemBackendText = preferences.stemSeparationBackendUrl; dialog = "stems" }
                 )
             }
 

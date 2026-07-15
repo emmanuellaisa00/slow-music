@@ -116,6 +116,7 @@ data class UserPreferences(
     val autoPlaySimilar: Boolean = true,
     val networkMode: NetworkMode = NetworkMode.ONLINE_ONLY,
     val resolverBackendUrl: String = "",
+    val stemSeparationBackendUrl: String = "",
     val enableCoverArtBlur: Boolean = true,
     // Apple Music Style Settings
     val uiStyle: UIStyle = UIStyle.DEFAULT,

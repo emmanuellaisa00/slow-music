@@ -24,6 +24,7 @@ import com.slowmusic.app.domain.repository.PreferencesRepository
 import com.slowmusic.app.service.MusicPlaybackService
 import com.slowmusic.app.service.MusicWidgetService
 import com.slowmusic.app.streaming.StreamingFallbackResolver
+import com.slowmusic.app.streaming.StemSeparationResolver
 import com.slowmusic.app.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -47,6 +48,7 @@ class MainViewModel @Inject constructor(
     private val lyricsRepository: LyricsRepository,
     private val downloadManager: DownloadManager,
     private val streamingFallbackResolver: StreamingFallbackResolver,
+    private val stemSeparationResolver: StemSeparationResolver,
     private val queueStateRepository: QueueStateRepository
 ) : AndroidViewModel(application) {
 
@@ -169,6 +171,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferences.collect { prefs ->
                 streamingFallbackResolver.setBackendUrl(prefs.resolverBackendUrl)
+                stemSeparationResolver.setBackendUrl(prefs.stemSeparationBackendUrl)
                 mediaController?.playbackParameters = PlaybackParameters(prefs.playbackSpeed.coerceIn(0.5f, 2f))
             }
         }
@@ -521,6 +524,16 @@ class MainViewModel @Inject constructor(
         val existing = streamUrlForLayer(song, mode)
         if (!existing.isNullOrBlank() && existing != song.streamUrl) return song
 
+        val stemResolution = stemSeparationResolver.resolveStems(song)
+        when (mode) {
+            AudioLayerMode.VOCALS -> stemResolution?.vocalsUrl?.takeIf { it.isNotBlank() }?.let { return song.copy(vocalsStreamUrl = it) }
+            AudioLayerMode.INSTRUMENTAL -> stemResolution?.instrumentalUrl?.takeIf { it.isNotBlank() }?.let { return song.copy(instrumentalStreamUrl = it) }
+            AudioLayerMode.BOTH -> Unit
+        }
+
+        // Last-resort fallback: if no true stem backend is configured/available,
+        // try to find a public acapella/instrumental upload. True isolation comes
+        // from the stem backend above.
         val layerQuery = when (mode) {
             AudioLayerMode.VOCALS -> "${song.title} ${song.artist} acapella vocals"
             AudioLayerMode.INSTRUMENTAL -> "${song.title} ${song.artist} instrumental"

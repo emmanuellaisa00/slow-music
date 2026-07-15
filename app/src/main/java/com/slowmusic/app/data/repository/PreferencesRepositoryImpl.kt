@@ -38,6 +38,7 @@ class PreferencesRepositoryImpl @Inject constructor(
         val AUTO_PLAY_SIMILAR = booleanPreferencesKey("auto_play_similar")
         val UI_STYLE = stringPreferencesKey("ui_style")
         val RESOLVER_BACKEND_URL = stringPreferencesKey("resolver_backend_url")
+        val STEM_SEPARATION_BACKEND_URL = stringPreferencesKey("stem_separation_backend_url")
         val ENABLE_COVER_ART_BLUR = booleanPreferencesKey("enable_cover_art_blur")
         val EQUALIZER_ENABLED = booleanPreferencesKey("equalizer_enabled")
         val EQUALIZER_PRESET = intPreferencesKey("equalizer_preset")
@@ -64,6 +65,7 @@ class PreferencesRepositoryImpl @Inject constructor(
                 autoPlaySimilar = prefs[PreferencesKeys.AUTO_PLAY_SIMILAR] ?: true,
                 networkMode = NetworkMode.valueOf(prefs[PreferencesKeys.NETWORK_MODE] ?: NetworkMode.ONLINE_ONLY.name),
                 resolverBackendUrl = prefs[PreferencesKeys.RESOLVER_BACKEND_URL] ?: "",
+                stemSeparationBackendUrl = prefs[PreferencesKeys.STEM_SEPARATION_BACKEND_URL] ?: "",
                 enableCoverArtBlur = prefs[PreferencesKeys.ENABLE_COVER_ART_BLUR] ?: true,
                 uiStyle = UIStyle.valueOf(prefs[PreferencesKeys.UI_STYLE] ?: UIStyle.DEFAULT.name)
             )
@@ -82,6 +84,7 @@ class PreferencesRepositoryImpl @Inject constructor(
             prefs[PreferencesKeys.AUTO_PLAY_SIMILAR] = preferences.autoPlaySimilar
             prefs[PreferencesKeys.NETWORK_MODE] = preferences.networkMode.name
             prefs[PreferencesKeys.RESOLVER_BACKEND_URL] = preferences.resolverBackendUrl
+            prefs[PreferencesKeys.STEM_SEPARATION_BACKEND_URL] = preferences.stemSeparationBackendUrl
             prefs[PreferencesKeys.ENABLE_COVER_ART_BLUR] = preferences.enableCoverArtBlur
             prefs[PreferencesKeys.UI_STYLE] = preferences.uiStyle.name
         }
