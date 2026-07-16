@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.slowmusic.app.domain.model.Song
+import com.slowmusic.app.presentation.design.*
 import com.slowmusic.app.presentation.theme.*
 
 @Composable
@@ -43,14 +44,14 @@ fun MiniPlayer(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 8.dp)
-            .shadow(10.dp, RoundedCornerShape(26.dp), clip = false)
-            .clip(RoundedCornerShape(26.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(26.dp))
+            .padding(horizontal = SlowSpacing.md, vertical = SlowSpacing.sm)
+            .shadow(SlowElevation.floating, RoundedCornerShape(SlowRadius.xl), clip = false)
+            .clip(RoundedCornerShape(SlowRadius.xl))
+            .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(SlowRadius.xl))
             .clickable(onClick = onClick),
         color = PlayerBackground.copy(alpha = 0.96f),
         tonalElevation = 2.dp,
-        shape = RoundedCornerShape(26.dp)
+        shape = RoundedCornerShape(SlowRadius.xl)
     ) {
         Column {
             LinearProgressIndicator(
@@ -66,7 +67,7 @@ fun MiniPlayer(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(62.dp)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = SlowSpacing.md, vertical = SlowSpacing.sm),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Album art
@@ -74,12 +75,12 @@ fun MiniPlayer(
                     model = song.albumArtUrl,
                     contentDescription = "Album art",
                     modifier = Modifier
-                        .size(46.dp)
-                        .clip(RoundedCornerShape(15.dp)),
+                        .size(SlowSize.miniArtwork)
+                        .clip(RoundedCornerShape(SlowRadius.md)),
                     contentScale = ContentScale.Crop
                 )
                 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(SlowSpacing.sm + SlowSpacing.xs))
                 
                 // Song info
                 Column(
@@ -104,21 +105,21 @@ fun MiniPlayer(
                 }
                 
                 MiniEqualizerBars(isPlaying = isPlaying)
-                Spacer(Modifier.width(6.dp))
-                IconButton(onClick = onPlayPause, modifier = Modifier.size(42.dp)) {
+                Spacer(Modifier.width(SlowSpacing.xs + SlowSpacing.xxs))
+                IconButton(onClick = onPlayPause, modifier = Modifier.size(SlowSize.minTouch - 6.dp)) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                         contentDescription = if (isPlaying) "Pause" else "Play",
                         tint = TextPrimaryDark,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(SlowSize.icon)
                     )
                 }
-                IconButton(onClick = onNext, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = onNext, modifier = Modifier.size(SlowSize.minTouch - 8.dp)) {
                     Icon(
                         imageVector = Icons.Filled.SkipNext,
                         contentDescription = "Next",
                         tint = TextPrimaryDark,
-                        modifier = Modifier.size(23.dp)
+                        modifier = Modifier.size(SlowSize.icon - 1.dp)
                     )
                 }
             }
@@ -153,7 +154,7 @@ private fun MiniEqualizerBars(isPlaying: Boolean) {
                 modifier = Modifier
                     .width(4.dp)
                     .fillMaxHeight(animated.value.coerceIn(0.28f, 1f))
-                    .clip(RoundedCornerShape(4.dp))
+                    .clip(RoundedCornerShape(SlowRadius.xs))
                     .background(PrimaryGreen.copy(alpha = if (isPlaying) 0.95f else 0.42f))
             )
         }
@@ -169,18 +170,18 @@ fun SongCard(
 ) {
     Card(
         modifier = modifier
-            .width(160.dp)
+            .width(SlowSize.cardWidth)
             .animateContentSize()
-            .clip(RoundedCornerShape(18.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f), RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(SlowRadius.lg))
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f), RoundedCornerShape(SlowRadius.lg))
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.82f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp, pressedElevation = 3.dp),
-        shape = RoundedCornerShape(18.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = SlowElevation.subtle, pressedElevation = SlowElevation.card),
+        shape = RoundedCornerShape(SlowRadius.lg)
     ) {
-        Column(modifier = Modifier.padding(10.dp)) {
+        Column(modifier = Modifier.padding(SlowSpacing.sm + SlowSpacing.xs)) {
             Box {
                 AsyncImage(
                     model = song.albumArtUrl,
@@ -188,7 +189,7 @@ fun SongCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f)
-                        .clip(RoundedCornerShape(14.dp)),
+                        .clip(RoundedCornerShape(SlowRadius.md)),
                     contentScale = ContentScale.Crop
                 )
                 Box(
@@ -235,8 +236,8 @@ fun SongListItem(
 ) {
     ListItem(
         modifier = modifier
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .padding(horizontal = SlowSpacing.md, vertical = SlowSpacing.xs)
+            .clip(RoundedCornerShape(SlowRadius.lg))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.82f))
             .clickable(onClick = onClick),
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -267,8 +268,8 @@ fun SongListItem(
                 model = song.albumArtUrl,
                 contentDescription = "Album art",
                 modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(14.dp)),
+                    .size(SlowSize.artworkSmall)
+                    .clip(RoundedCornerShape(SlowRadius.md)),
                 contentScale = ContentScale.Crop
             )
         },
@@ -341,7 +342,7 @@ fun AlbumCard(
 ) {
     Card(
         modifier = modifier
-            .width(160.dp)
+            .width(SlowSize.cardWidth)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -411,8 +412,8 @@ fun GenreChip(
 ) {
     Surface(
         modifier = modifier
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .padding(horizontal = SlowSpacing.md, vertical = SlowSpacing.xs)
+            .clip(RoundedCornerShape(SlowRadius.lg))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f))
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
