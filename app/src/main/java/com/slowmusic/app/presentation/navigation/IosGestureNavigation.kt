@@ -3,6 +3,7 @@ package com.slowmusic.app.presentation.navigation
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -12,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -67,9 +69,16 @@ fun IosGestureNavigationLayer(
     val allowsModalDismiss = isModal
     val gesturesEnabled = enabled && canNavigateBack && route != null && !route.isRootTabRoute()
 
+    val dragProgress = when (dragMode) {
+        IosDragMode.BackPush -> (shownX / thresholdPx).coerceIn(0f, 1f)
+        IosDragMode.DismissModal -> (shownY / thresholdPx).coerceIn(0f, 1f)
+        null -> 0f
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.Black.copy(alpha = dragProgress * 0.10f))
             .pointerInput(gesturesEnabled, route) {
                 if (!gesturesEnabled) return@pointerInput
                 detectDragGestures(
@@ -131,11 +140,18 @@ fun IosGestureNavigationLayer(
             .graphicsLayer {
                 translationX = shownX
                 translationY = shownY
+                if (shownX > 0f) {
+                    val pushScale = 1f - (shownX / maxHorizontalPx * 0.012f).coerceIn(0f, 0.012f)
+                    scaleX = pushScale
+                    scaleY = pushScale
+                    shadowElevation = shownX / maxHorizontalPx * 18f
+                }
                 if (shownY > 0f) {
                     val modalScale = 1f - (shownY / maxVerticalPx * 0.035f).coerceIn(0f, 0.035f)
                     scaleX = modalScale
                     scaleY = modalScale
                     alpha = 1f - (shownY / maxVerticalPx * 0.08f).coerceIn(0f, 0.08f)
+                    shadowElevation = shownY / maxVerticalPx * 20f
                 }
             }
     ) {
