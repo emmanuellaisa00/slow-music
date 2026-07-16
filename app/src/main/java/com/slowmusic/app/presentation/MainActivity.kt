@@ -5,6 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -14,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.Brush
@@ -200,15 +209,24 @@ fun SlowMusicApp(
             modifier = Modifier.fillMaxSize(),
             containerColor = if (useAppleMusicUi || showPlayingBackdrop) Color.Transparent else MaterialTheme.colorScheme.background,
             bottomBar = {
-                if (showBottomBar) {
+                AnimatedVisibility(
+                    visible = showBottomBar,
+                    enter = slideInVertically(animationSpec = tween(220)) { it / 2 } + fadeIn(tween(180)),
+                    exit = slideOutVertically(animationSpec = tween(180)) { it / 2 } + fadeOut(tween(120))
+                ) {
                 when (navigationStyle) {
                     com.slowmusic.app.domain.model.NavigationStyle.TABS,
                     com.slowmusic.app.domain.model.NavigationStyle.BOTTOM_NAV -> {
                         Column {
-                            if (showMiniPlayer) {
+                            AnimatedVisibility(
+                                visible = showMiniPlayer,
+                                enter = slideInVertically(animationSpec = tween(220)) { it / 3 } + fadeIn(tween(160)),
+                                exit = slideOutVertically(animationSpec = tween(180)) { it / 3 } + fadeOut(tween(120))
+                            ) {
+                                val miniSong = currentSong ?: return@AnimatedVisibility
                                 if (useIosGlass) {
                                     IosGlassMiniPlayer(
-                                        song = currentSong!!,
+                                        song = miniSong,
                                         isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
                                         progress = progress,
                                         onPlayPause = onPlayPause,
@@ -217,7 +235,7 @@ fun SlowMusicApp(
                                     )
                                 } else if (useAppleMusicUi) {
                                     AppleMiniPlayer(
-                                        song = currentSong!!,
+                                        song = miniSong,
                                         isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
                                         progress = progress,
                                         onPlayPause = onPlayPause,
@@ -227,7 +245,7 @@ fun SlowMusicApp(
                                     )
                                 } else {
                                     MiniPlayer(
-                                        song = currentSong!!,
+                                        song = miniSong,
                                         isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
                                         onPlayPause = onPlayPause,
                                         onNext = onNext,
@@ -256,16 +274,28 @@ fun SlowMusicApp(
                                         )
                                 ) {
                                     bottomNavItems.forEach { item ->
+                                        val selected = currentRoute == item.screen.route
+                                        val iconScale by animateFloatAsState(
+                                            targetValue = if (selected) 1.10f else 1f,
+                                            animationSpec = spring(dampingRatio = 0.78f, stiffness = 520f),
+                                            label = "bottom_nav_icon_scale"
+                                        )
                                         NavigationBarItem(
-                                            icon = { Icon(if (currentRoute == item.screen.route) item.selectedIcon else item.unselectedIcon, contentDescription = item.title) },
+                                            icon = {
+                                                Icon(
+                                                    if (selected) item.selectedIcon else item.unselectedIcon,
+                                                    contentDescription = item.title,
+                                                    modifier = Modifier.scale(iconScale)
+                                                )
+                                            },
                                             label = { Text(item.title, style = MaterialTheme.typography.labelSmall) },
-                                            selected = currentRoute == item.screen.route,
+                                            selected = selected,
                                             colors = NavigationBarItemDefaults.colors(
                                                 selectedIconColor = MaterialTheme.colorScheme.primary,
                                                 selectedTextColor = MaterialTheme.colorScheme.primary,
-                                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
-                                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f),
+                                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f)
                                             ),
                                             onClick = {
                                                 navigateRootWithTap(item.screen.route)
@@ -277,10 +307,15 @@ fun SlowMusicApp(
                         }
                     }
                     com.slowmusic.app.domain.model.NavigationStyle.DRAWER -> {
-                        if (showMiniPlayer) {
+                        AnimatedVisibility(
+                            visible = showMiniPlayer,
+                            enter = slideInVertically(animationSpec = tween(220)) { it / 3 } + fadeIn(tween(160)),
+                            exit = slideOutVertically(animationSpec = tween(180)) { it / 3 } + fadeOut(tween(120))
+                        ) {
+                            val miniSong = currentSong ?: return@AnimatedVisibility
                             if (useIosGlass) {
                                 IosGlassMiniPlayer(
-                                    song = currentSong!!,
+                                    song = miniSong,
                                     isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
                                     progress = progress,
                                     onPlayPause = onPlayPause,
@@ -289,7 +324,7 @@ fun SlowMusicApp(
                                 )
                             } else if (useAppleMusicUi) {
                                 AppleMiniPlayer(
-                                    song = currentSong!!,
+                                    song = miniSong,
                                     isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
                                     progress = progress,
                                     onPlayPause = onPlayPause,
@@ -299,7 +334,7 @@ fun SlowMusicApp(
                                 )
                             } else {
                                 MiniPlayer(
-                                    song = currentSong!!,
+                                    song = miniSong,
                                     isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,
                                     onPlayPause = onPlayPause,
                                     onNext = onNext,
