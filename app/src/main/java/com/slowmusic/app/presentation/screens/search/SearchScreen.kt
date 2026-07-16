@@ -20,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color
@@ -104,7 +105,8 @@ fun SearchScreen(
                             shape = RoundedCornerShape(26.dp),
                             modifier = Modifier
                                 .weight(1f)
-                                .heightIn(min = 52.dp),
+                                .heightIn(min = 52.dp)
+                                .shadow(4.dp, RoundedCornerShape(26.dp), clip = false),
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.90f),
                                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.84f),
@@ -133,6 +135,7 @@ fun SearchScreen(
                             modifier = Modifier
                                 .size(52.dp)
                                 .clip(RoundedCornerShape(26.dp))
+                                .shadow(4.dp, RoundedCornerShape(26.dp), clip = false)
                                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.86f))
                         ) { Icon(Icons.Filled.Notifications, "Notifications", tint = MaterialTheme.colorScheme.onSurface) }
                     }
@@ -159,7 +162,7 @@ fun SearchScreen(
             }
             voiceMessage?.let { Text(it, modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.primary) }
             when {
-                uiState.isSearching -> LoadingIndicator()
+                uiState.isSearching -> SearchLoadingSkeleton()
                 uiState.query.isEmpty() -> BrowseContent(
                     genres = uiState.genres,
                     recentSelections = recentSelections,
@@ -243,10 +246,14 @@ private fun BrowseContent(
             items(searchHistory.take(4)) { query -> SearchTextRow(Icons.Filled.History, query) { onHistoryItemClick(query) } }
         }
         stickyHeader { LockedSectionHeader("Browse All", lockActive) }
-        item {
-            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                items(genres) { genre -> GenreChip(name = genre.name, onClick = { onGenreClick(genre.id) }) }
+        if (genres.isNotEmpty()) {
+            item {
+                LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(genres) { genre -> SearchGenreChip(name = genre.name, onClick = { onGenreClick(genre.id) }) }
+                }
             }
+        } else if (suggestions.isEmpty() && recentSelections.isEmpty() && searchHistory.isEmpty()) {
+            item { PremiumSearchEmptyState(onHistoryItemClick) }
         }
     }
 }
@@ -254,6 +261,75 @@ private fun BrowseContent(
 @Composable
 private fun LockedSectionHeader(title: String, active: Boolean) {
     PremiumLockedHeader(title = title, active = active)
+}
+
+
+@Composable
+private fun SearchLoadingSkeleton() {
+    LazyColumn(contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item { SkeletonBlock(Modifier.fillMaxWidth().height(112.dp)) }
+        items(6) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                SkeletonBlock(Modifier.size(56.dp))
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    SkeletonBlock(Modifier.fillMaxWidth(0.72f).height(16.dp))
+                    Spacer(Modifier.height(8.dp))
+                    SkeletonBlock(Modifier.fillMaxWidth(0.46f).height(12.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkeletonBlock(modifier: Modifier) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.44f))
+    )
+}
+
+@Composable
+private fun PremiumSearchEmptyState(onSuggestion: (String) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 28.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f))
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(Icons.Filled.TravelExplore, contentDescription = null, modifier = Modifier.size(52.dp), tint = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.height(12.dp))
+        Text("Discover something new", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(6.dp))
+        Text("Try trending artists, genres, albums, or songs.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(16.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AssistChip(onClick = { onSuggestion("trending songs") }, label = { Text("Trending") })
+            AssistChip(onClick = { onSuggestion("new releases") }, label = { Text("New releases") })
+        }
+    }
+}
+
+@Composable
+private fun SearchGenreChip(name: String, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .height(36.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f),
+        shape = RoundedCornerShape(18.dp),
+        tonalElevation = 1.dp
+    ) {
+        Box(Modifier.padding(horizontal = 16.dp), contentAlignment = Alignment.Center) {
+            Text(name, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+        }
+    }
 }
 
 @Composable

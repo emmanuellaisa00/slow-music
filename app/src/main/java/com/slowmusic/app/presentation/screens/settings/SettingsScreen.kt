@@ -12,6 +12,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.Color
@@ -149,7 +152,7 @@ fun SettingsScreen(
                     title = "Cover Art Background",
                     subtitle = if (preferences.enableCoverArtBlur) "Blurred artwork behind screens" else "Use the normal app background",
                     trailing = {
-                        Switch(
+                        PremiumSwitch(
                             checked = preferences.enableCoverArtBlur,
                             onCheckedChange = { viewModel.updateCoverArtBlur(it) }
                         )
@@ -196,7 +199,7 @@ fun SettingsScreen(
                     title = "Auto-Play Similar",
                     subtitle = if (preferences.autoPlaySimilar) "On" else "Off",
                     trailing = {
-                        Switch(
+                        PremiumSwitch(
                             checked = preferences.autoPlaySimilar,
                             onCheckedChange = { viewModel.updateAutoPlaySimilar(it) }
                         )
@@ -216,7 +219,7 @@ fun SettingsScreen(
                     title = "Download on Wi-Fi Only",
                     subtitle = "Save mobile data",
                     trailing = {
-                        Switch(
+                        PremiumSwitch(
                             checked = preferences.downloadOnWifiOnly,
                             onCheckedChange = { viewModel.updateDownloadOnWifiOnly(it) }
                         )
@@ -555,8 +558,8 @@ private fun SettingsSection(
     Text(
         text = title,
         style = MaterialTheme.typography.titleSmall,
-        color = PrimaryGreen,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        color = PrimaryGreen.copy(alpha = 0.78f),
+        modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp)
     )
 }
 
@@ -569,34 +572,77 @@ private fun SettingsItem(
     trailing: @Composable (() -> Unit)? = null,
     isDanger: Boolean = false
 ) {
-    val contentColor = if (isDanger) {
-        MaterialTheme.colorScheme.error
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
+    val haptics = LocalHapticFeedback.current
+    val contentColor = if (isDanger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
 
-    ListItem(
-        modifier = (if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 12.dp, vertical = 3.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)),
-        headlineContent = {
-            Text(
-                text = title,
-                color = contentColor
-            )
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 4.dp)
+            .shadow(2.dp, RoundedCornerShape(20.dp), clip = false)
+            .clip(RoundedCornerShape(20.dp))
+            .then(
+                if (onClick != null) Modifier.clickable {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onClick()
+                } else Modifier
+            ),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f),
+        tonalElevation = 1.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 64.dp)
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background((if (isDanger) MaterialTheme.colorScheme.error else PrimaryGreen).copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = if (isDanger) MaterialTheme.colorScheme.error else PrimaryGreen, modifier = Modifier.size(22.dp))
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, color = contentColor, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                if (subtitle != null) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f), style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                }
+            }
+            if (trailing != null) {
+                Spacer(Modifier.width(12.dp))
+                trailing()
+            } else if (onClick != null) {
+                Spacer(Modifier.width(8.dp))
+                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.70f), modifier = Modifier.size(22.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun PremiumSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    val haptics = LocalHapticFeedback.current
+    Switch(
+        checked = checked,
+        onCheckedChange = {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            onCheckedChange(it)
         },
-        supportingContent = subtitle?.let {
-            { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        },
-        leadingContent = {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = contentColor
-            )
-        },
-        trailingContent = trailing
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = Color.White,
+            checkedTrackColor = PrimaryGreen,
+            checkedBorderColor = PrimaryGreen,
+            uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            uncheckedTrackColor = MaterialTheme.colorScheme.surface,
+            uncheckedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.22f)
+        )
     )
 }
 
