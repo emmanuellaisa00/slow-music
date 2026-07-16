@@ -154,7 +154,7 @@ private fun MiniEqualizerBars(isPlaying: Boolean) {
                 modifier = Modifier
                     .width(4.dp)
                     .fillMaxHeight(animated.value.coerceIn(0.28f, 1f))
-                    .clip(RoundedCornerShape(SlowRadius.xs))
+                    .clip(RoundedCornerShape(SlowRadius.sm))
                     .background(PrimaryGreen.copy(alpha = if (isPlaying) 0.95f else 0.42f))
             )
         }
