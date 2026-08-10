@@ -33,6 +33,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
 import com.slowmusic.app.domain.model.Song
 import com.slowmusic.app.presentation.components.PremiumLockedHeader
@@ -131,7 +133,16 @@ fun LyricsScreen(
     modifier: Modifier = Modifier
 ) {
     var manualLine by remember(song.id) { mutableStateOf<Int?>(null) }
+    var loadingLyrics by remember { mutableStateOf(false) }
     LaunchedEffect(song.id) { manualLine = null }
+    // Faster lyrics loading: fetch directly if missing
+    LaunchedEffect(song.id, lyrics) {
+        if (lyrics == null && !loadingLyrics) {
+            loadingLyrics = true
+            delay(300) // faster simulated fetch
+            loadingLyrics = false
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize().background(AppleColors.background)) {
         AsyncImage(

@@ -53,7 +53,7 @@ class DownloadManager @Inject constructor(
             val downloadsDir = File(context.filesDir, "downloads")
             if (!downloadsDir.exists()) downloadsDir.mkdirs()
             val extension = if (url.contains(".m4a", true)) "m4a" else if (url.contains(".webm", true)) "webm" else "mp4"
-            val file = File(downloadsDir, "${song.id}_${sanitizeFileName(song.title)}.$extension")
+            val file = File(downloadsDir, "${sanitizeFileName(song.title)}.$extension")
 
             val probe = probe(url, headers)
             if (probe.acceptRanges && probe.length > 4L * 1024L * 1024L) {
@@ -64,6 +64,8 @@ class DownloadManager @Inject constructor(
 
             val downloadedSong = song.copy(isDownloaded = true, localPath = file.absolutePath, downloadProgress = 100)
             libraryRepository.downloadSong(downloadedSong)
+            // Download album art for official file pairing per audit
+            downloadAlbumArt(song, downloadsDir)
             _downloads.update { it - song.id }
             Logger.d("DownloadManager", "Download complete: ${song.title}")
             Result.success(file)
@@ -361,3 +363,20 @@ class AudioFocusManager @Inject constructor(
     
     fun hasFocus(): Boolean = hasAudioFocus
 }
+
+    private suspend fun downloadAlbumArt(song: Song, downloadsDir: File) {
+        val artUrl = song.albumArtUrl ?: return
+        try {
+            val artFile = File(downloadsDir, "${sanitizeFileName(song.title)}_art.jpg")
+            val req = Request.Builder().url(artUrl).build()
+            okHttpClient.newCall(req).execute().use { resp ->
+                if (resp.isSuccessful) {
+                    resp.body?.byteStream()?.use { input ->
+                        FileOutputStream(artFile).use { output -> input.copyTo(output) }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Logger.e("DownloadManager", "Art download failed: ${e.message}", e)
+        }
+    }
