@@ -152,9 +152,18 @@ fun AppleMusicPlayerScreen(
                     style = AppleTypography.caption1,
                     color = Color.White,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
-                Spacer(Modifier.size(48.dp))
+                IconButton(onClick = onToggleFavorite) {
+                    Icon(if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, "Favorite", tint = Color.White, modifier = Modifier.size(22.dp))
+                }
+                IconButton(onClick = onShare) {
+                    Icon(Icons.Filled.Share, "Share", tint = Color.White, modifier = Modifier.size(22.dp))
+                }
+                IconButton(onClick = onMoreOptions) {
+                    Icon(Icons.Filled.MoreVert, "More", tint = Color.White, modifier = Modifier.size(22.dp))
+                }
             }
 
             AsyncImage(
@@ -189,6 +198,17 @@ fun AppleMusicPlayerScreen(
 
             Spacer(Modifier.height(14.dp))
             IOSProgressBar(value = progress, onSeek = onSeek)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                val currentMs = (song.duration * progress).toLong()
+                val totalMs = song.duration
+                val fmt = { ms: Long ->
+                    val m = ms / 60000
+                    val s = (ms % 60000) / 1000
+                    String.format("%d:%02d", m, s)
+                }
+                Text(fmt(currentMs), color = Color.White.copy(alpha = 0.72f), style = AppleTypography.footnote)
+                Text(fmt(totalMs), color = Color.White.copy(alpha = 0.72f), style = AppleTypography.footnote)
+            }
             Spacer(Modifier.height(14.dp))
             AudioLayerTabs(
                 selected = audioLayerMode,
@@ -268,7 +288,7 @@ private fun AudioLayerTabs(
             val label = when (mode) {
                 AudioLayerMode.VOCALS -> "Vocals"
                 AudioLayerMode.INSTRUMENTAL -> "Instrumental"
-                AudioLayerMode.BOTH -> "Both"
+                AudioLayerMode.BOTH -> "Full Track"
             }
             Surface(
                 modifier = Modifier

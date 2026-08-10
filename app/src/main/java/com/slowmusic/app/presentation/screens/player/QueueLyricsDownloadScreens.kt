@@ -159,12 +159,10 @@ fun LyricsScreen(
                 Column(Modifier.weight(1f)) {
                     Text(song.title, color = AppleColors.textPrimary, style = AppleTypography.headline, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(song.artist, color = AppleColors.textSecondary, style = AppleTypography.subheadline, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Spacer(Modifier.height(8.dp))
-                    LyricsProgressBar(value = progress, onSeek = onSeekToProgress)
                 }
             }
 
-            Box(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
+            Box(modifier = Modifier.weight(1f).padding(horizontal = 20.dp)) {
                 if (lyrics != null) {
                     val parsed = remember(song.id, lyrics) { parseLrcLines(lyrics) }
                     val lines = parsed.map { it.second }
@@ -208,10 +206,28 @@ fun LyricsScreen(
                         }
                     }
                 } else {
-                    EmptyApplePanel(Icons.Filled.Lyrics, "Lyrics Not Available", "We couldn't find lyrics for this song")
+                    // Improved empty state with actionable options per audit
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Filled.Lyrics, null, tint = AppleColors.textTertiary, modifier = Modifier.size(64.dp))
+                            Spacer(Modifier.height(16.dp))
+                            Text("Lyrics Not Available", style = AppleTypography.title3, color = AppleColors.textPrimary)
+                            Spacer(Modifier.height(8.dp))
+                            Text("We couldn't find lyrics for this song", style = AppleTypography.body, color = AppleColors.textSecondary, textAlign = TextAlign.Center)
+                            Spacer(Modifier.height(24.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Button(onClick = onNavigateBack) { Text("Back to Album") }
+                                OutlinedButton(onClick = { }) { Text("Search Online") }
+                            }
+                        }
+                    }
                 }
             }
         }
+
+            // Playback scrubber integrated at bottom per audit
+            Spacer(Modifier.height(16.dp))
+            LyricsProgressBar(value = progress, onSeek = onSeekToProgress)
     }
 }
 

@@ -34,7 +34,7 @@ object SlowSize {
     val icon = 24.dp
     val artworkSmall = 52.dp
     val miniArtwork = 46.dp
-    val cardWidth = 160.dp
+    val cardWidth = 170.dp
     val cardArtworkRadius = SlowRadius.md
 }
 

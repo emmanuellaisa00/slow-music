@@ -106,13 +106,12 @@ fun LibraryScreen(
                         Column {
                             Text("Your Library", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.height(4.dp))
-                            Text("${favorites.size} favorites • ${downloadedSongs.size} downloads • ${playlists.size} playlists", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            // Metadata removed to prevent double-reporting with list rows below
                         }
                     }
                 }
             }
-            stickyHeader { LockedLibrarySection(title = "Library", active = lockActive) }
-            
+            // Library sections start directly below Your Library card (duplicate header removed)
             item {
                 LibraryListItem(
                     icon = Icons.Filled.Favorite,

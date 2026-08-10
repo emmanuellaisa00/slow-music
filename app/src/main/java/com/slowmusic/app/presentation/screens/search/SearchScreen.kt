@@ -130,15 +130,16 @@ fun SearchScreen(
                                 }
                             }
                         )
-                        IconButton(
-                            onClick = onNotifications,
-                            modifier = Modifier
-                                .size(52.dp)
-                                .clip(RoundedCornerShape(26.dp))
-                                .shadow(4.dp, RoundedCornerShape(26.dp), clip = false)
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.86f))
-                        ) { Icon(Icons.Filled.Notifications, "Notifications", tint = MaterialTheme.colorScheme.onSurface) }
                     }
+                },
+                actions = {
+                    IconButton(
+                        onClick = onNotifications,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.86f))
+                    ) { Icon(Icons.Filled.Notifications, "Notifications", tint = MaterialTheme.colorScheme.onSurface) }
                 }
             )
         }
@@ -150,9 +151,7 @@ fun SearchScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                item {
-                    SearchFilterChip("All", uiState.selectedTab == SearchTab.ALL) { viewModel.selectTab(SearchTab.ALL) }
-                }
+                // Duplicate 'All' chip removed per audit; categories kept in tab strip below
                 if (uiState.downloadedSongs.isNotEmpty()) item {
                     SearchFilterChip("Downloaded", uiState.selectedTab == SearchTab.DOWNLOADS) { viewModel.selectTab(SearchTab.DOWNLOADS) }
                 }
@@ -222,7 +221,7 @@ private fun BrowseContent(
 ) {
     val listState = rememberLazyListState()
     val lockActive by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 8 } }
-    LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 92.dp)) {
+    LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 120.dp)) {
         if (suggestions.isNotEmpty()) {
             stickyHeader { LockedSectionHeader("Suggestions", lockActive) }
             items(suggestions) { suggestion -> SearchTextRow(Icons.Filled.Lightbulb, suggestion) { onHistoryItemClick(suggestion) } }
@@ -260,7 +259,14 @@ private fun BrowseContent(
 
 @Composable
 private fun LockedSectionHeader(title: String, active: Boolean) {
-    PremiumLockedHeader(title = title, active = active)
+    // Clean, unbordered typography header per design audit (replacing stroked outline)
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+    )
 }
 
 
@@ -395,7 +401,7 @@ private fun SearchResults(
 
     val listState = rememberLazyListState()
     val lockActive by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 8 } }
-    LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 92.dp)) {
+    LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 120.dp)) {
         item {
             ScrollableTabRow(selectedTabIndex = state.selectedTab.ordinal, edgePadding = 8.dp) {
                 SearchTab.values().forEach { tab ->

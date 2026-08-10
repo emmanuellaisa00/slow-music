@@ -291,9 +291,9 @@ fun SlowMusicApp(
                                             label = { Text(item.title, style = MaterialTheme.typography.labelSmall) },
                                             selected = selected,
                                             colors = NavigationBarItemDefaults.colors(
-                                                selectedIconColor = MaterialTheme.colorScheme.primary,
-                                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                                                selectedIconColor = if (useAppleMusicUi) Color.White else MaterialTheme.colorScheme.primary,
+                                                selectedTextColor = if (useAppleMusicUi) Color.White else MaterialTheme.colorScheme.primary,
+                                                indicatorColor = if (useAppleMusicUi) Color.White.copy(alpha = 0.22f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
                                                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f),
                                                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f)
                                             ),

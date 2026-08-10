@@ -286,19 +286,7 @@ private fun PremiumHomeHero(
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(Modifier.height(14.dp))
-                FilledTonalButton(
-                    onClick = onSearch,
-                    modifier = Modifier.height(40.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = Color.White.copy(alpha = 0.16f),
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    )
-                ) {
-                    Icon(Icons.Filled.Search, null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Find music", fontWeight = FontWeight.SemiBold)
-                }
+                // Search triggers removed; navigation kept in bottom tab bar per design audit
             }
             Row(
                 modifier = Modifier.align(Alignment.TopEnd),
@@ -306,7 +294,7 @@ private fun PremiumHomeHero(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 HeroIconButton(Icons.Filled.Notifications, "Notifications", onNotifications)
-                HeroIconButton(Icons.Filled.Search, "Search", onSearch)
+                // Search icon removed per design audit; navigation kept in bottom tab bar
             }
         }
     }

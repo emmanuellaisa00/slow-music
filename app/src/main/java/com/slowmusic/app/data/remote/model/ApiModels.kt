@@ -61,7 +61,7 @@ data class AlbumDto(
 // Genre constants
 object GenreConstants {
     val GENRES = listOf(
-        GenreDto("20", "Action", null),
+        GenreDto("20", "Pop", null),
         GenreDto("2", "Afrikaans", null),
         GenreDto("3", "Alternative", null),
         GenreDto("4", "Ambient", null),

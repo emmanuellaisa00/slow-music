@@ -5,6 +5,7 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -130,17 +131,25 @@ fun MiniPlayer(
 
 @Composable
 private fun MiniEqualizerBars(isPlaying: Boolean) {
-    val transition = rememberInfiniteTransition(label = "mini_equalizer")
+    val transition = if (isPlaying) rememberInfiniteTransition(label = "mini_equalizer") else null
     val bars = listOf(0, 1, 2).map { index ->
-        transition.animateFloat(
-            initialValue = 0.35f,
-            targetValue = if (isPlaying) listOf(0.95f, 0.62f, 0.82f)[index] else 0.35f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 420 + index * 90, easing = LinearEasing),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "mini_eq_$index"
-        )
+        if (isPlaying && transition != null) {
+            transition.animateFloat(
+                initialValue = 0.35f,
+                targetValue = listOf(0.95f, 0.62f, 0.82f)[index],
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 420 + index * 90, easing = LinearEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "mini_eq_$index"
+            )
+        } else {
+            androidx.compose.animation.core.animateFloatAsState(
+                targetValue = 0.35f,
+                animationSpec = tween(0),
+                label = "mini_eq_static"
+            )
+        }
     }
     Row(
         modifier = Modifier
@@ -216,7 +225,7 @@ fun SongCard(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 AssistChip(
                     onClick = {},
-                    label = { Text(if (song.isDownloaded) "Offline" else if (song.isLocal) "Local" else "Stream") },
+                    label = { Text(if (song.isDownloaded) "Offline" else if (song.isLocal) "Local" else "Play") },
                     modifier = Modifier.height(28.dp)
                 )
                 IconButton(onClick = onMoreClick, modifier = Modifier.size(36.dp)) { Icon(Icons.Filled.MoreHoriz, contentDescription = "More", tint = MaterialTheme.colorScheme.onSurfaceVariant) }

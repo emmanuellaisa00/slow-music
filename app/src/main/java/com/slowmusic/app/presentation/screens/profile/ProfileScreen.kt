@@ -52,9 +52,9 @@ fun ProfileScreen(
                 ProfileHeader(subscription = subscription)
             }
             
-            // Subscription Card
+            // Cohesive Account Status Card (merged promo banner + subscription status)
             item {
-                SubscriptionCard(
+                AccountStatusCard(
                     subscription = subscription,
                     onUpgradeClick = onNavigateToSubscription
                 )
@@ -67,10 +67,10 @@ fun ProfileScreen(
             
             item {
                 ProfileListItem(
-                    icon = Icons.Filled.CardMembership,
-                    title = "Subscription",
-                    subtitle = subscription.type.name,
-                    onClick = onNavigateToSubscription
+                    icon = Icons.Filled.Payment,
+                    title = "Purchase History",
+                    subtitle = "0 items • Offline Purchases",
+                    onClick = { message = "No offline purchases found" }
                 )
             }
             
@@ -87,8 +87,8 @@ fun ProfileScreen(
                 ProfileListItem(
                     icon = Icons.Filled.CardGiftcard,
                     title = "Redeem Code",
-                    subtitle = "Local database mode",
-                    onClick = { message = "Redeem codes are disabled in local database mode" }
+                    subtitle = "0 items • Offline Purchases",
+                    onClick = { message = "No redeem codes available offline" }
                 )
             }
             
@@ -120,7 +120,7 @@ fun ProfileScreen(
                     icon = Icons.Filled.Info,
                     title = "About",
                     subtitle = "Version 1.0.0",
-                    onClick = { message = "Slow Music v1.0.0 • Local database mode" }
+                    onClick = { message = "Slow Music v1.0.0 • Offline Purchases enabled" }
                 )
             }
         }
@@ -176,7 +176,7 @@ private fun ProfileHeader(
 }
 
 @Composable
-private fun SubscriptionCard(
+private fun AccountStatusCard(
     subscription: Subscription,
     onUpgradeClick: () -> Unit
 ) {
