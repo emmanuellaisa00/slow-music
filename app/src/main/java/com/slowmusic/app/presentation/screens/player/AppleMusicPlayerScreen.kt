@@ -216,6 +216,26 @@ fun AppleMusicPlayerScreen(
             )
             Spacer(Modifier.height(20.dp))
 
+            // Playback toggle controls row (shuffle/repeat) added per audit
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onToggleShuffle, modifier = Modifier.size(44.dp)) {
+                    Icon(
+                        Icons.Filled.Shuffle,
+                        contentDescription = "Shuffle",
+                        tint = if (isShuffled) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.58f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                IconButton(onClick = onToggleRepeat, modifier = Modifier.size(44.dp)) {
+                    Icon(
+                        if (repeatMode == RepeatMode.ONE) Icons.Filled.RepeatOne else Icons.Filled.Repeat,
+                        contentDescription = "Repeat",
+                        tint = if (repeatMode != RepeatMode.OFF) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.58f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(34.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onPrevious, modifier = Modifier.size(58.dp)) { Icon(Icons.Filled.SkipPrevious, "Previous", tint = Color.White, modifier = Modifier.size(38.dp)) }
                 Box(
@@ -328,5 +348,15 @@ private fun IOSProgressBar(value: Float, onSeek: (Float) -> Unit, modifier: Modi
     ) {
         Box(Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.22f)))
         Box(Modifier.fillMaxWidth(value.coerceIn(0f, 1f)).height(7.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.86f)))
+        // Scrubber thumb indicator added per audit
+        Box(
+            modifier = Modifier
+                .offset(x = (value * 300f).dp.coerceAtMost(300.dp - 12.dp) - 6.dp)
+                .align(Alignment.CenterStart)
+                .size(16.dp)
+                .clip(CircleShape)
+                .background(Color.White)
+                .border(1.5.dp, Color.Black.copy(alpha = 0.15f), CircleShape)
+        )
     }
 }

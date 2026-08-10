@@ -146,6 +146,18 @@ fun LyricsScreen(
                 .background(Brush.verticalGradient(listOf(Color.Black.copy(0.25f), AppleColors.background.copy(0.86f), AppleColors.background)))
         )
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            // Album art thumbnail added for lyrics context per audit
+            AppleGlassCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), cornerRadius = 16.dp) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AsyncImage(song.albumArtUrl, null, Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)), contentScale = ContentScale.Crop)
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(song.title, style = AppleTypography.subheadline, color = AppleColors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(song.artist, style = AppleTypography.caption1, color = AppleColors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

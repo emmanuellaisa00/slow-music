@@ -88,7 +88,8 @@ fun LibraryScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(paddingValues)
+                .statusBarsPadding(),
             contentPadding = PaddingValues(bottom = 100.dp)
         ) {
             item {
