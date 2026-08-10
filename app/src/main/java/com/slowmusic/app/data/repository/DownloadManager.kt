@@ -199,6 +199,23 @@ class DownloadManager @Inject constructor(
     fun cleanup() {
         scope.cancel()
     }
+
+    private suspend fun downloadAlbumArt(song: Song, downloadsDir: File) {
+        val artUrl = song.albumArtUrl ?: return
+        try {
+            val artFile = File(downloadsDir, "${sanitizeFileName(song.title)}_art.jpg")
+            val req = Request.Builder().url(artUrl).build()
+            okHttpClient.newCall(req).execute().use { resp ->
+                if (resp.isSuccessful) {
+                    resp.body?.byteStream()?.use { input ->
+                        FileOutputStream(artFile).use { output -> input.copyTo(output) }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Logger.e("DownloadManager", "Art download failed: ${e.message}", e)
+        }
+    }
 }
 
 sealed class DownloadState {
@@ -363,20 +380,3 @@ class AudioFocusManager @Inject constructor(
     
     fun hasFocus(): Boolean = hasAudioFocus
 }
-
-    private suspend fun downloadAlbumArt(song: Song, downloadsDir: File) {
-        val artUrl = song.albumArtUrl ?: return
-        try {
-            val artFile = File(downloadsDir, "${sanitizeFileName(song.title)}_art.jpg")
-            val req = Request.Builder().url(artUrl).build()
-            okHttpClient.newCall(req).execute().use { resp ->
-                if (resp.isSuccessful) {
-                    resp.body?.byteStream()?.use { input ->
-                        FileOutputStream(artFile).use { output -> input.copyTo(output) }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Logger.e("DownloadManager", "Art download failed: ${e.message}", e)
-        }
-    }

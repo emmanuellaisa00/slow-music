@@ -1,5 +1,6 @@
 package com.slowmusic.app.presentation.screens.profile
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -162,7 +163,7 @@ private fun ProfileHeader(
             }
             // Profile avatar edit indicator added per audit
             IconButton(
-                onClick = { message = "Profile photo upload feature coming soon" },
+                onClick = { },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .offset(x = 8.dp, y = 8.dp)

@@ -402,7 +402,7 @@ private fun QuickPicksRow(
     onMoreClick: (Song) -> Unit
 ) {
     LazyRow(
-        contentPadding = PaddingValues(start = 20.dp, end = 60.dp, vertical = 0.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(songs) { song ->
@@ -434,7 +434,7 @@ private fun GenreRow(
     onGenreClick: (String) -> Unit
 ) {
     LazyRow(
-        contentPadding = PaddingValues(start = 20.dp, end = 60.dp, vertical = 0.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(genres) { genre ->
@@ -477,7 +477,7 @@ private fun SongRow(
     onMoreClick: (Song) -> Unit
 ) {
     LazyRow(
-        contentPadding = PaddingValues(start = 20.dp, end = 60.dp, vertical = 0.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(songs) { song ->
@@ -496,7 +496,7 @@ private fun AlbumRow(
     onAlbumClick: (String) -> Unit
 ) {
     LazyRow(
-        contentPadding = PaddingValues(start = 20.dp, end = 60.dp, vertical = 0.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(albums) { album ->
