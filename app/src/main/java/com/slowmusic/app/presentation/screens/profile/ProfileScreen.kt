@@ -151,20 +151,26 @@ private fun ProfileHeader(
                 shape = CircleShape,
                 color = PrimaryGreen
             ) {
-            Icon(
-                Icons.Filled.Person,
-                contentDescription = "Profile",
+                Icon(
+                    Icons.Filled.Person,
+                    contentDescription = "Profile",
+                    modifier = Modifier
+                        .padding(24.dp)
+                        .fillMaxSize(),
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+            // Profile avatar edit indicator added per audit
+            IconButton(
+                onClick = { message = "Profile photo upload feature coming soon" },
                 modifier = Modifier
-                    .padding(24.dp)
-                    .fillMaxSize(),
-                tint = MaterialTheme.colorScheme.onPrimary
-            )
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 8.dp, y = 8.dp)
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.92f))
+            ) { Icon(Icons.Filled.Edit, "Edit profile photo", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp)) }
         }
-        // Profile avatar edit indicator added per audit
-        IconButton(
-            onClick = { message = "Profile photo upload feature coming soon" },
-            modifier = Modifier.align(Alignment.BottomEnd).offset(x = 8.dp, y = 8.dp).size(28.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.92f))
-        ) { Icon(Icons.Filled.Edit, "Edit profile photo", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp)) }
         
         Spacer(modifier = Modifier.height(16.dp))
         
