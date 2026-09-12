@@ -1,4 +1,4 @@
-# 🎵 Slow Music
+# 🎵 Slow Musicv
 
 > A modern Spotify-like music streaming Android app with optional Apple Music-style UI
 
