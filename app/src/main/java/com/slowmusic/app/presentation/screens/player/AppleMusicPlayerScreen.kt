@@ -111,7 +111,7 @@ fun AppleMusicPlayerScreen(
     ) {
         AsyncImage(
             model = song.albumArtUrl,
-            contentDescription = null,
+            contentDescription = "Background artwork for ${song.title}",
             modifier = Modifier
                 .fillMaxSize()
                 .blur(68.dp)
@@ -184,7 +184,13 @@ fun AppleMusicPlayerScreen(
             )
 
             Spacer(Modifier.height(18.dp))
-
+            if (song.title.isBlank() || song.id.isEmpty()) {
+                ErrorMessage(
+                    message = "Playback unavailable: song data is missing or not loaded.",
+                    onRetry = { onPlayPause(); if (!isPlaying) onPlayPause() },
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+                )
+            } else {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(song.title, color = Color.White, style = AppleTypography.title2, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -268,6 +274,7 @@ fun AppleMusicPlayerScreen(
                     Icon(Icons.Filled.KeyboardArrowUp, null, tint = Color(0xFF1DB954).copy(alpha = 0.6f))
                     Text("Lyrics", color = Color(0xFF1DB954), style = AppleTypography.headline, fontWeight = FontWeight.Bold)
                 }
+            }
             }
         }
     }
