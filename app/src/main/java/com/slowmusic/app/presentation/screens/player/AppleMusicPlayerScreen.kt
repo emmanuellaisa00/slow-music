@@ -97,7 +97,7 @@ fun AppleMusicPlayerScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(Color(0xFF121212))
             .pointerInput(song.id) {
                 detectVerticalDragGestures(
                     onVerticalDrag = { _, dragAmount -> if (dragAmount > 0) swipeDownDistance += dragAmount },
@@ -123,10 +123,10 @@ fun AppleMusicPlayerScreen(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(
-                            Color.Black.copy(alpha = 0.52f),
-                            Color.Black.copy(alpha = 0.70f),
-                            Color.Black.copy(alpha = 0.92f)
+                        colors = listOf(
+                            Color(0xFF121212).copy(alpha = 0.65f),
+                            Color(0xFF121212).copy(alpha = 0.85f),
+                            Color(0xFF121212)
                         )
                     )
                 )
@@ -156,7 +156,7 @@ fun AppleMusicPlayerScreen(
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(onClick = onToggleFavorite) {
-                    Icon(if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, "Favorite", tint = Color.White, modifier = Modifier.size(22.dp))
+                    Icon(if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, "Favorite", tint = Color(0xFF1DB954), modifier = Modifier.size(22.dp))
                 }
                 IconButton(onClick = onShare) {
                     Icon(Icons.Filled.Share, "Share", tint = Color.White, modifier = Modifier.size(22.dp))
@@ -222,7 +222,7 @@ fun AppleMusicPlayerScreen(
                     Icon(
                         Icons.Filled.Shuffle,
                         contentDescription = "Shuffle",
-                        tint = if (isShuffled) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.58f),
+                        tint = if (isShuffled) Color(0xFF1DB954) else Color.White.copy(alpha = 0.58f),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -230,7 +230,7 @@ fun AppleMusicPlayerScreen(
                     Icon(
                         if (repeatMode == RepeatMode.ONE) Icons.Filled.RepeatOne else Icons.Filled.Repeat,
                         contentDescription = "Repeat",
-                        tint = if (repeatMode != RepeatMode.OFF) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.58f),
+                        tint = if (repeatMode != RepeatMode.OFF) Color(0xFF1DB954) else Color.White.copy(alpha = 0.58f),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -242,12 +242,12 @@ fun AppleMusicPlayerScreen(
                     modifier = Modifier
                         .size(74.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.12f))
-                        .border(1.dp, Color.White.copy(alpha = 0.18f), CircleShape)
+                        .background(Color(0xFF1DB954).copy(alpha = 0.95f))
+                        .border(1.dp, Color(0xFF1DB954), CircleShape)
                         .clickable(onClick = onPlayPause),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, if (isPlaying) "Pause" else "Play", tint = Color.White, modifier = Modifier.size(42.dp))
+                    Icon(if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, if (isPlaying) "Pause" else "Play", tint = Color.Black, modifier = Modifier.size(42.dp))
                 }
                 IconButton(onClick = onNext, modifier = Modifier.size(58.dp)) { Icon(Icons.Filled.SkipNext, "Next", tint = Color.White, modifier = Modifier.size(38.dp)) }
             }
@@ -264,14 +264,14 @@ fun AppleMusicPlayerScreen(
                     .fillMaxWidth()
                     .height(sheetHeight)
                     .clip(RoundedCornerShape(topStart = 38.dp, topEnd = 38.dp))
-                    .background(Color.White.copy(alpha = sheetAlpha))
-                    .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(topStart = 38.dp, topEnd = 38.dp))
+                    .background(Color(0xFF181818).copy(alpha = sheetAlpha))
+                    .border(1.dp, Color(0xFF282828), RoundedCornerShape(topStart = 38.dp, topEnd = 38.dp))
                     .clickable { openLyricsWithTransition() },
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.KeyboardArrowUp, null, tint = Color.White.copy(alpha = 0.22f))
-                    Text("Lyrics", color = Color.White, style = AppleTypography.headline, fontWeight = FontWeight.Bold)
+                    Icon(Icons.Filled.KeyboardArrowUp, null, tint = Color(0xFF1DB954).copy(alpha = 0.6f))
+                    Text("Lyrics", color = Color(0xFF1DB954), style = AppleTypography.headline, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -346,8 +346,8 @@ private fun IOSProgressBar(value: Float, onSeek: (Float) -> Unit, modifier: Modi
             },
         contentAlignment = Alignment.CenterStart
     ) {
-        Box(Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.22f)))
-        Box(Modifier.fillMaxWidth(value.coerceIn(0f, 1f)).height(7.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.86f)))
+        Box(Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(50)).background(Color(0xFF1DB954).copy(alpha = 0.28f)))
+        Box(Modifier.fillMaxWidth(value.coerceIn(0f, 1f)).height(7.dp).clip(RoundedCornerShape(50)).background(Color(0xFF1DB954)))
         // Scrubber thumb indicator added per audit
         Box(
             modifier = Modifier

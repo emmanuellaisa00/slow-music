@@ -362,7 +362,27 @@ class MainViewModel @Inject constructor(
     fun toggleShuffle() {
         _isShuffled.value = !_isShuffled.value
         mediaController?.shuffleModeEnabled = _isShuffled.value
+        if (_isShuffled.value) {
+            viewModelScope.launch { applySmartShuffle() }
+        }
         persistQueueState()
+    }
+
+    private suspend fun applySmartShuffle() {
+        val currentQueue = _queue.value
+        if (currentQueue.isEmpty()) return
+        val seed = _currentSong.value ?: currentQueue.first()
+        val smartQueue = buildSmartRadio(seed).take(currentQueue.size.coerceAtLeast(8))
+        val newQueue = (currentQueue.distinctBy { it.id }.toMutableList()).apply {
+            clear()
+            addAll(smartQueue.distinctBy { it.id })
+            if (isEmpty()) addAll(currentQueue)
+        }.take(24)
+        _queue.value = newQueue
+        val newIndex = newQueue.indexOfFirst { it.id == seed.id }.coerceAtLeast(0)
+        _currentIndex.value = newIndex
+        persistQueueState()
+        Logger.d("MainViewModel", "Smart shuffle applied: ${newQueue.size} songs")
     }
 
     fun toggleRepeat() {

@@ -605,7 +605,13 @@ class AlbumDetailsViewModel @Inject constructor(
             _state.value = AlbumDetailsState(album, songs)
         } else {
             val album = musicRepository.getAlbumById(id) ?: Album(id, "Album $id", "Unknown Artist", "", null, 0, null, null)
-            _state.value = AlbumDetailsState(album, musicRepository.getSongsByAlbum(id))
+            var songs = musicRepository.getSongsByAlbum(id)
+            // Fetch songs from streaming fallback if local list is empty
+            if (songs.isEmpty()) {
+                val fallbackSongs = runCatching { streamingFallbackResolver.searchSongs("${album.title} ${album.artist} album", 20) }.getOrDefault(emptyList())
+                songs = fallbackSongs.filter { it.album.equals(album.title, ignoreCase = true) || it.artist.equals(album.artist, ignoreCase = true) }
+            }
+            _state.value = AlbumDetailsState(album, songs)
         }
     }
     fun saveAlbum() = viewModelScope.launch { _state.value.songs.take(1).forEach { libraryRepository.addToFavorites(it) } }

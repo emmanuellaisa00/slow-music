@@ -63,6 +63,7 @@ sealed class Screen(val route: String) {
     object Terms : Screen("legal/terms")
     object NotificationPermission : Screen("permissions/notifications")
     object LocalFilesPermission : Screen("permissions/local_files")
+    object SmartShuffle : Screen("smart_shuffle")
     object CastDevices : Screen("cast/devices")
     
     // Search

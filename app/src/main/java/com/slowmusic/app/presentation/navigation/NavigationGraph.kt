@@ -654,6 +654,30 @@ fun NavigationGraph(
             }
         }
 
+        composable(Screen.SmartShuffle.route) {
+            AppleMusicPlayerScreen(
+                song = currentSong ?: Song("smart_shuffle", "Smart Shuffle", "Spotify Style", "Shuffle", null, null, null, 0, null, null),
+                isPlaying = playbackState == PlaybackState.PLAYING,
+                progress = progress,
+                repeatMode = repeatMode,
+                audioLayerMode = audioLayerMode,
+                isShuffled = isShuffled,
+                isFavorite = false,
+                onPlayPause = onPlayPause,
+                onNext = onNext,
+                onPrevious = onPrevious,
+                onSeek = onSeek,
+                onToggleFavorite = onToggleFavorite,
+                onToggleShuffle = onToggleShuffle,
+                onToggleRepeat = onToggleRepeat,
+                onSetAudioLayerMode = onSetAudioLayerMode,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToLyrics = { openModal(Screen.Lyrics.route) },
+                onNavigateToQueue = { openModal(Screen.Queue.route) },
+                onShare = { },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
         composable(Screen.CastDevices.route) { StyledUtilityRoute { CastDevicePickerScreen(onNavigateBack = { navController.popBackStack() }) } }
         composable(Screen.DownloadStorage.route) { StyledUtilityRoute { DownloadStorageManagerScreen(onNavigateBack = { navController.popBackStack() }) } }
         composable(Screen.PrivacyPolicy.route) { StyledUtilityRoute { LegalTextScreen("Privacy Policy", PrivacyPolicyBody, onNavigateBack = { navController.popBackStack() }) } }
