@@ -224,7 +224,8 @@ fun SlowMusicApp(
                                 exit = slideOutVertically(animationSpec = tween(180)) { it / 3 } + fadeOut(tween(120))
                             ) {
                                 val miniSong = currentSong ?: return@AnimatedVisibility
-                                if (useIosGlass) {
+                                key(miniSong.id) {
+                                    if (useIosGlass) {
                                     IosGlassMiniPlayer(
                                         song = miniSong,
                                         isPlaying = playbackState == com.slowmusic.app.domain.model.PlaybackState.PLAYING,

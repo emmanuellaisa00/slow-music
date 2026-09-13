@@ -210,11 +210,6 @@ fun AppleMusicPlayerScreen(
                 Text(fmt(totalMs), color = Color.White.copy(alpha = 0.72f), style = AppleTypography.footnote)
             }
             Spacer(Modifier.height(14.dp))
-            AudioLayerTabs(
-                selected = audioLayerMode,
-                onSelect = onSetAudioLayerMode
-            )
-            Spacer(Modifier.height(20.dp))
 
             // Playback toggle controls row (shuffle/repeat) added per audit
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
@@ -278,62 +273,6 @@ fun AppleMusicPlayerScreen(
     }
 }
 
-
-@Composable
-private fun AudioLayerTabs(
-    selected: AudioLayerMode,
-    onSelect: (AudioLayerMode) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = "Audio",
-            color = Color.White.copy(alpha = 0.58f),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(22.dp))
-                .background(Color.White.copy(alpha = 0.08f))
-                .border(1.dp, Color.White.copy(alpha = 0.11f), RoundedCornerShape(22.dp))
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AudioLayerMode.values().forEach { mode ->
-            val active = selected == mode
-            val label = when (mode) {
-                AudioLayerMode.VOCALS -> "Vocals"
-                AudioLayerMode.INSTRUMENTAL -> "Instrumental"
-                AudioLayerMode.BOTH -> "Full Track"
-            }
-            Surface(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .clickable { onSelect(mode) },
-                shape = RoundedCornerShape(18.dp),
-                color = if (active) Color.White.copy(alpha = 0.92f) else Color.Transparent,
-                contentColor = if (active) Color.Black else Color.White.copy(alpha = 0.78f)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = if (active) FontWeight.Bold else FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-        }
-    }
-}
-}
 
 @Composable
 private fun IOSProgressBar(value: Float, onSeek: (Float) -> Unit, modifier: Modifier = Modifier) {

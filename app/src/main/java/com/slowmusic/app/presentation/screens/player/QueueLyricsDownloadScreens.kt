@@ -148,43 +148,48 @@ fun LyricsScreen(
         AsyncImage(
             model = song.albumArtUrl,
             contentDescription = null,
-            modifier = Modifier.fillMaxSize().blur(60.dp),
+            modifier = Modifier.fillMaxSize().blur(80.dp),
             contentScale = ContentScale.Crop
         )
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color.Black.copy(0.25f), AppleColors.background.copy(0.86f), AppleColors.background)))
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            AppleColors.background.copy(alpha = 0.70f),
+                            AppleColors.background.copy(alpha = 0.88f),
+                            AppleColors.background.copy(alpha = 0.98f),
+                            AppleColors.background
+                        )
+                    )
+                )
         )
-        Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            // Album art thumbnail added for lyrics context per audit
-            AppleGlassCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), cornerRadius = 16.dp) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    AsyncImage(song.albumArtUrl, null, Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)), contentScale = ContentScale.Crop)
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(song.title, style = AppleTypography.subheadline, color = AppleColors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(song.artist, style = AppleTypography.caption1, color = AppleColors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                }
-            }
-
+        Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+            // Compact song info header at top like Apple Music
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onNavigateBack, modifier = Modifier.size(44.dp)) {
-                    Icon(Icons.Filled.ArrowBack, "Back", tint = AppleColors.textPrimary)
+                    Icon(Icons.Filled.KeyboardArrowDown, "Back", tint = AppleColors.textPrimary)
                 }
                 Spacer(Modifier.width(8.dp))
                 Column(Modifier.weight(1f)) {
                     Text(song.title, color = AppleColors.textPrimary, style = AppleTypography.headline, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(song.artist, color = AppleColors.textSecondary, style = AppleTypography.subheadline, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
+                Icon(
+                    imageVector = Icons.Filled.Lyrics,
+                    contentDescription = "Lyrics",
+                    tint = AppleColors.primary,
+                    modifier = Modifier.size(24.dp)
+                )
             }
 
+            // Lyrics centered with large Apple Music typography
             Box(modifier = Modifier.weight(1f).padding(horizontal = 20.dp)) {
                 if (lyrics != null) {
                     val parsed = remember(song.id, lyrics) { parseLrcLines(lyrics) }
@@ -198,17 +203,17 @@ fun LyricsScreen(
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(top = 12.dp, bottom = 96.dp)
+                        verticalArrangement = Arrangement.Center,
+                        contentPadding = PaddingValues(top = 32.dp, bottom = 120.dp)
                     ) {
                         itemsIndexed(lines) { index, line ->
                             val active = index == currentLine
-                            val textSize by animateDpAsState(if (active) 24.dp else 18.dp, label = "lyric_size")
-                            val alpha by animateFloatAsState(if (active) 1f else 0.38f, label = "lyric_alpha")
+                            val textSize by animateDpAsState(if (active) 30.dp else 20.dp, label = "lyric_size_apple")
+                            val alpha by animateFloatAsState(if (active) 1f else 0.35f, label = "lyric_alpha_apple")
                             val scale by animateFloatAsState(
-                                if (active) 1.08f else 0.96f,
+                                if (active) 1.06f else 0.98f,
                                 animationSpec = spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow),
-                                label = "lyric_scale"
+                                label = "lyric_scale_apple"
                             )
                             Text(
                                 text = line.ifBlank { "♪" },
@@ -219,8 +224,8 @@ fun LyricsScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .scale(scale)
-                                    .background(if (active) AppleColors.primary.copy(alpha = 0.10f) else Color.Transparent, RoundedCornerShape(18.dp))
-                                    .padding(horizontal = 10.dp, vertical = 8.dp)
+                                    .background(if (active) AppleColors.primary.copy(alpha = 0.12f) else Color.Transparent, RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 16.dp, vertical = 10.dp)
                                     .clickable {
                                         manualLine = null
                                         onSeekToProgress(progressForLine(parsed, index, lines.size, song.duration))
@@ -229,28 +234,56 @@ fun LyricsScreen(
                         }
                     }
                 } else {
-                    // Improved empty state with actionable options per audit
+                    // Apple Music style empty lyrics state
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Filled.Lyrics, null, tint = AppleColors.textTertiary, modifier = Modifier.size(64.dp))
-                            Spacer(Modifier.height(16.dp))
-                            Text("Lyrics Not Available", style = AppleTypography.title3, color = AppleColors.textPrimary)
+                            Icon(Icons.Filled.Lyrics, null, tint = AppleColors.textTertiary, modifier = Modifier.size(72.dp))
+                            Spacer(Modifier.height(20.dp))
+                            Text("Lyrics Not Available", style = AppleTypography.title2, color = AppleColors.textPrimary)
                             Spacer(Modifier.height(8.dp))
                             Text("We couldn't find lyrics for this song", style = AppleTypography.body, color = AppleColors.textSecondary, textAlign = TextAlign.Center)
                             Spacer(Modifier.height(24.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Button(onClick = onNavigateBack) { Text("Back to Album") }
+                                FilledTonalButton(onClick = onNavigateBack) { Text("Back to Album") }
                                 OutlinedButton(onClick = { }) { Text("Search Online") }
                             }
                         }
                     }
                 }
             }
-        }
 
-            // Playback scrubber integrated at bottom per audit
-            Spacer(Modifier.height(16.dp))
+            // Album art thumbnail at bottom like Apple Music
+            AppleGlassCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .clickable { onNavigateBack() },
+                cornerRadius = 20.dp,
+                backgroundColor = AppleColors.background.copy(alpha = 0.92f),
+                borderColor = AppleColors.glassBorder.copy(alpha = 0.6f)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(12.dp)) {
+                    AsyncImage(
+                        model = song.albumArtUrl,
+                        contentDescription = song.title,
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .border(1.dp, AppleColors.glassBorder, RoundedCornerShape(10.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                    Spacer(Modifier.width(16.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(song.title, style = AppleTypography.subheadline, color = AppleColors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Bold)
+                        Text(song.artist, style = AppleTypography.caption1, color = AppleColors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    Icon(Icons.Filled.KeyboardArrowUp, null, tint = AppleColors.primary, modifier = Modifier.size(28.dp))
+                }
+            }
+
+            // Playback scrubber integrated at very bottom
             LyricsProgressBar(value = progress, onSeek = onSeekToProgress)
+        }
     }
 }
 
