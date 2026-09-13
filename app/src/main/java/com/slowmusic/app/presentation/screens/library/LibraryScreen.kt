@@ -20,6 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.slowmusic.app.domain.model.*
 import com.slowmusic.app.presentation.components.*
 import com.slowmusic.app.presentation.navigation.*
