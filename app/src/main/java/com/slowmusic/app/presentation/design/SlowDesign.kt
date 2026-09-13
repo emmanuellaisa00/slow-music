@@ -8,16 +8,16 @@ object SlowSpacing {
     val xs = 4.dp
     val sm = 8.dp
     val md = 16.dp
-    val lg = 24.dp
-    val xl = 32.dp
+    val lg = 20.dp
+    val xl = 28.dp
 }
 
 object SlowRadius {
-    val sm = 10.dp
-    val md = 14.dp
-    val lg = 18.dp
-    val xl = 24.dp
-    val xxl = 28.dp
+    val sm = 14.dp
+    val md = 20.dp
+    val lg = 26.dp
+    val xl = 28.dp
+    val xxl = 36.dp
     val pill = 999.dp
 }
 

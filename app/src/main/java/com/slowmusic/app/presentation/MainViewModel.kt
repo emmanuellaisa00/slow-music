@@ -258,7 +258,7 @@ class MainViewModel @Inject constructor(
         val playableQueue = queue.ifEmpty { listOf(song) }
         val clickedIndex = playableQueue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
 
-        // Stop current audio immediately so the UI never waits for fallback resolution
+        // Stop current audio immediately for Spotify-like fast playback start
         // while the previous track continues playing.
         mediaController?.run {
             stop()

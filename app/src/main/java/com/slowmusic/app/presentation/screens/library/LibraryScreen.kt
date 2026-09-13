@@ -176,11 +176,22 @@ fun LibraryScreen(
             }
             
             items(playlists) { playlist ->
-                LibraryListItem(
-                    icon = Icons.Filled.QueueMusic,
-                    title = playlist.name,
-                    subtitle = "${playlist.songIds.size} songs",
-                    onClick = { onPlaylistClick(playlist.id) }
+                ListItem(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.32f)).clickable { onPlaylistClick(playlist.id) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    headlineContent = { Text(playlist.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    supportingContent = { Text("${playlist.songIds.size} songs", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    leadingContent = {
+                        AsyncImage(
+                            model = playlist.artworkUrl ?: Icons.Filled.QueueMusic,
+                            contentDescription = playlist.name,
+                            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    },
+                    trailingContent = {
+                        Icon(Icons.Filled.PlayArrow, contentDescription = "Play playlist", tint = MaterialTheme.colorScheme.primary)
+                    }
                 )
             }
             
